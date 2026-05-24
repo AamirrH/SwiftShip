@@ -1,0 +1,20 @@
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+### Build output ###
+target/
+build/
+
+### Logs and local env ###
+*.log
+.env
+
+### Local service configs with secrets ###
+Inventory-Service/src/main/resources/application.properties
+Order-Service/src/main/resources/application.properties

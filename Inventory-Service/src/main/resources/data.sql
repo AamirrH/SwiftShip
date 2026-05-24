@@ -1,0 +1,16 @@
+INSERT INTO product (product_name, product_price, stock) VALUES
+('Wireless Mouse', 799.00, 120),
+('Mechanical Keyboard', 2499.00, 75),
+('USB-C Charging Cable', 349.00, 250),
+('Bluetooth Headphones', 1999.00, 60),
+('Laptop Stand', 1299.00, 45),
+('Webcam 1080p', 1799.00, 35),
+('Portable SSD 1TB', 7499.00, 20),
+('Smart Watch', 3999.00, 55),
+('Gaming Controller', 2899.00, 40),
+('Power Bank 20000mAh', 2199.00, 90),
+('LED Desk Lamp', 999.00, 110),
+('Wi-Fi Router', 3299.00, 30),
+('External Hard Drive 2TB', 5499.00, 25),
+('Ergonomic Office Chair', 8999.00, 15),
+('Noise Cancelling Earbuds', 3499.00, 50);
