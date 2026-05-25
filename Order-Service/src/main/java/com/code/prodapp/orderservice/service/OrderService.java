@@ -1,8 +1,7 @@
 package com.code.prodapp.orderservice.service;
 
-
-import com.code.prodapp.inventoryservice.DTOs.ProductDTO;
-import com.code.prodapp.inventoryservice.repository.ProductRepository;
+import com.code.prodapp.orderservice.DTOs.OrderRequestDTO;
+import com.code.prodapp.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -16,21 +15,21 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OrderService {
 
-    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
     private final ModelMapper modelMapper;
 
-    public List<ProductDTO> getAllInventory(){
+    public List<OrderRequestDTO> getAllOrders(){
         log.info("Getting all products");
-        return productRepository.findAll()
+        return orderRepository.findAll()
                 .stream()
-                .map(product -> modelMapper.map(product,ProductDTO.class))
+                .map(order -> modelMapper.map(order,OrderRequestDTO.class))
                 .collect(Collectors.toList());
     }
 
-    public ProductDTO getProductById(Long id){
-        log.info("Getting product by id {}", id);
-        return modelMapper.map(productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inventory Not Found")),ProductDTO.class);
+    public OrderRequestDTO getOrderById(Long id){
+        log.info("Getting order by id {}", id);
+        return modelMapper.map(orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inventory Not Found")),OrderRequestDTO.class);
     }
 
 

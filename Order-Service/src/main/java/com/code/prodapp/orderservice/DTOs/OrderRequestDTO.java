@@ -6,14 +6,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderDTO {
+public class OrderRequestDTO {
 
-    private String productName;
-
-    private Double productPrice;
+    private Long id;
+    private List<OrderItemRequestDTO> items;
+    private BigDecimal totalPrice;
 
 }
