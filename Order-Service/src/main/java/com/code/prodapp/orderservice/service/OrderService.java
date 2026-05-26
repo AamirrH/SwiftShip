@@ -8,6 +8,7 @@ import com.code.prodapp.orderservice.clients.InventoryClient;
 import com.code.prodapp.orderservice.entities.Item;
 import com.code.prodapp.orderservice.entities.Orders;
 import com.code.prodapp.orderservice.entities.enums.OrderStatus;
+import com.code.prodapp.orderservice.exceptions.OrderAlreadyCancelledException;
 import com.code.prodapp.orderservice.exceptions.OrderNotFoundException;
 import com.code.prodapp.orderservice.repository.ItemRepository;
 import com.code.prodapp.orderservice.repository.OrderRepository;
@@ -87,6 +88,9 @@ public class OrderService {
         // Find All Items corresponding to that particular orderId
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order Not Found"));
+        if(order.getOrderStatus().equals(OrderStatus.CANCELLED)){
+            throw new OrderAlreadyCancelledException("Order with id " + orderId + " is already cancelled");
+        }
         List<Item> orderedItems = itemRepository.findAllByOrdersId(orderId);
         List<AddStockRequestDTO> itemsToAdd = orderedItems
                 .stream()
