@@ -12,6 +12,7 @@ import com.code.prodapp.orderservice.exceptions.OrderAlreadyCancelledException;
 import com.code.prodapp.orderservice.exceptions.OrderNotFoundException;
 import com.code.prodapp.orderservice.repository.ItemRepository;
 import com.code.prodapp.orderservice.repository.OrderRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
@@ -51,6 +52,7 @@ public class OrderService {
 
 
     @Retry(name = "orderServiceRetry",fallbackMethod = "createOrderFallbackMethod")
+    @CircuitBreaker(name = "orderCircuitBreaker",fallbackMethod = "createOrderFallbackMethod")
     @RateLimiter(name = "orderServiceRateLimiter",fallbackMethod = "createOrderFallbackMethod")
     @Transactional
     public OrderRequestDTO createOrder(OrderRequestDTO orderRequestDTO) {

@@ -6,6 +6,9 @@ resilience4j:
       default:
         max-attempts: 2 # 2 Retries can be done maximum, after 2 retrys it goes to the fallback method
         wait-duration: 10s # wait 10 seconds between every retry
+      instances :
+      orderServiceRetry :
+
   ratelimiter:
     instances:
       default:
@@ -13,5 +16,14 @@ resilience4j:
         limit-refresh-period: 5s
         timeout-duration: 1s
 
-
-
+  circuitbreaker:
+    instances:
+      orderCircuitBreaker:
+        register-health-indicator: true
+        sliding-window-size: 10                          # Track last 10 calls
+        failure-rate-threshold: 50                       # Open if 50%+ fail
+        wait-duration-in-open-state: 10000               # Stay open for 10 seconds
+        permitted-number-of-calls-in-half-open-state: 5  # 5 test calls in half-open
+        sliding-window-type: COUNT_BASED                 # COUNT_BASED or TIME_BASED
+        minimum-number-of-calls: 5                       # Need at least 5 calls before evaluating
+        automatic-transition-from-open-to-half-open-enabled: true
