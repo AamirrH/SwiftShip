@@ -12,6 +12,8 @@ import com.code.prodapp.orderservice.exceptions.OrderAlreadyCancelledException;
 import com.code.prodapp.orderservice.exceptions.OrderNotFoundException;
 import com.code.prodapp.orderservice.repository.ItemRepository;
 import com.code.prodapp.orderservice.repository.OrderRepository;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +50,8 @@ public class OrderService {
     }
 
 
+    @Retry(name = "orderServiceRetry",fallbackMethod = "createOrderFallbackMethod")
+    @RateLimiter(name = "orderServiceRateLimiter",fallbackMethod = "createOrderFallbackMethod")
     @Transactional
     public OrderRequestDTO createOrder(OrderRequestDTO orderRequestDTO) {
         log.info("Creating Order {}", orderRequestDTO);
@@ -82,6 +86,15 @@ public class OrderService {
                 .toList();
         return new OrderRequestDTO(savedOrder.getId(), savedItems, BigDecimal.valueOf(savedOrder.getPrice()));
     }
+
+
+    public OrderRequestDTO createOrderFallbackMethod(OrderRequestDTO orderRequestDTO){
+        log.info("Fallback Method Hit");
+        return null;
+    }
+
+
+
 
     public void cancelOrder(Long orderId){
         log.info("Canceling Order {}", orderId);

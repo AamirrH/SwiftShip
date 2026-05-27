@@ -1,0 +1,8 @@
+## Retry and Rate-Limiter Config File
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 2 # 2 Retries can be done maximum, after 2 retrys it goes to the fallback method
+        wait-duration: 10s # wait 10 seconds between every retry
