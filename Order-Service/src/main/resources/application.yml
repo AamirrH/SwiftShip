@@ -6,3 +6,12 @@ resilience4j:
       default:
         max-attempts: 2 # 2 Retries can be done maximum, after 2 retrys it goes to the fallback method
         wait-duration: 10s # wait 10 seconds between every retry
+  ratelimiter:
+    instances:
+      default:
+        limit-for-period: 1 #10 API calls can be made in 5 seconds
+        limit-refresh-period: 5s
+        timeout-duration: 1s
+
+
+
