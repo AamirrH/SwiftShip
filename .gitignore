@@ -20,3 +20,5 @@ Inventory-Service/src/main/resources/application.properties
 Order-Service/src/main/resources/application.properties
 Discovery-Service/src/main/resources/application.properties
 API-Gateway/src/main/resources/application.yml
+Auth-Service/src/main/resources/application.properties
+Config-Server/src/main/resources/application.properties

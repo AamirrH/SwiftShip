@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: Config-Server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/AamirrH/eCommerce-Engine-Config-Server
+          username: AamirrH
+          password: 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
+          default-label: main
+          clone-on-start: true
+server:
+  port: 9080
+
+eureka:
+  client:
+    service-url:
+      default: http://localhost:8761/eureka
