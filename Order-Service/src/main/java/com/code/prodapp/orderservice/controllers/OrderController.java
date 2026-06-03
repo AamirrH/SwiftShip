@@ -4,6 +4,7 @@ import com.code.prodapp.orderservice.DTOs.OrderRequestDTO;
 import com.code.prodapp.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,10 +17,13 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    @Value("${aamir.variable.hussain}")
+    private String globalPropertiesSecretVariable;
+
 
     @GetMapping("/testOrders")
     public String testOrders() {
-        return "testOrders";
+        return "testOrders "+globalPropertiesSecretVariable;
     }
 
 
