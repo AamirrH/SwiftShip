@@ -1,5 +1,10 @@
 package com.code.prodapp.inventoryservice.configs;
 
+import feign.Capability;
+import feign.micrometer.MicrometerCapability;
+import feign.micrometer.MicrometerObservationCapability;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +24,9 @@ public class AppConfig {
         return RestClient.builder().build();
 
     }
+
+
+
 
 
 }

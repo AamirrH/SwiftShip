@@ -5,6 +5,7 @@ import com.code.prodapp.authservice.DTOs.LoginResponseDTO;
 import com.code.prodapp.authservice.DTOs.SignupRequestDTO;
 import com.code.prodapp.authservice.DTOs.SignupResponseDTO;
 import com.code.prodapp.authservice.entities.UserEntity;
+import com.code.prodapp.authservice.exceptions.UserAlreadyExistsException;
 import com.code.prodapp.authservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -25,31 +26,38 @@ public class UserService implements UserDetailsService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final ModelMapper modelMapper;
     private final AuthenticationManager authenticationManager;
+    private final JWTService jwtService;
 
 
-    public SignupResponseDTO signup(SignupRequestDTO signupRequestDTO) throws Exception {
+    public SignupResponseDTO signup(SignupRequestDTO signupRequestDTO) {
 
+        // Username is unique
         String username = signupRequestDTO.getUsername();
         if(userRepository.existsByUsername(username)) {
-            throw new Exception("User Already Exists");
+            throw new UserAlreadyExistsException("User with username " + username + " already exists");
         }
-
         String hashedPassword = bCryptPasswordEncoder.encode(signupRequestDTO.getPassword());
         String email = signupRequestDTO.getEmail();
         UserEntity user = new UserEntity();
         user.setUsername(username);
         user.setPassword(hashedPassword);
         user.setEmail(email);
-
         UserEntity savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, SignupResponseDTO.class);
 
     }
 
-//    public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
-//
-//
-//    }
+    public LoginResponseDTO login(LoginRequestDTO loginRequestDTO) {
+        // Takes an Unauthenticated Object and returns an Authenticated Object
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken
+                        (loginRequestDTO.getUsername(),loginRequestDTO.getPassword())
+        );
+        UserEntity user = (UserEntity) authentication.getPrincipal();
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        return new LoginResponseDTO(user.getUsername(), accessToken, refreshToken);
+    }
 
     public UserEntity getUserById(Long userId) {
         return userRepository.findById(userId)

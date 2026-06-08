@@ -24,7 +24,7 @@ public class JWTService {
         return Keys.hmacShaKeyFor(key.getBytes(StandardCharsets.UTF_8));
     }
 
-    private String generateAccessToken(UserEntity user){
+    protected String generateAccessToken(UserEntity user){
         return Jwts.builder()
                 .subject(String.valueOf(user.getId()))
                 .claim("username",user.getUsername())
@@ -37,7 +37,7 @@ public class JWTService {
                 .compact();
     }
 
-    private String generateRefreshToken(UserEntity user){
+    protected String generateRefreshToken(UserEntity user){
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("username",user.getUsername())
@@ -50,7 +50,7 @@ public class JWTService {
                 .compact();
     }
 
-    private Long getUserIdFromToken(String token){
+    protected Long getUserIdFromToken(String token){
         Claims claims = Jwts.parser()
                 .verifyWith(HMACGeneratedKey())
                 .build()
