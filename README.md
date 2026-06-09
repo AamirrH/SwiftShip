@@ -1,10 +1,10 @@
-# Scalable Ecommerce Backend Microservices
+# Scalable Ecommerce Backend Microservices 🛒
 
 This repository is a learning project for understanding microservices architecture with Spring Boot and Spring Cloud. It is intentionally built as a set of small services instead of one monolith so that common distributed-system patterns can be practiced in isolation: API gateway routing, service discovery, config server usage, service-to-service communication, JWT authentication, resilience patterns, and basic observability.
 
 The project is not intended to be production-ready yet. Some implementation choices are deliberately simple while the focus is on learning how the pieces fit together.
 
-## Architecture Overview
+## Architecture Overview 🧭
 
 ```text
 Client
@@ -22,35 +22,35 @@ Discovery-Service :8761
 Config-Server :9080 provides centralized configuration for services that import it.
 ```
 
-## Services
+## Services 🧩
 
 | Service | Purpose | Current Role |
 | --- | --- | --- |
-| `API-Gateway` | Single entry point for clients | Routes requests to services, applies route-specific JWT authentication filter for protected routes, forwards `X-User-Id` after token validation |
-| `Auth-Service` | Authentication and user management | Signup, login, password hashing, JWT access/refresh token generation, Spring Security configuration |
-| `Discovery-Service` | Eureka server | Service registry for microservices |
-| `Config-Server` | Spring Cloud Config server | Centralized config loaded from a remote Git repository |
-| `Inventory-Service` | Product/inventory domain | Product lookup, stock add/reduce, service discovery demo, Feign call demo |
-| `Order-Service` | Order domain | Order CRUD-like operations, order cancellation, inventory communication, resilience config |
+| `API-Gateway` 🚪 | Single entry point for clients | Routes requests to services, applies route-specific JWT authentication filter for protected routes, forwards `X-User-Id` after token validation |
+| `Auth-Service` 🔐 | Authentication and user management | Signup, login, password hashing, JWT access/refresh token generation, Spring Security configuration |
+| `Discovery-Service` 🧭 | Eureka server | Service registry for microservices |
+| `Config-Server` ⚙️ | Spring Cloud Config server | Centralized config loaded from a remote Git repository |
+| `Inventory-Service` 🗃️ | Product/inventory domain | Product lookup, stock add/reduce, service discovery demo, Feign call demo |
+| `Order-Service` 📦 | Order domain | Order CRUD-like operations, order cancellation, inventory communication, resilience config |
 
-## Implemented Features
+## Implemented Features ✅
 
-- Spring Boot based microservices split by responsibility.
-- Spring Cloud Gateway as the API entry point.
-- Eureka service discovery.
-- Spring Cloud Config Server.
-- JWT-based login flow.
-- Gateway route-specific authentication for `/orders/**` and `/products/**`.
-- Public auth routes under `/auth/**`.
-- Gateway validates JWT locally using the configured signing secret.
-- Gateway forwards authenticated user identity through `X-User-Id`.
-- Auth-Service stores users with unique username/email.
-- Password hashing with BCrypt.
-- Service-to-service communication using OpenFeign.
-- Resilience4j configuration in Order-Service for retry, rate limiter, and circuit breaker experiments.
-- Zipkin tracing configuration in Order-Service.
+- 🧱 Spring Boot based microservices split by responsibility.
+- 🚪 Spring Cloud Gateway as the API entry point.
+- 🧭 Eureka service discovery.
+- ⚙️ Spring Cloud Config Server.
+- 🔑 JWT-based login flow.
+- 🛡️ Gateway route-specific authentication for `/orders/**` and `/products/**`.
+- 🌐 Public auth routes under `/auth/**`.
+- ✅ Gateway validates JWT locally using the configured signing secret.
+- 👤 Gateway forwards authenticated user identity through `X-User-Id`.
+- 🧑‍💻 Auth-Service stores users with unique username/email.
+- 🔒 Password hashing with BCrypt.
+- 🔗 Service-to-service communication using OpenFeign.
+- 🧯 Resilience4j configuration in Order-Service for retry, rate limiter, and circuit breaker experiments.
+- 📈 Zipkin tracing configuration in Order-Service.
 
-## API Gateway Routes
+## API Gateway Routes 🚪
 
 Gateway runs on:
 
@@ -76,7 +76,7 @@ After successful JWT validation, the gateway adds:
 X-User-Id: <userId>
 ```
 
-## Auth-Service Routes
+## Auth-Service Routes 🔐
 
 Base path:
 
@@ -118,7 +118,7 @@ Example login response shape:
 }
 ```
 
-## Order-Service Routes
+## Order-Service Routes 📦
 
 Base path:
 
@@ -136,7 +136,7 @@ When called through the gateway, these routes are protected by JWT authenticatio
 | `POST` | `/orders/createOrder` | Create an order |
 | `PUT` | `/orders/cancelOrder/{id}` | Cancel an order |
 
-## Inventory-Service Routes
+## Inventory-Service Routes 🗃️
 
 Base path:
 
@@ -155,7 +155,7 @@ When called through the gateway, these routes are protected by JWT authenticatio
 | `PUT` | `/products/reduceStock` | Reduce stock for products |
 | `PUT` | `/products/addStock` | Add stock for products |
 
-## Authentication Flow
+## Authentication Flow 🔑
 
 ```text
 1. Client signs up using POST /auth/signup.
@@ -171,15 +171,15 @@ When called through the gateway, these routes are protected by JWT authenticatio
 
 The gateway does not call Auth-Service for every request. JWT validation is done locally in the gateway using the same signing secret. This keeps protected requests independent of Auth-Service availability after login.
 
-## Suggested Startup Order
+## Suggested Startup Order 🚀
 
-1. Start `Discovery-Service`.
-2. Start `Config-Server`.
-3. Start domain services:
+1. 🧭 Start `Discovery-Service`.
+2. ⚙️ Start `Config-Server`.
+3. 🧩 Start domain services:
    - `Auth-Service`
    - `Inventory-Service`
    - `Order-Service`
-4. Start `API-Gateway`.
+4. 🚪 Start `API-Gateway`.
 
 Then call APIs through:
 
@@ -187,7 +187,7 @@ Then call APIs through:
 http://localhost:9090
 ```
 
-## Local Configuration Notes
+## Local Configuration Notes ⚙️
 
 This project currently uses local configuration files for database credentials, JWT secrets, and config-server settings. For a real deployment, these values should be moved to environment variables, a secret manager, or a secure external config source.
 
@@ -198,29 +198,28 @@ Important local dependencies include:
 - Config server repository access for `Config-Server`.
 - Optional Zipkin server if tracing is being tested.
 
-## Learning Goals Covered
+## Learning Goals Covered 🎯
 
 This repository is useful for practicing:
 
-- How an API Gateway sits in front of services.
-- How route-specific gateway filters work.
-- How JWT authentication differs from authorization.
-- Why login/signup belong in Auth-Service, while token validation can happen in Gateway.
-- How Eureka enables service discovery.
-- How Feign clients simplify service-to-service calls.
-- How central config changes the way services are configured.
-- How resilience patterns are configured with Resilience4j.
-- How auth identity can be propagated using headers like `X-User-Id`.
+- 🚪 How an API Gateway sits in front of services.
+- 🛡️ How route-specific gateway filters work.
+- 🔑 How JWT authentication differs from authorization.
+- 🔐 Why login/signup belong in Auth-Service, while token validation can happen in Gateway.
+- 🧭 How Eureka enables service discovery.
+- 🔗 How Feign clients simplify service-to-service calls.
+- ⚙️ How central config changes the way services are configured.
+- 🧯 How resilience patterns are configured with Resilience4j.
+- 👤 How auth identity can be propagated using headers like `X-User-Id`.
 
-## Current Limitations / Next Steps
+## Current Limitations / Next Steps 🛠️
 
-- Add proper exception handling in Auth-Service for duplicate users and bad credentials.
-- Return clean `401` responses for expired or malformed JWTs in API-Gateway.
-- Move JWT secrets and database credentials out of committed config files.
-- Add roles/authorities to `UserEntity` and JWT claims.
-- Protect downstream services from direct external access so clients cannot bypass the gateway.
-- Add refresh-token endpoint and persistence/revocation strategy.
-- Add integration tests for auth flow through the gateway.
-- Add Docker Compose for PostgreSQL, Eureka, Config Server, Zipkin, and all services.
-- Standardize HTTP methods, for example use `GET /orders/{id}` instead of `POST /orders/{ID}` for lookups.
-
+- 🧯 Add proper exception handling in Auth-Service for duplicate users and bad credentials.
+- 🚫 Return clean `401` responses for expired or malformed JWTs in API-Gateway.
+- 🔒 Move JWT secrets and database credentials out of committed config files.
+- 👥 Add roles/authorities to `UserEntity` and JWT claims.
+- 🛡️ Protect downstream services from direct external access so clients cannot bypass the gateway.
+- 🔁 Add refresh-token endpoint and persistence/revocation strategy.
+- 🧪 Add integration tests for auth flow through the gateway.
+- 🐳 Add Docker Compose for PostgreSQL, Eureka, Config Server, Zipkin, and all services.
+- 🧹 Standardize HTTP methods, for example use `GET /orders/{id}` instead of `POST /orders/{ID}` for lookups.
