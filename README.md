@@ -1,4 +1,4 @@
-# Scalable Ecommerce Backend Microservices 🛒
+# Scalable eCommerce Backend 🛒
 
 This repository is a learning project for understanding microservices architecture with Spring Boot and Spring Cloud. It is intentionally built as a set of small services instead of one monolith so that common distributed-system patterns can be practiced in isolation: API gateway routing, service discovery, config server usage, service-to-service communication, JWT authentication, resilience patterns, and basic observability.
 
