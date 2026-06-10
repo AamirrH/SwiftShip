@@ -31,8 +31,8 @@ public class JWTService {
                 .claim("email",user.getEmail())
                 .claim("authorities",user.getAuthorities())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                // Expires after 10 Minutes
-                .expiration(new  Date(System.currentTimeMillis() + 60*1000*10))
+                // Expires after 1 Minute
+                .expiration(new  Date(System.currentTimeMillis() + 60*1000))
                 .signWith(HMACGeneratedKey())
                 .compact();
     }
