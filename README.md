@@ -1,4 +1,4 @@
-# Scalable eCommerce Backend 🛒
+# SwiftShip - Real-time Order Fulfillment & Delivery Tracking Platform 🛒
 
 This repository is a learning project for understanding microservices architecture with Spring Boot and Spring Cloud. It is intentionally built as a set of small services instead of one monolith so that common distributed-system patterns can be practiced in isolation: API gateway routing, service discovery, config server usage, service-to-service communication, JWT authentication, resilience patterns, and basic observability.
 
@@ -219,7 +219,7 @@ This repository is useful for practicing:
 - 🔒 Move JWT secrets and database credentials out of committed config files.
 - 👥 Add roles/authorities to `UserEntity` and JWT claims.
 - 🛡️ Protect downstream services from direct external access so clients cannot bypass the gateway.
-- 🔁 Add refresh-token endpoint and persistence/revocation strategy.
 - 🧪 Add integration tests for auth flow through the gateway.
 - 🐳 Add Docker Compose for PostgreSQL, Eureka, Config Server, Zipkin, and all services.
 - 🧹 Standardize HTTP methods, for example use `GET /orders/{id}` instead of `POST /orders/{ID}` for lookups.
+
