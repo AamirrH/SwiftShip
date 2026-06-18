@@ -2,7 +2,6 @@ package com.code.prodapp.routingservice.DTOs;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import java.util.List;
 
 @Data
@@ -10,6 +9,7 @@ import java.util.List;
 public class RouteResponseDTO {
 
     private List<Routes> routes;
+
 
 }
 

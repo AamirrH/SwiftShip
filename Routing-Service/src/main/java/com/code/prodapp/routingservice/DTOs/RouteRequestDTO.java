@@ -7,7 +7,6 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-@AllArgsConstructor
 public class RouteRequestDTO {
 
     private List<List<Double>> coordinates;
