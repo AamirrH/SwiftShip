@@ -2,6 +2,7 @@ package com.code.prodapp.orderservice.service;
 
 import com.code.prodapp.orderservice.DTOs.*;
 import com.code.prodapp.orderservice.clients.InventoryClient;
+import com.code.prodapp.orderservice.entities.CustomerAddress;
 import com.code.prodapp.orderservice.entities.Item;
 import com.code.prodapp.orderservice.entities.Orders;
 import com.code.prodapp.orderservice.entities.enums.OrderStatus;
@@ -36,6 +37,7 @@ public class OrderService {
     private final InventoryClient inventoryClient;
     private final ItemRepository itemRepository;
     private final KafkaTemplate<String, OrderEvent> orderEventKafkaTemplate;
+    private final CustomerAddressService customerAddressService;
 
 
     public List<OrderRequestDTO> getAllOrders(){
@@ -69,9 +71,18 @@ public class OrderService {
         boolean inStock = inventoryClient.InStock(stockCheckDTOList);
 
         // Now start creating the order.
+        CustomerAddress customerAddress = customerAddressService.findAddressForCustomer(
+                orderRequestDTO.getCustomerId(),
+                orderRequestDTO.getCustomerAddressId()
+        );
 
         Orders order = new Orders();
         order.setPrice(orderRequestDTO.getTotalPrice().doubleValue());
+        order.setCustomer(customerAddress.getCustomer());
+        order.setCustomerAddress(customerAddress);
+        order.setDeliveryAddressSnapshot(buildAddressSnapshot(customerAddress));
+        order.setDeliveryLat(customerAddress.getLat());
+        order.setDeliveryLng(customerAddress.getLng());
         order.setItems(
                 orderRequestDTO.getItems()
                         .stream()
@@ -91,8 +102,12 @@ public class OrderService {
 
         // Create an Order Event for Kafka
         OrderEvent orderEvent = new OrderEvent();
-        orderEvent.setOrderNumber(order.getId());
-        orderEvent.setOrderedItems(order.getItems()
+        orderEvent.setOrderNumber(savedOrder.getId());
+        orderEvent.setCustomerId(savedOrder.getCustomer().getId());
+        orderEvent.setDeliveryAddress(savedOrder.getDeliveryAddressSnapshot());
+        orderEvent.setDeliveryLat(savedOrder.getDeliveryLat());
+        orderEvent.setDeliveryLng(savedOrder.getDeliveryLng());
+        orderEvent.setOrderedItems(savedOrder.getItems()
                 .stream()
                 .map(item -> new ItemHelper(item.getProductId(),item.getQuantity()))
                 .collect(Collectors.toList())
@@ -104,7 +119,16 @@ public class OrderService {
                 .stream()
                 .map(item -> new ItemRequestDTO(item.getId(), item.getProductId(), item.getQuantity()))
                 .toList();
-        return new OrderRequestDTO(savedOrder.getId(), savedItems, BigDecimal.valueOf(savedOrder.getPrice()));
+        return new OrderRequestDTO(
+                savedOrder.getId(),
+                savedOrder.getCustomer().getId(),
+                savedOrder.getCustomerAddress().getId(),
+                savedItems,
+                BigDecimal.valueOf(savedOrder.getPrice()),
+                savedOrder.getDeliveryAddressSnapshot(),
+                savedOrder.getDeliveryLat(),
+                savedOrder.getDeliveryLng()
+        );
     }
 
 
@@ -132,6 +156,15 @@ public class OrderService {
         order.setOrderStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
         return;
+    }
+
+    private String buildAddressSnapshot(CustomerAddress address) {
+        return String.join(", ",
+                address.getAddressLine(),
+                address.getCity(),
+                address.getState(),
+                address.getPincode()
+        );
     }
 
 
