@@ -1,5 +1,7 @@
-package com.code.prodapp.inventoryservice.exceptions;
+package com.code.prodapp.inventoryservice.advice;
 
+import com.code.prodapp.inventoryservice.exceptions.NotEnoughStockAvailableException;
+import com.code.prodapp.inventoryservice.exceptions.ProductNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
