@@ -26,6 +26,20 @@ public class Orders {
 
     private Double price;
 
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_address_id")
+    private CustomerAddress customerAddress;
+
+    private String deliveryAddressSnapshot;
+
+    private Double deliveryLat;
+
+    private Double deliveryLng;
+
     @OneToMany(mappedBy = "orders", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Item> items;
 

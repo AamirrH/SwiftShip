@@ -1,18 +1,21 @@
 package com.code.prodapp.orderservice.events;
 
-import com.code.prodapp.orderservice.entities.Item;
-import com.code.prodapp.orderservice.entities.Orders;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class OrderEvent {
 
     private Long orderNumber;
+    private Long customerId;
+    private String deliveryAddress;
+    private Double deliveryLat;
+    private Double deliveryLng;
     private List<ItemHelper> orderedItems;
 
 }

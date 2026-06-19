@@ -16,7 +16,12 @@ import java.util.List;
 public class OrderRequestDTO {
 
     private Long id;
+    private Long customerId;
+    private Long customerAddressId;
     private List<ItemRequestDTO> items;
     private BigDecimal totalPrice;
+    private String deliveryAddress;
+    private Double deliveryLat;
+    private Double deliveryLng;
 
 }
