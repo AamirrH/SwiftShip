@@ -1,11 +1,7 @@
 package com.code.prodapp.inventoryservice.service;
 
 
-import com.code.prodapp.inventoryservice.DTOs.AddStockRequestDTO;
-import com.code.prodapp.inventoryservice.DTOs.CreateProductRequestDTO;
-import com.code.prodapp.inventoryservice.DTOs.ProductDTO;
-import com.code.prodapp.inventoryservice.DTOs.ReduceStockRequestDTO;
-import com.code.prodapp.inventoryservice.DTOs.UpdateProductRequestDTO;
+import com.code.prodapp.inventoryservice.DTOs.*;
 import com.code.prodapp.inventoryservice.entities.Product;
 import com.code.prodapp.inventoryservice.exceptions.NotEnoughStockAvailableException;
 import com.code.prodapp.inventoryservice.exceptions.ProductNotFoundException;
@@ -126,6 +122,23 @@ public class ProductService {
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with id " + id));
     }
 
+    public boolean InStock(List<StockCheckDTO> stockCheckDTO) {
+        List<Long> productIds = stockCheckDTO.stream()
+                .map(StockCheckDTO::getProductId)
+                .toList();
+        // Single DB Call.
+        List<Product> products = productRepository.findAllById(productIds);
+
+        for(int  i = 0;i < stockCheckDTO.size();i++){
+            if(products.get(i).getStock()<stockCheckDTO.get(i).getQuantity()){
+                throw new NotEnoughStockAvailableException(
+                        "Product with product Id "+stockCheckDTO.get(i).getProductId()+" Stock Not Enough" +
+                                "Remaining Stock Available "+stockCheckDTO.get(i).getQuantity()
+                );
+            }
+        }
+        return true;
+    }
 
 
 

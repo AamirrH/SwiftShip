@@ -2,6 +2,7 @@ package com.code.prodapp.orderservice.clients;
 
 import com.code.prodapp.orderservice.DTOs.AddStockRequestDTO;
 import com.code.prodapp.orderservice.DTOs.ReduceStockRequestDTO;
+import com.code.prodapp.orderservice.DTOs.StockCheckDTO;
 import com.code.prodapp.orderservice.entities.Item;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,8 @@ public interface InventoryClient {
     @PutMapping("/addStock")
     void addStock(@RequestBody List<AddStockRequestDTO> item);
 
+    @PostMapping("/checkStock")
+    boolean InStock(@RequestBody List<StockCheckDTO> stockCheckDTO);
 
 
 }

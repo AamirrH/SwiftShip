@@ -1,13 +1,11 @@
 package com.code.prodapp.orderservice.service;
 
-import com.code.prodapp.orderservice.DTOs.AddStockRequestDTO;
-import com.code.prodapp.orderservice.DTOs.ItemRequestDTO;
-import com.code.prodapp.orderservice.DTOs.OrderRequestDTO;
-import com.code.prodapp.orderservice.DTOs.ReduceStockRequestDTO;
+import com.code.prodapp.orderservice.DTOs.*;
 import com.code.prodapp.orderservice.clients.InventoryClient;
 import com.code.prodapp.orderservice.entities.Item;
 import com.code.prodapp.orderservice.entities.Orders;
 import com.code.prodapp.orderservice.entities.enums.OrderStatus;
+import com.code.prodapp.orderservice.events.OrderEvent;
 import com.code.prodapp.orderservice.exceptions.OrderAlreadyCancelledException;
 import com.code.prodapp.orderservice.exceptions.OrderNotFoundException;
 import com.code.prodapp.orderservice.repository.ItemRepository;
@@ -19,6 +17,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -35,6 +34,8 @@ public class OrderService {
     private final ModelMapper modelMapper;
     private final InventoryClient inventoryClient;
     private final ItemRepository itemRepository;
+    private final KafkaTemplate<String, OrderEvent> orderEventKafkaTemplate;
+
 
     public List<OrderRequestDTO> getAllOrders(){
         log.info("Getting all products");
@@ -56,9 +57,19 @@ public class OrderService {
     @RateLimiter(name = "orderServiceRateLimiter",fallbackMethod = "createOrderFallbackMethod")
     @Transactional
     public OrderRequestDTO createOrder(OrderRequestDTO orderRequestDTO) {
+
         log.info("Creating Order {}", orderRequestDTO);
+
+        // Get All the Items we need to check Stock of
+        List<StockCheckDTO> stockCheckDTOList = new ArrayList<>();
+        for(ItemRequestDTO item : orderRequestDTO.getItems()){
+            stockCheckDTOList.add(modelMapper.map(item,StockCheckDTO.class));
+        }
+        boolean inStock = inventoryClient.InStock(stockCheckDTOList);
+
+        // Now start creating the order.
+
         Orders order = new Orders();
-        order.setOrderStatus(OrderStatus.PENDING);
         order.setPrice(orderRequestDTO.getTotalPrice().doubleValue());
         order.setItems(
                 orderRequestDTO.getItems()
@@ -73,15 +84,16 @@ public class OrderService {
                         })
                         .collect(Collectors.toList())
         );
-        List<ReduceStockRequestDTO> reduceStockRequestDTOS = order
-                .getItems()
-                .stream()
-                .map(item -> new ReduceStockRequestDTO(item.getProductId(),item.getQuantity()))
-                .toList();
-        inventoryClient.reduceStock(reduceStockRequestDTOS);
+        order.setOrderStatus(OrderStatus.PLACED);
         // Save the Order in DB
-        order.setOrderStatus(OrderStatus.CONFIRMED);
         Orders savedOrder = orderRepository.save(order);
+
+        // Create an Order Event for Kafka
+        OrderEvent orderEvent = new OrderEvent();
+        orderEvent.setOrderNumber(order.getId());
+        orderEvent.setOrderedItems(order.getItems());
+        orderEventKafkaTemplate.send("order-placed",orderEvent);
+
         List<ItemRequestDTO> savedItems = savedOrder.getItems()
                 .stream()
                 .map(item -> new ItemRequestDTO(item.getId(), item.getProductId(), item.getQuantity()))

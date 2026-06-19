@@ -1,11 +1,7 @@
 package com.code.prodapp.inventoryservice.controllers;
 
 
-import com.code.prodapp.inventoryservice.DTOs.AddStockRequestDTO;
-import com.code.prodapp.inventoryservice.DTOs.CreateProductRequestDTO;
-import com.code.prodapp.inventoryservice.DTOs.ProductDTO;
-import com.code.prodapp.inventoryservice.DTOs.ReduceStockRequestDTO;
-import com.code.prodapp.inventoryservice.DTOs.UpdateProductRequestDTO;
+import com.code.prodapp.inventoryservice.DTOs.*;
 import com.code.prodapp.inventoryservice.clients.OrdersFeignClient;
 import com.code.prodapp.inventoryservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -88,6 +84,10 @@ public class ProductController {
         productService.addStock(itemsToAdd);
     }
 
+    @PostMapping("/checkStock")
+    public ResponseEntity<Boolean> InStock(@RequestBody List<StockCheckDTO> stockCheckDTO){
+        return ResponseEntity.ok(productService.InStock(stockCheckDTO));
+    }
 
 
 
