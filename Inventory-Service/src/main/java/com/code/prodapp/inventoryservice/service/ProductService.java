@@ -149,6 +149,7 @@ public class ProductService {
         return true;
     }
 
+    @Transactional
     @KafkaListener(topics = "order-placed")
     public void handleOrderPlacedEvent(OrderEvent orderEvent) {
         // Reduce Stock Asynchronously
@@ -160,6 +161,11 @@ public class ProductService {
                                 Integer::sum)
                 );
         List<Product> products = productRepository.findAllById(requestedItemsMap.keySet());
+
+        if (products.size() != requestedItemsMap.size()) {
+            throw new ProductNotFoundException("One or more ordered products were not found");
+        }
+
         for(Product product : products){
             Integer requestedQuantity = requestedItemsMap.get(product.getId());
             if(product.getStock()<requestedQuantity){
