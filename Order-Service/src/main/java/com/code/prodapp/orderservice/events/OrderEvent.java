@@ -13,6 +13,6 @@ import java.util.List;
 public class OrderEvent {
 
     private Long orderNumber;
-    private List<Item> orderedItems;
+    private List<ItemHelper> orderedItems;
 
 }

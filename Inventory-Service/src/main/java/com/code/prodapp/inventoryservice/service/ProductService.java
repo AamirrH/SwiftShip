@@ -3,6 +3,8 @@ package com.code.prodapp.inventoryservice.service;
 
 import com.code.prodapp.inventoryservice.DTOs.*;
 import com.code.prodapp.inventoryservice.entities.Product;
+import com.code.prodapp.inventoryservice.events.ItemHelper;
+import com.code.prodapp.inventoryservice.events.OrderEvent;
 import com.code.prodapp.inventoryservice.exceptions.NotEnoughStockAvailableException;
 import com.code.prodapp.inventoryservice.exceptions.ProductNotFoundException;
 import com.code.prodapp.inventoryservice.repository.ProductRepository;
@@ -10,9 +12,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -123,23 +127,54 @@ public class ProductService {
     }
 
     public boolean InStock(List<StockCheckDTO> stockCheckDTO) {
-        List<Long> productIds = stockCheckDTO.stream()
-                .map(StockCheckDTO::getProductId)
-                .toList();
-        // Single DB Call.
-        List<Product> products = productRepository.findAllById(productIds);
 
-        for(int  i = 0;i < stockCheckDTO.size();i++){
-            if(products.get(i).getStock()<stockCheckDTO.get(i).getQuantity()){
-                throw new NotEnoughStockAvailableException(
-                        "Product with product Id "+stockCheckDTO.get(i).getProductId()+" Stock Not Enough" +
-                                "Remaining Stock Available "+stockCheckDTO.get(i).getQuantity()
+        Map<Long,Integer> requestedItemsMap = stockCheckDTO
+                .stream()
+                .collect(Collectors
+                        .toMap(StockCheckDTO::getProductId,
+                                StockCheckDTO::getQuantity,
+                                Integer::sum)
                 );
+        // Single DB Call.
+        List<Product> products = productRepository.findAllById(requestedItemsMap.keySet());
+
+        for(Product product : products){
+            Integer requestedQuantity = requestedItemsMap.get(product.getId());
+            if(product.getStock()<requestedQuantity){
+                throw new NotEnoughStockAvailableException("Product with name "+product.getProductName()
+                        +" Stock Not Enough");
             }
+
         }
         return true;
     }
 
+    @KafkaListener(topics = "order-placed")
+    public void handleOrderPlacedEvent(OrderEvent orderEvent) {
+        // Reduce Stock Asynchronously
+        Map<Long,Integer> requestedItemsMap = orderEvent.getOrderedItems()
+                .stream()
+                .collect(Collectors
+                        .toMap(ItemHelper::getProductId,
+                                ItemHelper::getQuantity,
+                                Integer::sum)
+                );
+        List<Product> products = productRepository.findAllById(requestedItemsMap.keySet());
+        for(Product product : products){
+            Integer requestedQuantity = requestedItemsMap.get(product.getId());
+            if(product.getStock()<requestedQuantity){
+                throw new NotEnoughStockAvailableException("Product with name "+product.getProductName()
+                        +" Stock Not Enough");
+            }
+            else {
+                product.setStock(product.getStock() - requestedQuantity);
+            }
+
+        }
+        productRepository.saveAll(products);
+
+
+    }
 
 
 

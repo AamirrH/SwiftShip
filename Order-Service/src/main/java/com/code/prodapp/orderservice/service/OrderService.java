@@ -5,6 +5,7 @@ import com.code.prodapp.orderservice.clients.InventoryClient;
 import com.code.prodapp.orderservice.entities.Item;
 import com.code.prodapp.orderservice.entities.Orders;
 import com.code.prodapp.orderservice.entities.enums.OrderStatus;
+import com.code.prodapp.orderservice.events.ItemHelper;
 import com.code.prodapp.orderservice.events.OrderEvent;
 import com.code.prodapp.orderservice.exceptions.OrderAlreadyCancelledException;
 import com.code.prodapp.orderservice.exceptions.OrderNotFoundException;
@@ -91,7 +92,12 @@ public class OrderService {
         // Create an Order Event for Kafka
         OrderEvent orderEvent = new OrderEvent();
         orderEvent.setOrderNumber(order.getId());
-        orderEvent.setOrderedItems(order.getItems());
+        orderEvent.setOrderedItems(order.getItems()
+                .stream()
+                .map(item -> new ItemHelper(item.getProductId(),item.getQuantity()))
+                .collect(Collectors.toList())
+        );
+
         orderEventKafkaTemplate.send("order-placed",orderEvent);
 
         List<ItemRequestDTO> savedItems = savedOrder.getItems()
@@ -102,7 +108,7 @@ public class OrderService {
     }
 
 
-    public OrderRequestDTO createOrderFallbackMethod(OrderRequestDTO orderRequestDTO){
+    public OrderRequestDTO createOrderFallbackMethod(){
         log.info("Fallback Method Hit");
         return null;
     }
