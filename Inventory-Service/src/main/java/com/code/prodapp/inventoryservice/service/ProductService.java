@@ -138,6 +138,10 @@ public class ProductService {
         // Single DB Call.
         List<Product> products = productRepository.findAllById(requestedItemsMap.keySet());
 
+        if (products.size() != requestedItemsMap.size()) {
+            throw new ProductNotFoundException("One or more requested products were not found");
+        }
+
         for(Product product : products){
             Integer requestedQuantity = requestedItemsMap.get(product.getId());
             if(product.getStock()<requestedQuantity){
