@@ -1,4 +1,4 @@
-# SwiftShip - Scalable Ecommerce Backend Microservices
+# SwiftShip - Real Time Order Fulfillment and Delivery Tracking
 
 SwiftShip is a Spring Boot microservices project that simulates a real-time order fulfillment and delivery tracking backend inspired by Swiggy, Blinkit, and ecommerce logistics systems.
 
