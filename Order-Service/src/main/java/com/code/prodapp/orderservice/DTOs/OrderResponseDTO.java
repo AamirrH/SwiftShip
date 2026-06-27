@@ -1,6 +1,5 @@
 package com.code.prodapp.orderservice.DTOs;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,14 +12,16 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderRequestDTO {
+public class OrderResponseDTO {
 
     private Long id;
     private Long customerId;
     private Long customerAddressId;
-    private List<ItemRequestDTO> items;
+    private List<ItemResponseDTO> items;
+    private BigDecimal totalPrice;
     private String deliveryAddress;
     private Double deliveryLat;
     private Double deliveryLng;
+
 
 }

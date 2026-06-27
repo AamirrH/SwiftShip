@@ -10,12 +10,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemRequestDTO {
-
+public class ItemResponseDTO {
     private Long itemId;
     private Long productId;
     private Integer quantity;
-    private Double productPrice;
-
-
 }

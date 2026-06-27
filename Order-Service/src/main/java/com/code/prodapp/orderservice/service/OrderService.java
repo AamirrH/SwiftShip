@@ -61,7 +61,7 @@ public class OrderService {
     @CircuitBreaker(name = "orderCircuitBreaker",fallbackMethod = "createOrderFallbackMethod")
     @RateLimiter(name = "orderServiceRateLimiter",fallbackMethod = "createOrderFallbackMethod")
     @Transactional
-    public OrderRequestDTO createOrder(OrderRequestDTO orderRequestDTO) {
+    public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
 
         log.info("Creating Order {}", orderRequestDTO);
 
@@ -77,9 +77,14 @@ public class OrderService {
                 orderRequestDTO.getCustomerId(),
                 orderRequestDTO.getCustomerAddressId()
         );
+        // Calculate the total price, manually
+        double totalPrice = 0.0;
+        for(ItemRequestDTO item : orderRequestDTO.getItems()){
+           totalPrice = (totalPrice + (item.getQuantity()*item.getProductPrice()));
+        }
 
         Orders order = new Orders();
-        order.setPrice(orderRequestDTO.getTotalPrice().doubleValue());
+        order.setPrice(totalPrice);
         order.setCustomer(customerAddress.getCustomer());
         order.setCustomerAddress(customerAddress);
         order.setDeliveryAddressSnapshot(buildAddressSnapshot(customerAddress));
@@ -102,12 +107,6 @@ public class OrderService {
         // Save the Order in DB
         Orders savedOrder = orderRepository.save(order);
 
-
-        // Calculate Total Price
-
-
-
-
         // Create an Order Event for Kafka
         OrderEvent orderEvent = new OrderEvent();
         orderEvent.setOrderNumber(savedOrder.getId());
@@ -123,11 +122,11 @@ public class OrderService {
 
         orderEventKafkaTemplate.send("order-placed",orderEvent);
 
-        List<ItemRequestDTO> savedItems = savedOrder.getItems()
+        List<ItemResponseDTO> savedItems = savedOrder.getItems()
                 .stream()
-                .map(item -> new ItemRequestDTO(item.getId(), item.getProductId(), item.getQuantity()))
+                .map(item -> new ItemResponseDTO(item.getId(), item.getProductId(), item.getQuantity()))
                 .toList();
-        return new OrderRequestDTO(
+        return new OrderResponseDTO(
                 savedOrder.getId(),
                 savedOrder.getCustomer().getId(),
                 savedOrder.getCustomerAddress().getId(),
