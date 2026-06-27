@@ -1,5 +1,4 @@
-package com.code.prodapp.warehouseservice.events;
-
+package com.code.prodapp.orderservice.events;
 
 import lombok.Getter;
 import lombok.Setter;

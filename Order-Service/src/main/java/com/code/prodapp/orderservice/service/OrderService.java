@@ -7,6 +7,7 @@ import com.code.prodapp.orderservice.entities.Item;
 import com.code.prodapp.orderservice.entities.Orders;
 import com.code.prodapp.orderservice.entities.enums.OrderStatus;
 import com.code.prodapp.orderservice.events.ItemHelper;
+import com.code.prodapp.orderservice.events.OrderConfirmedEvent;
 import com.code.prodapp.orderservice.events.OrderEvent;
 import com.code.prodapp.orderservice.exceptions.OrderAlreadyCancelledException;
 import com.code.prodapp.orderservice.exceptions.OrderNotFoundException;
@@ -19,6 +20,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -100,6 +102,12 @@ public class OrderService {
         // Save the Order in DB
         Orders savedOrder = orderRepository.save(order);
 
+
+        // Calculate Total Price
+
+
+
+
         // Create an Order Event for Kafka
         OrderEvent orderEvent = new OrderEvent();
         orderEvent.setOrderNumber(savedOrder.getId());
@@ -158,6 +166,21 @@ public class OrderService {
         return;
     }
 
+
+    @Transactional
+    @KafkaListener(topics = "order-confirmed")
+    public void handleOrderConfirmedEvent(OrderConfirmedEvent orderConfirmedEvent) {
+        Orders order = orderRepository.findById(orderConfirmedEvent.getOrderNumber())
+                .orElseThrow(() -> new OrderNotFoundException("Order Not Found"));
+
+        if (order.getOrderStatus().equals(OrderStatus.CANCELLED)) {
+            log.info("Ignoring confirmation for cancelled order {}", orderConfirmedEvent.getOrderNumber());
+            return;
+        }
+
+        order.setOrderStatus(OrderStatus.CONFIRMED);
+        orderRepository.save(order);
+    }
     private String buildAddressSnapshot(CustomerAddress address) {
         return String.join(", ",
                 address.getAddressLine(),
@@ -170,3 +193,5 @@ public class OrderService {
 
 
 }
+
+

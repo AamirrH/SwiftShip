@@ -200,6 +200,7 @@ public class ProductService {
         orderConfirmedEvent.setOrderNumber(orderEvent.getOrderNumber());
         orderConfirmedEvent.setCustomerId(orderEvent.getCustomerId());
         orderConfirmedEvent.setOrderStatus("CONFIRMED");
+        orderConfirmedEvent.setDeliveryAddress(orderEvent.getDeliveryAddress());
         // X-Coordinate
         orderConfirmedEvent.setDeliveryLng(orderEvent.getDeliveryLng());
         // Y-Coordinate
@@ -211,3 +212,5 @@ public class ProductService {
 
 
 }
+
+

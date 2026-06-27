@@ -123,14 +123,18 @@ public class WarehouseService {
         // Create the Warehouse assigned event
         WarehouseAssignedEvent warehouseAssignedEvent = new WarehouseAssignedEvent();
         // Details of the warehouse that have been assigned
-        warehouseAssignedEvent.setWarehouseId(warehouseResponseDTO.getId());
         warehouseAssignedEvent.setOrderNumber(orderConfirmedEvent.getOrderNumber());
+        warehouseAssignedEvent.setCustomerId(orderConfirmedEvent.getCustomerId());
+        warehouseAssignedEvent.setCustomerAddress(orderConfirmedEvent.getDeliveryAddress());
+        warehouseAssignedEvent.setCustomerLatitude(latitude);
+        warehouseAssignedEvent.setCustomerLongitude(longitude);
+        warehouseAssignedEvent.setWarehouseId(warehouseResponseDTO.getId());
         warehouseAssignedEvent.setWarehouseName(warehouseResponseDTO.getWarehouseName());
         warehouseAssignedEvent.setCity(warehouseResponseDTO.getCity());
-        warehouseAssignedEvent.setCustomerId(orderConfirmedEvent.getCustomerId());
-        warehouseAssignedEvent.setWarehouse_lat(warehouseResponseDTO.getLat());
-        warehouseAssignedEvent.setWarehouse_lng(warehouseResponseDTO.getLng());
+        warehouseAssignedEvent.setWarehouseLatitude(warehouseResponseDTO.getLat());
+        warehouseAssignedEvent.setWarehouseLongitude(warehouseResponseDTO.getLng());
 
+        warehouseAssignedKafkaTemplate.send("warehouse-assigned", warehouseAssignedEvent);
 
     }
 
@@ -138,3 +142,4 @@ public class WarehouseService {
 
 
 }
+
