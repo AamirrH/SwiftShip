@@ -4,6 +4,7 @@ package com.code.prodapp.inventoryservice.service;
 import com.code.prodapp.inventoryservice.DTOs.*;
 import com.code.prodapp.inventoryservice.entities.Product;
 import com.code.prodapp.inventoryservice.events.ItemHelper;
+import com.code.prodapp.inventoryservice.events.OrderConfirmedEvent;
 import com.code.prodapp.inventoryservice.events.OrderEvent;
 import com.code.prodapp.inventoryservice.exceptions.NotEnoughStockAvailableException;
 import com.code.prodapp.inventoryservice.exceptions.ProductNotFoundException;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +28,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
+    private final KafkaTemplate<String, OrderConfirmedEvent> orderConfirmedKafkaTemplate;
 
     public List<ProductDTO> getAllInventory(){
         log.info("Getting all products");
@@ -153,6 +156,8 @@ public class ProductService {
         return true;
     }
 
+
+    // Consumer is a Producer itself, consumes OrderEvent and Produces OrderConfirmedEvent
     @Transactional
     @KafkaListener(topics = "order-placed")
     public void handleOrderPlacedEvent(OrderEvent orderEvent) {
@@ -181,7 +186,27 @@ public class ProductService {
             }
 
         }
+        // Save the updated stock products.
         productRepository.saveAll(products);
+
+        // Cancel-window
+
+
+
+
+
+        // Build the OrderConfirmedEvent
+        OrderConfirmedEvent orderConfirmedEvent = new OrderConfirmedEvent();
+        orderConfirmedEvent.setOrderNumber(orderEvent.getOrderNumber());
+        orderConfirmedEvent.setCustomerId(orderEvent.getCustomerId());
+        orderConfirmedEvent.setOrderStatus("CONFIRMED");
+        // X-Coordinate
+        orderConfirmedEvent.setDeliveryLng(orderEvent.getDeliveryLng());
+        // Y-Coordinate
+        orderConfirmedEvent.setDeliveryLat(orderEvent.getDeliveryLat());
+        orderConfirmedKafkaTemplate.send("order-confirmed", orderConfirmedEvent);
+
+
 
 
     }
