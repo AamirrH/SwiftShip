@@ -189,7 +189,7 @@ public class ProductService {
         // Save the updated stock products.
         productRepository.saveAll(products);
 
-        // Cancel-window
+        // Cancel-window (Orders can only be canceled until they are not confirmed)
 
 
 
@@ -205,9 +205,6 @@ public class ProductService {
         // Y-Coordinate
         orderConfirmedEvent.setDeliveryLat(orderEvent.getDeliveryLat());
         orderConfirmedKafkaTemplate.send("order-confirmed", orderConfirmedEvent);
-
-
-
 
     }
 

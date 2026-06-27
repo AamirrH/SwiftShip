@@ -17,6 +17,4 @@ public class WarehouseResponseDTO {
     private double lng;
     private Integer capacity;
     private boolean active;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

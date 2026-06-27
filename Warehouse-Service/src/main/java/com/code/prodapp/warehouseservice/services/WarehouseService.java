@@ -4,6 +4,8 @@ import com.code.prodapp.warehouseservice.DTOs.CreateWarehouseRequestDTO;
 import com.code.prodapp.warehouseservice.DTOs.UpdateWarehouseRequestDTO;
 import com.code.prodapp.warehouseservice.DTOs.WarehouseResponseDTO;
 import com.code.prodapp.warehouseservice.entities.Warehouse;
+import com.code.prodapp.warehouseservice.events.OrderConfirmedEvent;
+import com.code.prodapp.warehouseservice.events.WarehouseAssignedEvent;
 import com.code.prodapp.warehouseservice.exceptions.WarehouseNotFoundException;
 import com.code.prodapp.warehouseservice.repositories.WarehouseRepository;
 import jakarta.transaction.Transactional;
@@ -14,6 +16,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.modelmapper.ModelMapper;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,6 +34,7 @@ public class WarehouseService {
     private final WarehouseRepository warehouseRepository;
     private final ModelMapper modelMapper;
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), WGS_84_SRID);
+    private final KafkaTemplate<String, WarehouseAssignedEvent> warehouseAssignedKafkaTemplate;
 
     public WarehouseResponseDTO getWarehouseByUUID(UUID id) {
         log.info("Getting warehouse by id {}", id);
@@ -105,4 +110,31 @@ public class WarehouseService {
         return mapToDTO(closestWarehouse);
 
     }
+
+    // Consumes order-confirmed event and produces warehouse-assigned event
+    @Transactional
+    @KafkaListener(topics = "order-confirmed")
+    public void handleOrderConfirmedEvent(OrderConfirmedEvent orderConfirmedEvent) {
+        // Extract the data from the orderConfirmedEvent.
+        Double latitude = orderConfirmedEvent.getDeliveryLat();
+        Double longitude = orderConfirmedEvent.getDeliveryLng();
+        // Find the nearest warehouse.
+        WarehouseResponseDTO warehouseResponseDTO = findNearestWarehouse(longitude, latitude);
+        // Create the Warehouse assigned event
+        WarehouseAssignedEvent warehouseAssignedEvent = new WarehouseAssignedEvent();
+        // Details of the warehouse that have been assigned
+        warehouseAssignedEvent.setWarehouseId(warehouseResponseDTO.getId());
+        warehouseAssignedEvent.setOrderNumber(orderConfirmedEvent.getOrderNumber());
+        warehouseAssignedEvent.setWarehouseName(warehouseResponseDTO.getWarehouseName());
+        warehouseAssignedEvent.setCity(warehouseResponseDTO.getCity());
+        warehouseAssignedEvent.setCustomerId(orderConfirmedEvent.getCustomerId());
+        warehouseAssignedEvent.setWarehouse_lat(warehouseResponseDTO.getLat());
+        warehouseAssignedEvent.setWarehouse_lng(warehouseResponseDTO.getLng());
+
+
+    }
+
+
+
+
 }
