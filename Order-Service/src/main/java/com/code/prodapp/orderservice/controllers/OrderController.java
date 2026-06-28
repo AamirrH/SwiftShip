@@ -1,6 +1,7 @@
 package com.code.prodapp.orderservice.controllers;
 
 import com.code.prodapp.orderservice.DTOs.OrderRequestDTO;
+import com.code.prodapp.orderservice.DTOs.OrderResponseDTO;
 import com.code.prodapp.orderservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,7 @@ public class OrderController {
     }
 
     @PostMapping("/createOrder")
-    public ResponseEntity<OrderRequestDTO> createOrder(@RequestBody OrderRequestDTO orderRequestDTO){
+    public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO orderRequestDTO){
         return ResponseEntity.ok(orderService.createOrder(orderRequestDTO));
     }
 
