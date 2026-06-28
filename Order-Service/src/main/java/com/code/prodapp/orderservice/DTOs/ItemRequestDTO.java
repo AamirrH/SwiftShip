@@ -15,7 +15,6 @@ public class ItemRequestDTO {
     private Long itemId;
     private Long productId;
     private Integer quantity;
-    private Double productPrice;
 
 
 }

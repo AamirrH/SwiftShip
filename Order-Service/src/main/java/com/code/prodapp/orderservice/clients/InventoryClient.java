@@ -2,6 +2,7 @@ package com.code.prodapp.orderservice.clients;
 
 import com.code.prodapp.orderservice.DTOs.AddStockRequestDTO;
 import com.code.prodapp.orderservice.DTOs.ReduceStockRequestDTO;
+import com.code.prodapp.orderservice.DTOs.ReturnedItemsDTO;
 import com.code.prodapp.orderservice.DTOs.StockCheckDTO;
 import com.code.prodapp.orderservice.entities.Item;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -21,7 +22,7 @@ public interface InventoryClient {
     void addStock(@RequestBody List<AddStockRequestDTO> item);
 
     @PostMapping("/checkStock")
-    boolean InStock(@RequestBody List<StockCheckDTO> stockCheckDTO);
+    List<ReturnedItemsDTO> InStockAndReturnPrices(@RequestBody List<StockCheckDTO> stockCheckDTO);
 
 
 }

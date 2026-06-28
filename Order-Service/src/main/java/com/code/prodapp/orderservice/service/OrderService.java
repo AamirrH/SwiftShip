@@ -70,8 +70,7 @@ public class OrderService {
         for(ItemRequestDTO item : orderRequestDTO.getItems()){
             stockCheckDTOList.add(modelMapper.map(item,StockCheckDTO.class));
         }
-        boolean inStock = inventoryClient.InStock(stockCheckDTOList);
-
+        List<ReturnedItemsDTO> returnedItemsDTOList = inventoryClient.InStockAndReturnPrices(stockCheckDTOList);
         // Now start creating the order.
         CustomerAddress customerAddress = customerAddressService.findAddressForCustomer(
                 orderRequestDTO.getCustomerId(),
@@ -79,8 +78,8 @@ public class OrderService {
         );
         // Calculate the total price, manually
         double totalPrice = 0.0;
-        for(ItemRequestDTO item : orderRequestDTO.getItems()){
-           totalPrice = (totalPrice + (item.getQuantity()*item.getProductPrice()));
+        for(ReturnedItemsDTO returnedItemsDTO : returnedItemsDTOList){
+            totalPrice = totalPrice + (returnedItemsDTO.getQuantity()*returnedItemsDTO.getProductPrice());
         }
 
         Orders order = new Orders();

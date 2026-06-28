@@ -17,6 +17,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -129,7 +130,7 @@ public class ProductService {
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with id " + id));
     }
 
-    public boolean InStock(List<StockCheckDTO> stockCheckDTO) {
+    public List<ReturnedItemsDTO> InStockAndReturnPrice(List<StockCheckDTO> stockCheckDTO) {
 
         Map<Long,Integer> requestedItemsMap = stockCheckDTO
                 .stream()
@@ -140,6 +141,15 @@ public class ProductService {
                 );
         // Single DB Call.
         List<Product> products = productRepository.findAllById(requestedItemsMap.keySet());
+
+        // Return Products with Prices
+        List<ReturnedItemsDTO> returnedItemsDTOS = products
+                                      .stream()
+                                      .map(product ->
+                                       new ReturnedItemsDTO(product.getId(),requestedItemsMap.get(product.getId()),product.getProductPrice()))
+                                      .collect(Collectors.toList());
+
+        // Stock Logic
 
         if (products.size() != requestedItemsMap.size()) {
             throw new ProductNotFoundException("One or more requested products were not found");
@@ -153,7 +163,7 @@ public class ProductService {
             }
 
         }
-        return true;
+        return returnedItemsDTOS;
     }
 
 

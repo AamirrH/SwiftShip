@@ -85,8 +85,8 @@ public class ProductController {
     }
 
     @PostMapping("/checkStock")
-    public ResponseEntity<Boolean> InStock(@RequestBody List<StockCheckDTO> stockCheckDTO){
-        return ResponseEntity.ok(productService.InStock(stockCheckDTO));
+    public ResponseEntity<List<ReturnedItemsDTO>> InStockAndReturnPrice(@RequestBody List<StockCheckDTO> stockCheckDTO){
+        return ResponseEntity.ok(productService.InStockAndReturnPrice(stockCheckDTO));
     }
 
 
