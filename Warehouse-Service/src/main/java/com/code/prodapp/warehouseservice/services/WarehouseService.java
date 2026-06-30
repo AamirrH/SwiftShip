@@ -133,7 +133,7 @@ public class WarehouseService {
         warehouseAssignedEvent.setCity(warehouseResponseDTO.getCity());
         warehouseAssignedEvent.setWarehouseLatitude(warehouseResponseDTO.getLat());
         warehouseAssignedEvent.setWarehouseLongitude(warehouseResponseDTO.getLng());
-
+        // Warehouse has been assigned, shortest path need to be found now.
         warehouseAssignedKafkaTemplate.send("warehouse-assigned", warehouseAssignedEvent);
 
     }

@@ -205,6 +205,7 @@ public class ProductService {
 
 
 
+
         // Build the OrderConfirmedEvent
         OrderConfirmedEvent orderConfirmedEvent = new OrderConfirmedEvent();
         orderConfirmedEvent.setOrderNumber(orderEvent.getOrderNumber());
