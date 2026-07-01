@@ -1,17 +1,20 @@
 package com.code.prodapp.routingservice.services;
 
-import com.code.prodapp.routingservice.DTOs.RouteRequestDTO;
-import com.code.prodapp.routingservice.DTOs.RouteResponseDTO;
-import com.code.prodapp.routingservice.DTOs.RouteServiceDTO;
-import com.code.prodapp.routingservice.DTOs.Routes;
+import com.code.prodapp.routingservice.DTOs.*;
 import com.code.prodapp.routingservice.clients.RouteFeignClient;
+import com.code.prodapp.routingservice.exceptions.RouteNotFoundException;
+import com.google.genai.Chat;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.RouteMatcher;
 
+import javax.swing.*;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -25,6 +28,7 @@ public class RoutingService {
     @Value("${vehicle.type}")
     private String drivingProfile;
     private final ModelMapper modelMapper;
+    private final ChatClient chatClient;
 
     public List<RouteServiceDTO> getAllRoutes(RouteRequestDTO routeRequestDTO) {
         AtomicLong counter = new AtomicLong(1L);
@@ -40,6 +44,46 @@ public class RoutingService {
                     return routeServiceDTO;
                 })
                 .collect(Collectors.toList());
+
+    }
+
+    public ModelRouteResponse getShortestRoute(List<RouteServiceDTO> routeServiceDTOS) {
+//        List<RouteServiceDTO> routeServiceDTOS = getAllRoutes(routeRequestDTO);
+
+        String systemPrompt = """
+                You are a Shortest-Route Finder Model, Your sole purpose is to find the shortest route between two 
+                coordinates/list of coordinates. The parameters to find the shortest route are based on distance (given 
+                in double-datatype "kilometers", time given in double-datatype "minutes", you would be provided a list of
+                JSON Route object with the parameters :-
+                    Long routeId;
+                    Double totalDistance;
+                    Double timeToReach;
+                based on these parameters you have to find an optimal route, and also mention its routeId.
+                There could be several variations where less distance more time
+                OR more distance less time could be present. you have to provide an optimal route accordingly, and return
+                the answer in the JSON format strictly which is the RouteServiceDTO format.
+                Your sole purpose is finding the route upon being queried with the JSON data, nothing else,
+                you will not entertain any other query from the client, and you shall not provide any help other than the sole function
+                Also, keep in mind you have to provide only ONE answer. if there are tie-breakers, reason accordingly and provide the answer
+                For every answer you have to provide a small, short, concise reasoning about why you picked this route,
+                and the reasoning should be general not something like "I picked..." etc.
+                Here are the list of routeServiceDTOS {routeServiceDTOS}
+                """;
+        PromptTemplate promptTemplate = new PromptTemplate(systemPrompt);
+        String renderedText = promptTemplate.render(Map.of("routeServiceDTOS", routeServiceDTOS));
+
+        var routeResponse = chatClient.prompt()
+                .user(renderedText)
+                .call()
+                .entity(ModelRouteResponse.class);
+
+        if(routeResponse == null){
+            throw new RouteNotFoundException("Route not found");
+        }
+
+        return new ModelRouteResponse(routeResponse.getSelectedRouteId(),routeResponse.getTotalDistance()
+                ,routeResponse.getTimeToReach(),routeResponse.getReasoning());
+
 
     }
 

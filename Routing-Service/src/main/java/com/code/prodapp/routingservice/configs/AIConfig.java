@@ -1,17 +1,15 @@
 package com.code.prodapp.routingservice.configs;
 
-import com.google.genai.Chat;
-import org.modelmapper.ModelMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class AppConfig {
+public class AIConfig {
 
     @Bean
-    public ModelMapper modelMapper() {
-        return new ModelMapper();
+    public ChatClient chatClient(ChatClient.Builder chatClientBuilder) {
+        return chatClientBuilder.build();
     }
 
 

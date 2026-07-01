@@ -1,14 +1,13 @@
 package com.code.prodapp.routingservice.DTOs;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Generated;
+import lombok.*;
 
 import java.time.LocalTime;
 
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class RouteServiceDTO {
 
 
