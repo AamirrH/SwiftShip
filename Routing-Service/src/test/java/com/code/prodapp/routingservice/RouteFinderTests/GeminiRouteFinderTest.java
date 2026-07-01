@@ -20,9 +20,10 @@ public class GeminiRouteFinderTest {
 
 
     @BeforeEach
+    // Runs before each test
     void setup() {
         routeServiceDTOList = new ArrayList<>();
-        routeServiceDTOList.add(new RouteServiceDTO(1L,7298.3,579.6));
+        routeServiceDTOList.add(null);
         routeServiceDTOList.add(new RouteServiceDTO(2L,6151.1,543.9));
 
     }

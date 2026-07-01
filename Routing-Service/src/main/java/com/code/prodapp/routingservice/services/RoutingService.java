@@ -3,6 +3,7 @@ package com.code.prodapp.routingservice.services;
 import com.code.prodapp.routingservice.DTOs.*;
 import com.code.prodapp.routingservice.clients.RouteFeignClient;
 import com.code.prodapp.routingservice.exceptions.RouteNotFoundException;
+import com.code.prodapp.routingservice.exceptions.RouteServiceDownException;
 import com.google.genai.Chat;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -67,15 +68,32 @@ public class RoutingService {
                 Also, keep in mind you have to provide only ONE answer. if there are tie-breakers, reason accordingly and provide the answer
                 For every answer you have to provide a small, short, concise reasoning about why you picked this route,
                 and the reasoning should be general not something like "I picked..." etc.
+                
                 Here are the list of routeServiceDTOS {routeServiceDTOS}
                 """;
         PromptTemplate promptTemplate = new PromptTemplate(systemPrompt);
+
+        // Validate before rendering the text
+        if(routeServiceDTOS.isEmpty()){
+            throw new RouteNotFoundException("Routes not returned");
+        }
+
+        if(routeServiceDTOS.contains(null)){
+            throw new IllegalArgumentException("A Route Service DTO is required");
+        }
+
+        // Render the system prompt with the parameters
         String renderedText = promptTemplate.render(Map.of("routeServiceDTOS", routeServiceDTOS));
 
-        var routeResponse = chatClient.prompt()
-                .user(renderedText)
-                .call()
-                .entity(ModelRouteResponse.class);
+        ModelRouteResponse routeResponse = null;
+        try {
+            routeResponse = chatClient.prompt()
+                    .user(renderedText)
+                    .call()
+                    .entity(ModelRouteResponse.class);
+        } catch (Exception e) {
+            throw new RouteServiceDownException("Route Service is unavailable at this time. Please try again later.");
+        }
 
         if(routeResponse == null){
             throw new RouteNotFoundException("Route not found");
