@@ -2,13 +2,18 @@ package com.code.prodapp.routingservice.services;
 
 import com.code.prodapp.routingservice.DTOs.*;
 import com.code.prodapp.routingservice.clients.RouteFeignClient;
+import com.code.prodapp.routingservice.events.RouteCalculatedEvent;
+import com.code.prodapp.routingservice.events.WarehouseAssignedEvent;
 import com.code.prodapp.routingservice.exceptions.RouteNotFoundException;
 import com.code.prodapp.routingservice.exceptions.RouteServiceDownException;
 import com.google.genai.Chat;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.RouteMatcher;
@@ -30,6 +35,11 @@ public class RoutingService {
     private String drivingProfile;
     private final ModelMapper modelMapper;
     private final ChatClient chatClient;
+    private final Integer NUMBER_OF_FINAL_ROUTES = 3;
+    private final Float WEIGHT_FACTOR = 1.6F;
+    private final KafkaTemplate<String, RouteCalculatedEvent> routingKafkaTemplate;
+
+
 
     public List<RouteServiceDTO> getAllRoutes(RouteRequestDTO routeRequestDTO) {
         AtomicLong counter = new AtomicLong(1L);
@@ -48,8 +58,45 @@ public class RoutingService {
 
     }
 
-    public ModelRouteResponse getShortestRoute(List<RouteServiceDTO> routeServiceDTOS) {
-//        List<RouteServiceDTO> routeServiceDTOS = getAllRoutes(routeRequestDTO);
+    @Transactional
+    @KafkaListener(topics = "warehouse-assigned")
+    public void handleWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent){
+        // Calculate Route using the warehouse assigned
+        Double customerLatitude = warehouseAssignedEvent.getCustomerLatitude(); // Y- customer coordinate
+        Double customerLongitude = warehouseAssignedEvent.getCustomerLongitude(); // X- customer coordinate
+        Double warehouseLatitude = warehouseAssignedEvent.getWarehouseLatitude(); // Y - warehouse coordinate
+        Double warehouseLongitude = warehouseAssignedEvent.getWarehouseLongitude(); // X - warehouse coordinate
+
+        // Build a RouteRequestDTO
+        // Coordinates -> [(x1,y1),(x2,y2)]
+        RouteRequestDTO routeRequestDTO = new RouteRequestDTO();
+        routeRequestDTO.setCoordinates(List.of
+                (List.of(customerLongitude,customerLatitude), // List of customer-coordinates (X,Y)
+                 List.of(warehouseLongitude,warehouseLatitude)) // List of warehouse-coordinates
+        );
+        AlternativeRoutes alternativeRoutes = new AlternativeRoutes(NUMBER_OF_FINAL_ROUTES,WEIGHT_FACTOR);
+        routeRequestDTO.setAlternativeRoutes(alternativeRoutes);
+
+        // Get the Shortest Route
+        ModelRouteResponse modelRouteResponse = getShortestRoute(routeRequestDTO);
+
+        // Save the Response in Database
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+    private ModelRouteResponse getShortestRoute(RouteRequestDTO routeRequestDTO) {
+        List<RouteServiceDTO> routeServiceDTOS = getAllRoutes(routeRequestDTO);
 
         String systemPrompt = """
                 You are a Shortest-Route Finder Model, Your sole purpose is to find the shortest route between two 
