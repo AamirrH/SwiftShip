@@ -2,23 +2,22 @@ package com.code.prodapp.routingservice.services;
 
 import com.code.prodapp.routingservice.DTOs.*;
 import com.code.prodapp.routingservice.clients.RouteFeignClient;
+import com.code.prodapp.routingservice.entities.SelectedRoute;
 import com.code.prodapp.routingservice.events.RouteCalculatedEvent;
 import com.code.prodapp.routingservice.events.WarehouseAssignedEvent;
 import com.code.prodapp.routingservice.exceptions.RouteNotFoundException;
 import com.code.prodapp.routingservice.exceptions.RouteServiceDownException;
-import com.google.genai.Chat;
+import com.code.prodapp.routingservice.repositories.RouteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.RouteMatcher;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,20 +37,19 @@ public class RoutingService {
     private final Integer NUMBER_OF_FINAL_ROUTES = 3;
     private final Float WEIGHT_FACTOR = 1.6F;
     private final KafkaTemplate<String, RouteCalculatedEvent> routingKafkaTemplate;
-
-
+    private final RouteRepository routeRepository;
 
     public List<RouteServiceDTO> getAllRoutes(RouteRequestDTO routeRequestDTO) {
         AtomicLong counter = new AtomicLong(1L);
-        RouteResponseDTO routeResponseDTO = routeFeignClient.getAllRoutes(apiKey,drivingProfile,routeRequestDTO);
+        RouteResponseDTO routeResponseDTO = routeFeignClient.getAllRoutes(apiKey, drivingProfile, routeRequestDTO);
         return routeResponseDTO
                 .getRoutes()
                 .stream()
                 .map(r -> {
                     RouteServiceDTO routeServiceDTO = new RouteServiceDTO();
                     routeServiceDTO.setRouteId(counter.getAndIncrement());
-                    routeServiceDTO.setTotalDistance(r.getSummary().getDistance()/1000.0);
-                    routeServiceDTO.setTimeToReach(r.getSummary().getDuration()/60.0);
+                    routeServiceDTO.setTotalDistance(r.getSummary().getDistance() / 1000.0);
+                    routeServiceDTO.setTimeToReach(r.getSummary().getDuration() / 60.0);
                     return routeServiceDTO;
                 })
                 .collect(Collectors.toList());
@@ -60,40 +58,52 @@ public class RoutingService {
 
     @Transactional
     @KafkaListener(topics = "warehouse-assigned")
-    public void handleWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent){
-        // Calculate Route using the warehouse assigned
-        Double customerLatitude = warehouseAssignedEvent.getCustomerLatitude(); // Y- customer coordinate
-        Double customerLongitude = warehouseAssignedEvent.getCustomerLongitude(); // X- customer coordinate
-        Double warehouseLatitude = warehouseAssignedEvent.getWarehouseLatitude(); // Y - warehouse coordinate
-        Double warehouseLongitude = warehouseAssignedEvent.getWarehouseLongitude(); // X - warehouse coordinate
+    public void handleWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent) {
+        // Calculate route using the assigned warehouse.
+        Double customerLatitude = warehouseAssignedEvent.getCustomerLatitude();
+        Double customerLongitude = warehouseAssignedEvent.getCustomerLongitude();
+        Double warehouseLatitude = warehouseAssignedEvent.getWarehouseLatitude();
+        Double warehouseLongitude = warehouseAssignedEvent.getWarehouseLongitude();
 
-        // Build a RouteRequestDTO
-        // Coordinates -> [(x1,y1),(x2,y2)]
+        // Coordinates are [longitude, latitude]. Origin is warehouse, destination is customer.
         RouteRequestDTO routeRequestDTO = new RouteRequestDTO();
-        routeRequestDTO.setCoordinates(List.of
-                (List.of(customerLongitude,customerLatitude), // List of customer-coordinates (X,Y)
-                 List.of(warehouseLongitude,warehouseLatitude)) // List of warehouse-coordinates
-        );
-        AlternativeRoutes alternativeRoutes = new AlternativeRoutes(NUMBER_OF_FINAL_ROUTES,WEIGHT_FACTOR);
+        routeRequestDTO.setCoordinates(List.of(
+                List.of(warehouseLongitude, warehouseLatitude),
+                List.of(customerLongitude, customerLatitude)
+        ));
+        AlternativeRoutes alternativeRoutes = new AlternativeRoutes(NUMBER_OF_FINAL_ROUTES, WEIGHT_FACTOR);
         routeRequestDTO.setAlternativeRoutes(alternativeRoutes);
 
-        // Get the Shortest Route
         ModelRouteResponse modelRouteResponse = getShortestRoute(routeRequestDTO);
 
-        // Save the Response in Database
+        SelectedRoute selectedRoute = new SelectedRoute();
+        selectedRoute.setSelectedRouteId(modelRouteResponse.getSelectedRouteId());
+        selectedRoute.setOrderId(warehouseAssignedEvent.getOrderNumber());
+        selectedRoute.setCustomerId(warehouseAssignedEvent.getCustomerId());
+        selectedRoute.setCustomerAddress(warehouseAssignedEvent.getCustomerAddress());
+        selectedRoute.setCustomerCoordinates(List.of(customerLongitude, customerLatitude));
+        selectedRoute.setWareHouseCoordinates(List.of(warehouseLongitude, warehouseLatitude));
+        selectedRoute.setTotalDistance(modelRouteResponse.getTotalDistance());
+        selectedRoute.setTimeToReach(modelRouteResponse.getTimeToReach());
+        selectedRoute.setReasoning(modelRouteResponse.getReasoning());
+        routeRepository.save(selectedRoute);
 
+        RouteCalculatedEvent routeCalculatedEvent = new RouteCalculatedEvent();
+        routeCalculatedEvent.setOrderNumber(warehouseAssignedEvent.getOrderNumber());
+        routeCalculatedEvent.setCustomerId(warehouseAssignedEvent.getCustomerId());
+        routeCalculatedEvent.setWarehouseId(warehouseAssignedEvent.getWarehouseId());
+        routeCalculatedEvent.setSelectedRouteId(modelRouteResponse.getSelectedRouteId());
+        routeCalculatedEvent.setTotalDistance(modelRouteResponse.getTotalDistance());
+        routeCalculatedEvent.setTimeToReach(modelRouteResponse.getTimeToReach());
+        routeCalculatedEvent.setReasoning(modelRouteResponse.getReasoning());
+        routeCalculatedEvent.setCustomerLatitude(customerLatitude);
+        routeCalculatedEvent.setCustomerLongitude(customerLongitude);
+        routeCalculatedEvent.setCustomerAddress(warehouseAssignedEvent.getCustomerAddress());
+        routeCalculatedEvent.setWarehouseLatitude(warehouseLatitude);
+        routeCalculatedEvent.setWarehouseLongitude(warehouseLongitude);
 
-
-
-
-
-
+        routingKafkaTemplate.send("route-calculated", routeCalculatedEvent);
     }
-
-
-
-
-
 
     private ModelRouteResponse getShortestRoute(RouteRequestDTO routeRequestDTO) {
         List<RouteServiceDTO> routeServiceDTOS = getAllRoutes(routeRequestDTO);
@@ -121,11 +131,11 @@ public class RoutingService {
         PromptTemplate promptTemplate = new PromptTemplate(systemPrompt);
 
         // Validate before rendering the text
-        if(routeServiceDTOS.isEmpty()){
+        if (routeServiceDTOS.isEmpty()) {
             throw new RouteNotFoundException("Routes not returned");
         }
 
-        if(routeServiceDTOS.contains(null)){
+        if (routeServiceDTOS.contains(null)) {
             throw new IllegalArgumentException("A Route Service DTO is required");
         }
 
@@ -142,15 +152,13 @@ public class RoutingService {
             throw new RouteServiceDownException("Route Service is unavailable at this time. Please try again later.");
         }
 
-        if(routeResponse == null){
+        if (routeResponse == null) {
             throw new RouteNotFoundException("Route not found");
         }
 
-        return new ModelRouteResponse(routeResponse.getSelectedRouteId(),routeResponse.getTotalDistance()
-                ,routeResponse.getTimeToReach(),routeResponse.getReasoning());
-
+        return new ModelRouteResponse(routeResponse.getSelectedRouteId(), routeResponse.getTotalDistance(),
+                routeResponse.getTimeToReach(), routeResponse.getReasoning());
 
     }
-
 
 }

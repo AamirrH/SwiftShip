@@ -31,6 +31,8 @@ public class SelectedRoute {
 
     private List<Double> customerCoordinates;
 
+    private String customerAddress;
+
     private List<Double> wareHouseCoordinates;
 
     private double totalDistance;
@@ -38,8 +40,5 @@ public class SelectedRoute {
     private double timeToReach;
 
     private String reasoning;
-
-
-
 
 }
