@@ -287,11 +287,6 @@ http://localhost:9090
 
 ## Current Limitations / Next Steps
 
-- Publish `order-confirmed` and `order-rejected` from Inventory-Service.
-- Consume `order-confirmed/order-rejected` in Order-Service to update order status.
-- Consume `order-confirmed` in Warehouse-Service and publish `warehouse-assigned`.
-- Consume `warehouse-assigned` in Routing-Service.
-- Add Gemini/Spring AI route selection in Routing-Service.
 - Create Tracking-Service with Kafka, Redis, and WebSocket live updates.
 - Create Notification-Service for lifecycle notifications.
 - Add Docker Compose for local infrastructure and demo startup.
