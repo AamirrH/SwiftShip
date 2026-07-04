@@ -80,6 +80,7 @@ public class RoutingService {
         selectedRoute.setSelectedRouteId(modelRouteResponse.getSelectedRouteId());
         selectedRoute.setOrderId(warehouseAssignedEvent.getOrderNumber());
         selectedRoute.setCustomerId(warehouseAssignedEvent.getCustomerId());
+        selectedRoute.setWarehouseId(warehouseAssignedEvent.getWarehouseId());
         selectedRoute.setCustomerAddress(warehouseAssignedEvent.getCustomerAddress());
         selectedRoute.setCustomerCoordinates(List.of(customerLongitude, customerLatitude));
         selectedRoute.setWareHouseCoordinates(List.of(warehouseLongitude, warehouseLatitude));
@@ -162,3 +163,4 @@ public class RoutingService {
     }
 
 }
+

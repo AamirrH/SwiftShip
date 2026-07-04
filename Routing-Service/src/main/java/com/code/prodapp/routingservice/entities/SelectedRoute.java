@@ -31,8 +31,11 @@ public class SelectedRoute {
     @Column(name = "order_id",nullable = false)
     private Long orderId;
 
+    @Column(name = "warehouse_id",nullable = false)
+    private UUID warehouseId;
+
     @ElementCollection
-    @CollectionTable(name="coordinates_table",joinColumns = @JoinColumn(referencedColumnName = "response_uuid" ,
+    @CollectionTable(name="coordinates_table",joinColumns = @JoinColumn(referencedColumnName = "customer_id" ,
     name = "selected_route_uuid"))
     @Column(name = "customer_coordinates")
     private List<Double> customerCoordinates;
@@ -40,7 +43,7 @@ public class SelectedRoute {
     private String customerAddress;
 
     @ElementCollection
-    @CollectionTable(name = "warehouse_coordinates_table",joinColumns = @JoinColumn(referencedColumnName = "response_uuid",
+    @CollectionTable(name = "warehouse_coordinates_table",joinColumns = @JoinColumn(referencedColumnName = "warehouse_id",
     name = "warehouse_coordinate_table_response_uuid" ))
     @Column(name = "warehouse_coordinates")
     private List<Double> wareHouseCoordinates;
@@ -56,3 +59,4 @@ public class SelectedRoute {
     private String reasoning;
 
 }
+
