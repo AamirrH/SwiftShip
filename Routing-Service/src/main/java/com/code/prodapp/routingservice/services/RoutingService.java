@@ -82,8 +82,10 @@ public class RoutingService {
         selectedRoute.setCustomerId(warehouseAssignedEvent.getCustomerId());
         selectedRoute.setWarehouseId(warehouseAssignedEvent.getWarehouseId());
         selectedRoute.setCustomerAddress(warehouseAssignedEvent.getCustomerAddress());
-        selectedRoute.setCustomerCoordinates(List.of(customerLongitude, customerLatitude));
-        selectedRoute.setWareHouseCoordinates(List.of(warehouseLongitude, warehouseLatitude));
+        selectedRoute.setCustomerLng(customerLongitude);
+        selectedRoute.setCustomerLat(customerLatitude);
+        selectedRoute.setWarehouseLng(warehouseLongitude);
+        selectedRoute.setWarehouseLat(warehouseLatitude);
         selectedRoute.setTotalDistance(modelRouteResponse.getTotalDistance());
         selectedRoute.setTimeToReach(modelRouteResponse.getTimeToReach());
         selectedRoute.setReasoning(modelRouteResponse.getReasoning());
@@ -163,4 +165,5 @@ public class RoutingService {
     }
 
 }
+
 
