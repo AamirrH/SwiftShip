@@ -1,40 +1,44 @@
 # SwiftShip - Real Time Order Fulfillment and Delivery Tracking
 
-SwiftShip is a Spring Boot microservices project that simulates a real-time order fulfillment and delivery tracking backend inspired by Swiggy, Blinkit, and ecommerce logistics systems.
+SwiftShip is a Spring Boot microservices project that simulates a real-time order fulfillment and delivery tracking backend inspired by Swiggy, Blinkit, Blinkit-style quick commerce, and ecommerce logistics systems.
 
-The goal is to demonstrate practical distributed-system skills: service discovery, API gateway routing, JWT authentication, config server usage, OpenFeign calls, Kafka event-driven workflows, PostGIS warehouse selection, external route calculation, and eventually live tracking with Redis/WebSocket.
+The project demonstrates distributed backend patterns including service discovery, centralized configuration, API gateway routing, JWT authentication, OpenFeign communication, Kafka event-driven workflows, PostgreSQL/PostGIS spatial computation, OpenRouteService route calculation, and Gemini/Spring AI based route selection.
 
-This is a learning and portfolio project. It is intentionally built service-by-service so each distributed pattern can be understood before the next layer is added.
+This is a learning and portfolio project built service-by-service so each distributed pattern can be understood before the next layer is added.
 
-## Product Flow
+## Current Product Flow
 
 ```text
 Customer places an order
-  -> Order-Service stores the order and publishes order-placed
-  -> Inventory-Service consumes order-placed and reserves/reduces stock
-  -> Inventory-Service will publish order-confirmed or order-rejected
-  -> Warehouse-Service will assign the nearest active warehouse using PostGIS
-  -> Routing-Service will calculate route alternatives using OpenRouteService
-  -> Routing-Service will use Gemini/Spring AI to select the best route
-  -> Tracking-Service will simulate driver movement and live ETA updates
+  -> Order-Service validates customer/address and checks stock/prices with Inventory-Service
+  -> Order-Service stores the order as PLACED and publishes order-placed
+  -> Inventory-Service consumes order-placed, reduces stock, and publishes order-confirmed
+  -> Order-Service consumes order-confirmed and marks the order CONFIRMED
+  -> Warehouse-Service consumes order-confirmed and selects the nearest active warehouse using PostGIS
+  -> Warehouse-Service publishes warehouse-assigned
+  -> Routing-Service consumes warehouse-assigned
+  -> Routing-Service calls OpenRouteService for route alternatives
+  -> Routing-Service uses Gemini/Spring AI to choose the optimal route
+  -> Routing-Service stores the selected route and publishes route-calculated
+  -> Tracking-Service and Notification-Service are planned next
 ```
 
-## Current Services
+## Services
 
 | Service | Port | Current Role |
 | --- | ---: | --- |
 | `Discovery-Service` | `8761` | Eureka service registry |
-| `Config-Server` | `9080` | Centralized Spring Cloud Config server |
-| `API-Gateway` | `9090` | Gateway routes, JWT validation, protected service access |
+| `Config-Server` | `9080` | Centralized Spring Cloud Config server backed by Git |
+| `API-Gateway` | `9090` | Gateway routes, JWT validation, protected downstream access |
 | `Auth-Service` | configured service port | Signup, login, JWT access/refresh token generation |
-| `Order-Service` | configured service port | Orders, customers, customer addresses, selected delivery address snapshots, `order-placed` Kafka producer |
-| `Inventory-Service` | configured service port | Product CRUD, stock checks, async stock reduction from `order-placed` Kafka consumer |
-| `Warehouse-Service` | configured service port | Warehouse CRUD and nearest active warehouse lookup using PostgreSQL/PostGIS |
-| `Routing-Service` | configured service port | OpenRouteService route alternatives between warehouse/customer coordinates |
+| `Order-Service` | configured service port | Customers, addresses, order creation, order status updates, `order-placed` producer |
+| `Inventory-Service` | configured service port | Product CRUD, stock/price validation, stock reduction, `order-confirmed` producer |
+| `Warehouse-Service` | configured service port | Warehouse CRUD, PostGIS nearest warehouse selection, `warehouse-assigned` producer |
+| `Routing-Service` | configured service port | OpenRouteService alternatives, Gemini route choice, selected route persistence, `route-calculated` producer |
 
-Tracking and notification services are planned next.
+Tracking-Service and Notification-Service are not built yet.
 
-## Current Architecture
+## Architecture Snapshot
 
 ```text
 Client
@@ -47,13 +51,16 @@ API-Gateway
   |-- /customers/**         -> Order-Service
   |-- /products/**          -> Inventory-Service
   |-- /admin/warehouses/**  -> Warehouse-Service
-  |-- /routes/**            -> Routing-Service
+  |-- /routes/**            -> Routing-Service test/manual route APIs
   |
   v
 Eureka Discovery-Service
 
-Config-Server provides centralized service configuration.
-Kafka is used for order lifecycle events.
+Config-Server provides service configuration.
+Kafka carries order lifecycle events.
+PostGIS powers warehouse proximity lookup.
+OpenRouteService calculates route alternatives.
+Gemini/Spring AI selects the preferred route candidate.
 ```
 
 ## Implemented Features
@@ -62,73 +69,53 @@ Kafka is used for order lifecycle events.
 - Spring Cloud Gateway API entry point.
 - Eureka service discovery.
 - Spring Cloud Config Server.
-- Auth-Service with signup, login, password hashing, and JWT generation.
+- Auth-Service with signup, login, password hashing, JWT access token and refresh token support.
 - API-Gateway JWT validation for protected routes.
-- Gateway forwards authenticated user identity using `X-User-Id`.
-- OpenFeign between services where synchronous calls are still used.
+- Gateway forwards authenticated identity using `X-User-Id`.
+- OpenFeign for service-to-service HTTP calls.
 - Resilience4j retry, rate limiter, and circuit breaker experiments in Order-Service.
 - Zipkin tracing configuration.
-- Order-Service customer and address domain:
-  - `Customer`
-  - `CustomerAddress`
-  - order stores `customer`, selected address reference, and delivery address snapshot.
-- Order placement publishes an `order-placed` Kafka event.
+- Order-Service owns customers, customer addresses, orders, and order items.
+- Orders store a delivery address snapshot so historical orders remain correct if a saved address changes.
+- Order total price is calculated server-side using product prices returned by Inventory-Service.
+- Inventory-Service checks stock and returns trusted product prices from its own database.
 - Inventory-Service consumes `order-placed` and reduces stock asynchronously.
-- Inventory stock checking uses a single DB fetch and groups duplicate product IDs.
-- Warehouse-Service uses PostGIS geography points for nearest active warehouse selection.
-- Routing-Service calls OpenRouteService and returns route alternatives with distance/duration.
+- Warehouse-Service stores warehouse locations as PostGIS points and selects the nearest active warehouse.
+- Routing-Service consumes warehouse assignments, calls OpenRouteService, asks Gemini to choose the best route, stores the selected route, and publishes `route-calculated`.
 
-## Kafka Progress
+## Kafka Event Flow
 
 Implemented:
 
 ```text
-Order-Service -- order-placed --> Inventory-Service
+Order-Service      -- order-placed      --> Inventory-Service
+Inventory-Service  -- order-confirmed   --> Order-Service
+Inventory-Service  -- order-confirmed   --> Warehouse-Service
+Warehouse-Service  -- warehouse-assigned --> Routing-Service
+Routing-Service    -- route-calculated   --> next planned consumers
 ```
 
-`order-placed` currently carries:
+Planned:
 
 ```text
-orderNumber
-customerId
-deliveryAddress
-deliveryLat
-deliveryLng
-orderedItems: productId + quantity
+Tracking-Service   -- eta-updated       --> Notification-Service
+Tracking-Service   -- order-delivered   --> Order-Service + Notification-Service
+Notification-Service consumes order/warehouse/route/tracking lifecycle events
 ```
 
-Next Kafka events:
+### Current Event Responsibilities
 
-```text
-Inventory-Service -- order-confirmed/order-rejected --> Order-Service
-Inventory-Service -- order-confirmed --> Warehouse-Service
-Warehouse-Service -- warehouse-assigned --> Routing-Service
-Routing-Service -- route-calculated --> Tracking-Service
-Tracking-Service -- eta-updated/order-delivered --> Notification-Service and Order-Service
-```
+`order-placed` carries order/customer/address coordinates and ordered product quantities.
 
-## API Gateway Routes
+`order-confirmed` confirms stock reduction and forwards delivery address coordinates.
 
-Gateway runs on:
+`warehouse-assigned` carries customer destination plus assigned warehouse identity and coordinates.
 
-```text
-http://localhost:9090
-```
+`route-calculated` carries selected route id, distance, time, reasoning, warehouse/customer context, and route coordinates for downstream tracking.
 
-| Gateway Path | Routed Service | Auth Filter |
-| --- | --- | --- |
-| `/auth/**` | `Auth-Service` | No |
-| `/orders/**` | `Order-Service` | Yes |
-| `/products/**` | `Inventory-Service` | Yes |
-| `/admin/warehouses/**` | `Warehouse-Service` | Currently routed |
+Event classes are currently duplicated per service. A shared events module or Schema Registry can be added later after event payloads stabilize.
 
-Protected routes require:
-
-```http
-Authorization: Bearer <accessToken>
-```
-
-## Order-Service Routes
+## Order-Service
 
 Base path:
 
@@ -140,11 +127,11 @@ Base path:
 | --- | --- | --- |
 | `GET` | `/orders/testOrders` | Test endpoint |
 | `GET` | `/orders` | Get all orders |
-| `POST` | `/orders/{ID}` | Get order by id |
-| `POST` | `/orders/createOrder` | Create an order and publish `order-placed` |
-| `PUT` | `/orders/cancelOrder/{id}` | Cancel an order |
+| `POST` | `/orders/{ID}` | Get order by id, currently non-standard and should become `GET` later |
+| `POST` | `/orders/createOrder` | Create order and publish `order-placed` |
+| `PUT` | `/orders/cancelOrder/{id}` | Cancel order |
 
-Order creation now expects customer/address context:
+Order creation request no longer trusts client-sent price:
 
 ```json
 {
@@ -152,12 +139,11 @@ Order creation now expects customer/address context:
   "customerAddressId": 1,
   "items": [
     { "productId": 1, "quantity": 2 }
-  ],
-  "totalPrice": 1299.00
+  ]
 }
 ```
 
-The selected address is copied into the order as a delivery snapshot so old orders remain historically correct even if the customer edits their saved address later.
+Order-Service asks Inventory-Service for stock and product prices, calculates total price on the server, saves the order, and publishes `order-placed`.
 
 ## Customer Routes
 
@@ -182,7 +168,9 @@ Base path:
 | `PATCH` | `/customers/{customerId}/addresses/{addressId}` | Update saved address |
 | `DELETE` | `/customers/{customerId}/addresses/{addressId}` | Delete saved address |
 
-## Inventory-Service Routes
+Geocoding is still a planned improvement. Currently addresses store coordinates directly.
+
+## Inventory-Service
 
 Base path:
 
@@ -200,13 +188,13 @@ Base path:
 | `PUT` | `/products/admin/{ID}` | Update product |
 | `PATCH` | `/products/admin/{ID}` | Patch product |
 | `DELETE` | `/products/admin/{ID}` | Delete product |
-| `POST` | `/products/checkStock` | Check stock availability |
+| `POST` | `/products/checkStock` | Checks stock and returns product prices for server-side order pricing |
 | `PUT` | `/products/reduceStock` | Manual/internal stock reduction |
 | `PUT` | `/products/addStock` | Manual/internal stock restoration |
 
-Final order stock changes should happen through Kafka, not direct client calls.
+Kafka is now the main stock reduction path after order placement.
 
-## Warehouse-Service Routes
+## Warehouse-Service
 
 Base path:
 
@@ -223,26 +211,78 @@ Base path:
 | `DELETE` | `/admin/warehouses/{id}` | Soft delete warehouse |
 | `GET` | `/admin/warehouses/nearest?lon={lng}&lat={lat}` | Find nearest active warehouse |
 
-Warehouse locations are stored as PostGIS `GEOGRAPHY(Point, 4326)` and queried using a native nearest-neighbor query.
+Warehouse locations are stored using PostgreSQL/PostGIS. The nearest warehouse query uses active warehouses only and is also reused by the Kafka `order-confirmed` consumer.
 
 ## Routing-Service
 
-Routing-Service currently calls OpenRouteService with warehouse/customer coordinate pairs and supports alternative routes.
+Routing-Service currently has both manual route APIs and Kafka-driven routing.
 
-OpenRouteService coordinates must be sent as:
+Manual route endpoint:
+
+```text
+POST /routes
+```
+
+The main workflow is event-driven:
+
+```text
+warehouse-assigned
+  -> build OpenRouteService request using warehouse/customer coordinates
+  -> request alternative routes with driving-hgv profile
+  -> convert ORS route summaries into route candidates
+  -> ask Gemini/Spring AI to select the optimal route
+  -> save SelectedRoute in routeDB
+  -> publish route-calculated
+```
+
+OpenRouteService coordinates are sent as:
 
 ```text
 [lng, lat]
 ```
 
-The service currently extracts route candidates with:
+Selected route persistence stores:
 
 ```text
-distance
-duration
+orderId
+customerId
+warehouseId
+customerLng/customerLat
+warehouseLng/warehouseLat
+totalDistance
+timeToReach
+reasoning
 ```
 
-Next step: add Spring AI/Gemini route selection over those candidates using business signals such as weather, demand, priority, and vehicle profile.
+Known remaining Routing-Service work:
+
+- Strengthen Kafka listener error handling with retries and DLT.
+- Add/update tests for route calculation and AI selection.
+- Validate Gemini selected route id against candidate routes.
+- Clean up manual test routes if the service becomes fully event-driven.
+
+## API Gateway Routes
+
+Gateway runs on:
+
+```text
+http://localhost:9090
+```
+
+| Gateway Path | Routed Service | Auth Filter |
+| --- | --- | --- |
+| `/auth/**` | `Auth-Service` | No |
+| `/orders/**` | `Order-Service` | Yes |
+| `/customers/**` | `Order-Service` | Yes |
+| `/products/**` | `Inventory-Service` | Yes |
+| `/admin/warehouses/**` | `Warehouse-Service` | Currently routed |
+| `/routes/**` | `Routing-Service` | Currently routed/test use |
+
+Protected routes require:
+
+```http
+Authorization: Bearer <accessToken>
+```
 
 ## Auth Flow
 
@@ -257,16 +297,25 @@ Next step: add Spring AI/Gemini route selection over those candidates using busi
 
 ## Suggested Startup Order
 
-1. Start PostgreSQL/Kafka dependencies.
+1. Start PostgreSQL and Kafka.
 2. Start `Discovery-Service`.
 3. Start `Config-Server`.
-4. Start domain services:
+4. Verify Config-Server endpoints, for example:
+
+```text
+http://localhost:9080/Order-Service/default
+http://localhost:9080/Inventory-Service/default
+http://localhost:9080/Warehouse-Service/default
+http://localhost:9080/Routing-Service/default
+```
+
+5. Start domain services:
    - `Auth-Service`
-   - `Order-Service`
    - `Inventory-Service`
+   - `Order-Service`
    - `Warehouse-Service`
    - `Routing-Service`
-5. Start `API-Gateway`.
+6. Start `API-Gateway`.
 
 Then call public APIs through:
 
@@ -277,18 +326,27 @@ http://localhost:9090
 ## Local Dependencies
 
 - PostgreSQL for persistent services.
-- PostgreSQL/PostGIS for Warehouse-Service.
-- Kafka for order lifecycle events.
+- PostgreSQL/PostGIS for Warehouse-Service spatial queries.
+- Kafka for order, warehouse, route, and future tracking events.
 - Eureka Discovery-Service.
-- Config-Server.
+- Spring Cloud Config Server.
 - Optional Zipkin server for tracing.
 - OpenRouteService API key for Routing-Service.
+- Gemini API key for Routing-Service AI route selection.
 - Later: Redis for Tracking-Service live state.
 
 ## Current Limitations / Next Steps
 
-- Create Tracking-Service with Kafka, Redis, and WebSocket live updates.
+- Create Tracking-Service with Kafka, Redis, simulated GPS movement, ETA calculation, and WebSocket live updates.
 - Create Notification-Service for lifecycle notifications.
+- Add geocoding for customer addresses instead of manually providing lat/lng.
+- Add Kafka retry and dead-letter topic handling.
+- Add shared event contracts or Schema Registry after payloads stabilize.
 - Add Docker Compose for local infrastructure and demo startup.
 - Move secrets and API keys to environment variables or secure config.
-- Standardize routes where needed, for example `GET /orders/{id}` instead of `POST /orders/{ID}`.
+- Standardize REST route naming where needed, for example `GET /orders/{id}` instead of `POST /orders/{ID}`.
+- Add more reliable integration tests that do not depend on live external APIs unless explicitly enabled.
+
+## Interview Pitch
+
+SwiftShip is a distributed order fulfillment and delivery tracking backend. It uses Kafka for order lifecycle orchestration, PostGIS for nearest warehouse selection, OpenRouteService for route alternatives, and Gemini/Spring AI for route choice. The next milestone is Tracking-Service, where Redis and WebSocket will power live delivery progress and ETA updates.
