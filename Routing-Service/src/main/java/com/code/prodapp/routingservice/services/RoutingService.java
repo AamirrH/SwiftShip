@@ -108,7 +108,7 @@ public class RoutingService {
         routingKafkaTemplate.send("route-calculated", routeCalculatedEvent);
     }
 
-    private ModelRouteResponse getShortestRoute(RouteRequestDTO routeRequestDTO) {
+    public ModelRouteResponse getShortestRoute(RouteRequestDTO routeRequestDTO) {
         List<RouteServiceDTO> routeServiceDTOS = getAllRoutes(routeRequestDTO);
 
         String systemPrompt = """

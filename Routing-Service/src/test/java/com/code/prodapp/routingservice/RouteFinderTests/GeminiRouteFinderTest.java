@@ -1,5 +1,6 @@
 package com.code.prodapp.routingservice.RouteFinderTests;
 
+import com.code.prodapp.routingservice.DTOs.RouteRequestDTO;
 import com.code.prodapp.routingservice.DTOs.RouteServiceDTO;
 import com.code.prodapp.routingservice.services.RoutingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +31,7 @@ public class GeminiRouteFinderTest {
 
     @Test
     void findShortestPath(){
-        System.out.println(routingService.getShortestRoute(routeServiceDTOList));
+        System.out.println(routingService.getShortestRoute((RouteRequestDTO) routeServiceDTOList));
     }
 
 
