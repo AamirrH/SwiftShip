@@ -30,6 +30,10 @@ import java.util.stream.Collectors;
 public class WarehouseService {
 
     private static final int WGS_84_SRID = 4326;
+    private static final String ORDER_EVENTS_TOPIC = "order-events";
+    private static final String FULFILLMENT_EVENTS_TOPIC = "fulfillment-events";
+    private static final String ORDER_CONFIRMED_EVENT = "ORDER_CONFIRMED";
+    private static final String WAREHOUSE_ASSIGNED_EVENT = "WAREHOUSE_ASSIGNED";
 
     private final WarehouseRepository warehouseRepository;
     private final ModelMapper modelMapper;
@@ -113,8 +117,12 @@ public class WarehouseService {
 
     // Consumes order-confirmed event and produces warehouse-assigned event
     @Transactional
-    @KafkaListener(topics = "order-confirmed")
+    @KafkaListener(topics = ORDER_EVENTS_TOPIC)
     public void handleOrderConfirmedEvent(OrderConfirmedEvent orderConfirmedEvent) {
+        if (!ORDER_CONFIRMED_EVENT.equals(orderConfirmedEvent.getEventType())) {
+            return;
+        }
+
         // Extract the data from the orderConfirmedEvent.
         Double latitude = orderConfirmedEvent.getDeliveryLat();
         Double longitude = orderConfirmedEvent.getDeliveryLng();
@@ -123,6 +131,7 @@ public class WarehouseService {
         // Create the Warehouse assigned event
         WarehouseAssignedEvent warehouseAssignedEvent = new WarehouseAssignedEvent();
         // Details of the warehouse that have been assigned
+        warehouseAssignedEvent.setEventType(WAREHOUSE_ASSIGNED_EVENT);
         warehouseAssignedEvent.setOrderNumber(orderConfirmedEvent.getOrderNumber());
         warehouseAssignedEvent.setCustomerId(orderConfirmedEvent.getCustomerId());
         warehouseAssignedEvent.setCustomerAddress(orderConfirmedEvent.getDeliveryAddress());
@@ -134,7 +143,11 @@ public class WarehouseService {
         warehouseAssignedEvent.setWarehouseLatitude(warehouseResponseDTO.getLat());
         warehouseAssignedEvent.setWarehouseLongitude(warehouseResponseDTO.getLng());
         // Warehouse has been assigned, shortest path need to be found now.
-        warehouseAssignedKafkaTemplate.send("warehouse-assigned", warehouseAssignedEvent);
+        warehouseAssignedKafkaTemplate.send(
+                FULFILLMENT_EVENTS_TOPIC,
+                orderConfirmedEvent.getOrderNumber().toString(),
+                warehouseAssignedEvent
+        );
 
     }
 
@@ -142,4 +155,3 @@ public class WarehouseService {
 
 
 }
-
