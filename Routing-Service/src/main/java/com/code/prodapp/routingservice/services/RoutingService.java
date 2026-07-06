@@ -27,6 +27,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoutingService {
 
+    private static final String FULFILLMENT_EVENTS_TOPIC = "fulfillment-events";
+    private static final String WAREHOUSE_ASSIGNED_EVENT = "WAREHOUSE_ASSIGNED";
+    private static final String ROUTE_CALCULATED_EVENT = "ROUTE_CALCULATED";
+
     @Value("${osr.api.key}")
     private String apiKey;
     private final RouteFeignClient routeFeignClient;
@@ -57,8 +61,12 @@ public class RoutingService {
     }
 
     @Transactional
-    @KafkaListener(topics = "warehouse-assigned")
+    @KafkaListener(topics = FULFILLMENT_EVENTS_TOPIC)
     public void handleWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent) {
+        if (!WAREHOUSE_ASSIGNED_EVENT.equals(warehouseAssignedEvent.getEventType())) {
+            return;
+        }
+
         // Calculate route using the assigned warehouse.
         Double customerLatitude = warehouseAssignedEvent.getCustomerLatitude();
         Double customerLongitude = warehouseAssignedEvent.getCustomerLongitude();
@@ -92,6 +100,7 @@ public class RoutingService {
         routeRepository.save(selectedRoute);
 
         RouteCalculatedEvent routeCalculatedEvent = new RouteCalculatedEvent();
+        routeCalculatedEvent.setEventType(ROUTE_CALCULATED_EVENT);
         routeCalculatedEvent.setOrderNumber(warehouseAssignedEvent.getOrderNumber());
         routeCalculatedEvent.setCustomerId(warehouseAssignedEvent.getCustomerId());
         routeCalculatedEvent.setWarehouseId(warehouseAssignedEvent.getWarehouseId());
@@ -105,7 +114,11 @@ public class RoutingService {
         routeCalculatedEvent.setWarehouseLatitude(warehouseLatitude);
         routeCalculatedEvent.setWarehouseLongitude(warehouseLongitude);
 
-        routingKafkaTemplate.send("route-calculated", routeCalculatedEvent);
+        routingKafkaTemplate.send(
+                FULFILLMENT_EVENTS_TOPIC,
+                warehouseAssignedEvent.getOrderNumber().toString(),
+                routeCalculatedEvent
+        );
     }
 
     public ModelRouteResponse getShortestRoute(RouteRequestDTO routeRequestDTO) {
@@ -165,5 +178,4 @@ public class RoutingService {
     }
 
 }
-
 

@@ -9,6 +9,8 @@ import java.util.UUID;
 @Setter
 public class WarehouseAssignedEvent {
 
+    private String eventType;
+
     // Order-part
     private Long orderNumber;
 

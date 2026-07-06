@@ -13,6 +13,8 @@ import java.util.UUID;
 @NoArgsConstructor
 public class RouteCalculatedEvent {
 
+    private String eventType;
+
     private Long orderNumber;
     private Long customerId;
     private UUID warehouseId;
