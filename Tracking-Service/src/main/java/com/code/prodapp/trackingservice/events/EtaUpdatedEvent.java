@@ -11,6 +11,7 @@ import java.time.Instant;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+// Estimated Time of Arrival Fields - constantly being updated to let the customer know the progress
 public class EtaUpdatedEvent {
 
     private String eventType;
