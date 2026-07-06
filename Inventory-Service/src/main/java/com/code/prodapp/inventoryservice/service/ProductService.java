@@ -27,6 +27,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductService {
 
+    private static final String ORDER_EVENTS_TOPIC = "order-events";
+    private static final String ORDER_PLACED_EVENT = "ORDER_PLACED";
+    private static final String ORDER_CONFIRMED_EVENT = "ORDER_CONFIRMED";
+
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final KafkaTemplate<String, OrderConfirmedEvent> orderConfirmedKafkaTemplate;
@@ -169,8 +173,12 @@ public class ProductService {
 
     // Consumer is a Producer itself, consumes OrderEvent and Produces OrderConfirmedEvent
     @Transactional
-    @KafkaListener(topics = "order-placed")
+    @KafkaListener(topics = ORDER_EVENTS_TOPIC)
     public void handleOrderPlacedEvent(OrderEvent orderEvent) {
+        if (!ORDER_PLACED_EVENT.equals(orderEvent.getEventType())) {
+            return;
+        }
+
         // Reduce Stock Asynchronously
         Map<Long,Integer> requestedItemsMap = orderEvent.getOrderedItems()
                 .stream()
@@ -208,6 +216,7 @@ public class ProductService {
 
         // Build the OrderConfirmedEvent
         OrderConfirmedEvent orderConfirmedEvent = new OrderConfirmedEvent();
+        orderConfirmedEvent.setEventType(ORDER_CONFIRMED_EVENT);
         orderConfirmedEvent.setOrderNumber(orderEvent.getOrderNumber());
         orderConfirmedEvent.setCustomerId(orderEvent.getCustomerId());
         orderConfirmedEvent.setOrderStatus("CONFIRMED");
@@ -216,12 +225,11 @@ public class ProductService {
         orderConfirmedEvent.setDeliveryLng(orderEvent.getDeliveryLng());
         // Y-Coordinate
         orderConfirmedEvent.setDeliveryLat(orderEvent.getDeliveryLat());
-        orderConfirmedKafkaTemplate.send("order-confirmed", orderConfirmedEvent);
+        orderConfirmedKafkaTemplate.send(ORDER_EVENTS_TOPIC, orderEvent.getOrderNumber().toString(), orderConfirmedEvent);
 
     }
 
 
 
 }
-
 
