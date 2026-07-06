@@ -34,6 +34,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OrderService {
 
+    private static final String ORDER_EVENTS_TOPIC = "order-events";
+    private static final String ORDER_PLACED_EVENT = "ORDER_PLACED";
+    private static final String ORDER_CONFIRMED_EVENT = "ORDER_CONFIRMED";
+
     private final OrderRepository orderRepository;
     private final ModelMapper modelMapper;
     private final InventoryClient inventoryClient;
@@ -108,6 +112,7 @@ public class OrderService {
 
         // Create an Order Event for Kafka
         OrderEvent orderEvent = new OrderEvent();
+        orderEvent.setEventType(ORDER_PLACED_EVENT);
         orderEvent.setOrderNumber(savedOrder.getId());
         orderEvent.setCustomerId(savedOrder.getCustomer().getId());
         orderEvent.setDeliveryAddress(savedOrder.getDeliveryAddressSnapshot());
@@ -119,7 +124,7 @@ public class OrderService {
                 .collect(Collectors.toList())
         );
 
-        orderEventKafkaTemplate.send("order-placed",orderEvent);
+        orderEventKafkaTemplate.send(ORDER_EVENTS_TOPIC,orderEvent);
 
         List<ItemResponseDTO> savedItems = savedOrder.getItems()
                 .stream()
@@ -166,8 +171,12 @@ public class OrderService {
 
 
     @Transactional
-    @KafkaListener(topics = "order-confirmed")
+    @KafkaListener(topics = ORDER_EVENTS_TOPIC)
     public void handleOrderConfirmedEvent(OrderConfirmedEvent orderConfirmedEvent) {
+        if (!ORDER_CONFIRMED_EVENT.equals(orderConfirmedEvent.getEventType())) {
+            return;
+        }
+
         Orders order = orderRepository.findById(orderConfirmedEvent.getOrderNumber())
                 .orElseThrow(() -> new OrderNotFoundException("Order Not Found"));
 

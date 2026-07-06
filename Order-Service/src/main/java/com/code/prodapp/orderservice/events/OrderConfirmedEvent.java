@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class OrderConfirmedEvent {
 
+    private String eventType;
     private Long orderNumber;
     private Long customerId;
     private String orderStatus;

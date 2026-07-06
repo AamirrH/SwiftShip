@@ -11,6 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderEvent {
 
+    private String eventType;
     private Long orderNumber;
     private Long customerId;
     private String deliveryAddress;
