@@ -2,6 +2,7 @@ package com.code.prodapp.trackingservice.advices;
 
 import com.code.prodapp.trackingservice.exceptions.DriverNotFoundException;
 import com.code.prodapp.trackingservice.exceptions.NoAvailableDriverException;
+import com.code.prodapp.trackingservice.exceptions.TrackingSessionNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,6 +25,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoAvailableDriverException.class)
     public ResponseEntity<Map<String, String>> handleNoAvailableDriver(NoAvailableDriverException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(TrackingSessionNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleTrackingSessionNotFound(TrackingSessionNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(Map.of("message", exception.getMessage()));
     }
 

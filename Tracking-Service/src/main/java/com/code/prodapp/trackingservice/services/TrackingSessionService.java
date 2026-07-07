@@ -1,9 +1,11 @@
 package com.code.prodapp.trackingservice.services;
 
+import com.code.prodapp.trackingservice.DTOs.TrackingSessionResponseDTO;
 import com.code.prodapp.trackingservice.entities.Driver;
 import com.code.prodapp.trackingservice.entities.TrackingSession;
 import com.code.prodapp.trackingservice.entities.TrackingStatus;
 import com.code.prodapp.trackingservice.events.RouteCalculatedEvent;
+import com.code.prodapp.trackingservice.exceptions.TrackingSessionNotFoundException;
 import com.code.prodapp.trackingservice.repositories.TrackingSessionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +22,7 @@ public class TrackingSessionService {
     private final DriverService driverService;
 
     @Transactional
-    @KafkaListener(topics = "fullfillment-events")
+    @KafkaListener(topics = "fulfillment-events")
     public void handleRouteCalculatedEvent(RouteCalculatedEvent routeCalculatedEvent){
         if (!"ROUTE_CALCULATED".equals(routeCalculatedEvent.getEventType())) {
             return;
@@ -32,6 +34,13 @@ public class TrackingSessionService {
         trackingSessionRepository.save(trackingSession);
 
 
+    }
+
+    public TrackingSessionResponseDTO getTrackingSessionByOrderNumber(Long orderNumber) {
+        TrackingSession trackingSession = trackingSessionRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new TrackingSessionNotFoundException("Tracking session not found for order " + orderNumber));
+
+        return mapToDTO(trackingSession);
     }
 
     private TrackingSession createTrackingSession(RouteCalculatedEvent routeCalculatedEvent, Driver assignedDriver){
@@ -64,6 +73,34 @@ public class TrackingSessionService {
         trackingSession.setUpdatedAt(now);
 
         return trackingSession;
+    }
+
+    private TrackingSessionResponseDTO mapToDTO(TrackingSession trackingSession) {
+        Driver driver = trackingSession.getDriver();
+
+        return new TrackingSessionResponseDTO(
+                trackingSession.getTrackingId(),
+                trackingSession.getOrderNumber(),
+                trackingSession.getCustomerId(),
+                trackingSession.getWarehouseId(),
+                trackingSession.getSelectedRouteId(),
+                driver.getDriverId(),
+                driver.getDriverName(),
+                trackingSession.getWarehouseLatitude(),
+                trackingSession.getWarehouseLongitude(),
+                trackingSession.getCustomerLatitude(),
+                trackingSession.getCustomerLongitude(),
+                trackingSession.getCustomerAddress(),
+                trackingSession.getCurrentLatitude(),
+                trackingSession.getCurrentLongitude(),
+                trackingSession.getTotalDistanceKm(),
+                trackingSession.getRemainingDistanceKm(),
+                trackingSession.getInitialEtaMinutes(),
+                trackingSession.getCurrentEtaMinutes(),
+                trackingSession.getTrackingStatus(),
+                trackingSession.getCreatedAt(),
+                trackingSession.getUpdatedAt()
+        );
     }
 
 
