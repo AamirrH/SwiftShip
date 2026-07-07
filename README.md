@@ -344,7 +344,6 @@ http://localhost:9090
 - Add shared event contracts or Schema Registry after payloads stabilize.
 - Add Docker Compose for local infrastructure and demo startup.
 - Move secrets and API keys to environment variables or secure config.
-- Standardize REST route naming where needed, for example `GET /orders/{id}` instead of `POST /orders/{ID}`.
 - Add more reliable integration tests that do not depend on live external APIs unless explicitly enabled.
 
 ## Interview Pitch
