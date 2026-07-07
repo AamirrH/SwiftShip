@@ -6,6 +6,7 @@ import com.code.prodapp.trackingservice.DTOs.UpdateDriverRequestDTO;
 import com.code.prodapp.trackingservice.entities.Driver;
 import com.code.prodapp.trackingservice.entities.DriverStatus;
 import com.code.prodapp.trackingservice.exceptions.DriverNotFoundException;
+import com.code.prodapp.trackingservice.exceptions.NoAvailableDriverException;
 import com.code.prodapp.trackingservice.repositories.DriverRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -104,6 +105,24 @@ public class DriverService {
                 driver.getPhoneNumber(),
                 driver.getDriverStatus()
         );
+    }
+
+    private Integer getTotalDriver(){
+        return Math.toIntExact(driverRepository.count());
+    }
+
+    // Serial Driver Assignment
+    @Transactional
+    public Driver driverAssignmentStrategy() {
+        List<Driver> availableDrivers = driverRepository.findAllByDriverStatus(DriverStatus.AVAILABLE);
+
+        if (availableDrivers.isEmpty()) {
+            throw new NoAvailableDriverException("No available drivers found");
+        }
+
+        Driver driver = availableDrivers.getFirst();
+        driver.setDriverStatus(DriverStatus.ENGAGED);
+        return driverRepository.save(driver);
     }
 
 }
