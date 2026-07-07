@@ -5,6 +5,7 @@ import com.code.prodapp.trackingservice.DTOs.DriverResponseDTO;
 import com.code.prodapp.trackingservice.DTOs.UpdateDriverRequestDTO;
 import com.code.prodapp.trackingservice.entities.Driver;
 import com.code.prodapp.trackingservice.entities.DriverStatus;
+import com.code.prodapp.trackingservice.exceptions.DriverNotFoundException;
 import com.code.prodapp.trackingservice.repositories.DriverRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -93,7 +94,7 @@ public class DriverService {
 
     private Driver findDriverEntityById(Long driverId) {
         return driverRepository.findById(driverId)
-                .orElseThrow(() -> new RuntimeException("Driver not found with id " + driverId));
+                .orElseThrow(() -> new DriverNotFoundException("Driver not found with id " + driverId));
     }
 
     private DriverResponseDTO mapToDTO(Driver driver) {
