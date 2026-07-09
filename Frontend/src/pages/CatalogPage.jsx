@@ -6,7 +6,7 @@ import { api } from "../lib/api.js";
 import { useApiResource } from "../hooks/useApiResource.js";
 import { mockProducts } from "../data/mockData.js";
 
-const categories = ["All", "Electronics", "Logistics Gear", "Packaging"];
+const categories = ["All", "Electronics", "Daily Essentials", "Personal Care", "Home", "Lifestyle", "Packaging"];
 
 export function CatalogPage({ onAddToCart, onOpenProduct }) {
   const [category, setCategory] = useState("All");
@@ -37,8 +37,8 @@ export function CatalogPage({ onAddToCart, onOpenProduct }) {
       <div className="page-header">
         <div>
           <span className="label-caps">Customer catalog</span>
-          <h1 className="page-title">Shop fulfillment gear</h1>
-          <p className="muted">Products read from `/products` when the backend is running, with design-safe fallback data.</p>
+          <h1 className="page-title">Shop everything SwiftShip can move</h1>
+          <p className="muted">Electronics, daily essentials, personal care, home goods, and shipping supplies from one fast catalog.</p>
         </div>
         <Button variant="secondary">
           <SlidersHorizontal size={18} />
