@@ -31,7 +31,7 @@ export function AppShell({ activePage, cartCount, children, onNavigate, title })
           </div>
           <div>
             <div className="brand-title">SwiftShip</div>
-            <span className="label-caps">Expert Navigator</span>
+            <span className="label-caps">Fast Delivery</span>
           </div>
         </div>
 
