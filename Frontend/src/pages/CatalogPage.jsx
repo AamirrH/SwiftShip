@@ -48,8 +48,8 @@ export function CatalogPage({ onAddToCart, onOpenProduct }) {
 
       <div className="card card-pad" style={{ marginBottom: 24 }}>
         <div className="grid two">
-          <div style={{ position: "relative" }}>
-            <Search size={18} style={{ left: 14, position: "absolute", top: "50%", transform: "translateY(-50%)" }} />
+          <div style={{ alignSelf: "start", minHeight: 42, position: "relative" }}>
+            <Search size={18} style={{ left: 14, pointerEvents: "none", position: "absolute", top: 12 }} />
             <input className="input" placeholder="Search catalog..." style={{ paddingLeft: 42 }} value={query} onChange={(event) => setQuery(event.target.value)} />
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "flex-end" }}>
