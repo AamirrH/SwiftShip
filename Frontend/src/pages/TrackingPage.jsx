@@ -1,0 +1,68 @@
+import { Clock3, MapPin, Navigation, Phone, Route } from "lucide-react";
+import { OrderTimeline } from "../components/orders/OrderTimeline.jsx";
+import { TrackingMap } from "../components/tracking/TrackingMap.jsx";
+import { Button } from "../components/ui/Button.jsx";
+import { Card } from "../components/ui/Card.jsx";
+import { StatusBadge } from "../components/ui/StatusBadge.jsx";
+import { api } from "../lib/api.js";
+import { useApiResource } from "../hooks/useApiResource.js";
+import { mockTracking } from "../data/mockData.js";
+
+export function TrackingPage() {
+  const { data } = useApiResource(() => api.getTracking(mockTracking.orderNumber), mockTracking, []);
+  const tracking = {
+    ...mockTracking,
+    ...data,
+    steps: data.steps ?? mockTracking.steps,
+    currentLocation: data.currentLocation ?? mockTracking.currentLocation,
+  };
+
+  return (
+    <section className="page">
+      <div className="page-header">
+        <div>
+          <span className="label-caps">Live order tracking</span>
+          <h1 className="page-title">Order #{tracking.orderNumber}</h1>
+          <p className="muted">{tracking.customerAddress}</p>
+        </div>
+        <StatusBadge>{String(tracking.status ?? tracking.trackingStatus).replaceAll("_", " ")}</StatusBadge>
+      </div>
+
+      <Card>
+        <OrderTimeline steps={tracking.steps} />
+        <div className="grid three">
+          <Info icon={Clock3} label="Current ETA" value={`${Math.round(tracking.currentEtaMinutes)} min`} />
+          <Info icon={Route} label="Remaining" value={`${tracking.remainingDistanceKm} km`} />
+          <Info icon={Navigation} label="Location" value={tracking.currentLocation} />
+        </div>
+      </Card>
+
+      <div className="split" style={{ marginTop: 24 }}>
+        <TrackingMap />
+        <Card>
+          <span className="label-caps">Driver</span>
+          <h2 className="section-title" style={{ fontSize: 28, margin: "8px 0" }}>{tracking.driverName}</h2>
+          <p className="muted">Your simulated driver stream is ready for Redis/WebSocket integration when that layer is enabled.</p>
+          <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
+            <Button>
+              <Phone size={18} /> Call driver
+            </Button>
+            <Button variant="secondary">
+              <MapPin size={18} /> Share delivery pin
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+function Info({ icon: Icon, label, value }) {
+  return (
+    <div className="card card-pad" style={{ boxShadow: "none" }}>
+      <Icon size={22} style={{ color: "var(--primary)" }} />
+      <div className="label-caps" style={{ marginTop: 10 }}>{label}</div>
+      <strong>{value}</strong>
+    </div>
+  );
+}
