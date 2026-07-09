@@ -1,4 +1,4 @@
-import { ArrowRight, Clock3, PackageCheck, Route, ShoppingCart, Truck } from "lucide-react";
+import { ArrowRight, Clock3, PackageCheck, Route, Truck } from "lucide-react";
 import { ProductCard } from "../components/products/ProductCard.jsx";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
@@ -23,10 +23,10 @@ export function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
         <div className="hero-panel card">
           <div className="hero-copy">
             <span className="label-caps">Fast fulfillment, live delivery</span>
-            <h1>Order essentials and watch SwiftShip move.</h1>
+            <h1>Everything you need, delivered with live precision.</h1>
             <p>
-              Customer-facing shopping, checkout, order history, and live route visibility shaped around your
-              microservices backend.
+              Shop daily essentials, electronics, and home supplies while SwiftShip handles stock reservation,
+              warehouse assignment, route planning, and tracking in one clean customer flow.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 24 }}>
               <Button onClick={() => onNavigate("catalog")}>
@@ -49,7 +49,7 @@ export function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
       <div className="page-header">
         <div>
           <span className="label-caps">Popular now</span>
-          <h2 className="section-title" style={{ fontSize: 28, margin: "6px 0 0" }}>Featured logistics supplies</h2>
+          <h2 className="section-title" style={{ fontSize: 26, margin: "6px 0 0" }}>Featured picks for today</h2>
         </div>
         <Button variant="ghost" onClick={() => onNavigate("catalog")}>
           View all <ArrowRight size={18} />

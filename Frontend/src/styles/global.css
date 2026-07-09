@@ -164,7 +164,7 @@ a {
 
 .page-title {
   margin: 0;
-  font-size: clamp(28px, 4vw, 48px);
+  font-size: clamp(26px, 3vw, 40px);
   font-weight: 800;
   line-height: 1.12;
 }
@@ -331,14 +331,14 @@ a {
 .price {
   color: var(--primary);
   font-family: var(--font-heading);
-  font-size: 24px;
+  font-size: 21px;
   font-weight: 800;
 }
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.04fr) minmax(360px, 0.96fr);
-  gap: 28px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 24px;
   align-items: stretch;
   margin-bottom: 32px;
 }
@@ -349,29 +349,34 @@ a {
   overflow: hidden;
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(135deg, rgba(16, 19, 25, 0.25), rgba(16, 19, 25, 0.85)),
+    linear-gradient(90deg, rgba(11, 14, 20, 0.95) 0%, rgba(16, 19, 25, 0.82) 43%, rgba(16, 19, 25, 0.2) 100%),
+    linear-gradient(0deg, rgba(11, 14, 20, 0.7), rgba(11, 14, 20, 0.05)),
     url("https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1400&q=80") center/cover;
 }
 
 .hero-copy {
   position: absolute;
-  inset: auto 28px 28px 28px;
-  max-width: 650px;
+  inset: 48px auto 48px 36px;
+  display: flex;
+  max-width: 560px;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .hero-copy h1 {
   margin: 0 0 16px;
   font-family: var(--font-heading);
-  font-size: clamp(34px, 5vw, 64px);
-  line-height: 1.03;
+  font-size: clamp(34px, 4vw, 52px);
+  line-height: 1.06;
   letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .hero-copy p {
-  max-width: 580px;
+  max-width: 500px;
   color: var(--text-muted);
-  font-size: 18px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .metric-card {
@@ -393,7 +398,7 @@ a {
 
 .metric-value {
   margin: 8px 0 0;
-  font-size: 42px;
+  font-size: 34px;
   font-weight: 800;
 }
 
