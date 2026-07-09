@@ -1,5 +1,7 @@
 # SwiftShip - Real Time Order Fulfillment and Delivery Tracking
 
+<img width="3096" height="3072" alt="SwiftShip_Icon" src="https://github.com/user-attachments/assets/1478f836-06ba-4ed1-ac4c-cc42e8c7168c" />
+
 SwiftShip is a Spring Boot microservices project that simulates a real-time order fulfillment and delivery tracking backend inspired by Swiggy, Blinkit, Blinkit-style quick commerce, and ecommerce logistics systems.
 
 The project demonstrates distributed backend patterns including service discovery, centralized configuration, API gateway routing, JWT authentication, OpenFeign communication, Kafka event-driven workflows, PostgreSQL/PostGIS spatial computation, OpenRouteService route calculation, and Gemini/Spring AI based route selection.
