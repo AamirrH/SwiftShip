@@ -73,8 +73,7 @@ a {
 
 .brand-title,
 .page-title,
-.section-title,
-.metric-value {
+.section-title {
   font-family: var(--font-heading);
   letter-spacing: 0;
 }
@@ -336,29 +335,25 @@ a {
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
-  gap: 24px;
-  align-items: stretch;
   margin-bottom: 32px;
 }
 
 .hero-panel {
   position: relative;
-  min-height: 430px;
+  min-height: 560px;
   overflow: hidden;
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(90deg, rgba(11, 14, 20, 0.95) 0%, rgba(16, 19, 25, 0.82) 43%, rgba(16, 19, 25, 0.2) 100%),
-    linear-gradient(0deg, rgba(11, 14, 20, 0.7), rgba(11, 14, 20, 0.05)),
+    linear-gradient(90deg, rgba(11, 14, 20, 0.96) 0%, rgba(16, 19, 25, 0.84) 42%, rgba(16, 19, 25, 0.18) 100%),
+    linear-gradient(0deg, rgba(11, 14, 20, 0.72), rgba(11, 14, 20, 0.02)),
     url("https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1400&q=80") center/cover;
 }
 
 .hero-copy {
   position: absolute;
-  inset: 48px auto 48px 36px;
+  inset: 52px auto 52px 46px;
   display: flex;
-  max-width: 560px;
+  max-width: 660px;
   flex-direction: column;
   justify-content: center;
 }
@@ -366,40 +361,51 @@ a {
 .hero-copy h1 {
   margin: 0 0 16px;
   font-family: var(--font-heading);
-  font-size: clamp(34px, 4vw, 52px);
+  font-size: clamp(36px, 4.3vw, 60px);
   line-height: 1.06;
   letter-spacing: 0;
   text-wrap: balance;
 }
 
 .hero-copy p {
-  max-width: 500px;
+  max-width: 590px;
   color: var(--text-muted);
   font-size: 16px;
   line-height: 1.6;
 }
 
-.metric-card {
-  position: relative;
-  overflow: hidden;
+.hero-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 620px;
+  margin-top: 24px;
 }
 
-.metric-card::after {
-  content: "";
-  position: absolute;
-  right: -32px;
-  top: -32px;
-  width: 120px;
-  height: 120px;
-  border-radius: 999px;
-  background: rgba(255, 181, 157, 0.1);
-  filter: blur(18px);
+.hero-highlights > div {
+  display: grid;
+  gap: 4px;
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid rgba(255, 181, 157, 0.24);
+  border-radius: var(--radius-md);
+  background: rgba(11, 14, 20, 0.54);
+  backdrop-filter: blur(14px);
 }
 
-.metric-value {
-  margin: 8px 0 0;
-  font-size: 34px;
-  font-weight: 800;
+.hero-highlights svg {
+  color: var(--primary);
+}
+
+.hero-highlights strong {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.hero-highlights span {
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .split {
@@ -539,7 +545,6 @@ a {
     display: none;
   }
 
-  .hero,
   .split,
   .grid.three,
   .grid.four {
@@ -548,6 +553,7 @@ a {
 
   .hero-panel {
     grid-column: 1 / -1;
+    min-height: 520px;
   }
 
   .topbar {
@@ -594,7 +600,6 @@ a {
   .grid.two,
   .grid.three,
   .grid.four,
-  .hero,
   .split {
     grid-template-columns: 1fr;
   }
@@ -609,7 +614,15 @@ a {
   }
 
   .hero-panel {
-    min-height: 420px;
+    min-height: 620px;
+  }
+
+  .hero-copy {
+    inset: 32px 20px;
+  }
+
+  .hero-highlights {
+    grid-template-columns: 1fr;
   }
 
   .cart-row,
