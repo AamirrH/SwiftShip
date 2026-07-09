@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "./components/layout/AppShell.jsx";
 import { HomePage } from "./pages/HomePage.jsx";
 import { CatalogPage } from "./pages/CatalogPage.jsx";
@@ -9,6 +9,7 @@ import { TrackingPage } from "./pages/TrackingPage.jsx";
 import { AccountPage } from "./pages/AccountPage.jsx";
 import { AuthPage } from "./pages/AuthPage.jsx";
 import { mockCart, mockProducts } from "./data/mockData.js";
+import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 
 const pageTitles = {
   home: "Home",
@@ -22,9 +23,18 @@ const pageTitles = {
 };
 
 export default function App() {
-  const [activePage, setActivePage] = useState("home");
+  const [activePage, setActivePage] = useState(() => getPageFromHash());
   const [selectedProductId, setSelectedProductId] = useState(mockProducts[0].id);
-  const [cart, setCart] = useState(mockCart);
+  const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
+
+  useEffect(() => {
+    function syncPageFromHash() {
+      setActivePage(getPageFromHash());
+    }
+
+    window.addEventListener("hashchange", syncPageFromHash);
+    return () => window.removeEventListener("hashchange", syncPageFromHash);
+  }, []);
 
   const selectedProduct = useMemo(
     () => mockProducts.find((product) => product.id === selectedProductId) ?? mockProducts[0],
@@ -32,6 +42,7 @@ export default function App() {
   );
 
   function navigate(page) {
+    window.location.hash = page;
     setActivePage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -84,4 +95,9 @@ export default function App() {
       {pages[activePage]}
     </AppShell>
   );
+}
+
+function getPageFromHash() {
+  const page = window.location.hash.replace("#", "");
+  return pageTitles[page] ? page : "home";
 }
