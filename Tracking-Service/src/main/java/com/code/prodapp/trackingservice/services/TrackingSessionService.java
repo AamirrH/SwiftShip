@@ -19,6 +19,7 @@ import java.time.Instant;
 public class TrackingSessionService {
 
     private final TrackingSessionRepository trackingSessionRepository;
+    private final TrackingSimulationService trackingSimulationService;
     private final DriverService driverService;
 
     @Transactional
@@ -29,7 +30,10 @@ public class TrackingSessionService {
         }
         // Assign a driver
         Driver assignedDriver = driverService.driverAssignmentStrategy();
+        // Create a session
         TrackingSession trackingSession = createTrackingSession(routeCalculatedEvent,assignedDriver);
+        // Driver starts driving
+        trackingSimulationService.startDelivery(routeCalculatedEvent.getOrderNumber());
         // Save the session.
         trackingSessionRepository.save(trackingSession);
 
@@ -75,7 +79,7 @@ public class TrackingSessionService {
         return trackingSession;
     }
 
-    private TrackingSessionResponseDTO mapToDTO(TrackingSession trackingSession) {
+    public TrackingSessionResponseDTO mapToDTO(TrackingSession trackingSession) {
         Driver driver = trackingSession.getDriver();
 
         return new TrackingSessionResponseDTO(
