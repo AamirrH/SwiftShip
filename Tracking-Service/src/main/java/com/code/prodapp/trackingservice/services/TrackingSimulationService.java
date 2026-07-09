@@ -57,15 +57,8 @@ public class TrackingSimulationService {
             // progress -> distanceCovered/totalDistance
             double distanceCovered = trackingSession.getTotalDistanceKm()-trackingSession.getRemainingDistanceKm();
             double progress = distanceCovered/trackingSession.getTotalDistanceKm();
-            // Straight Line Interpolation
-            // source -> warehouseLat,warehouseLong
-            // target -> customerLat,customerLong
-            // currentLatitude = warehouseLatitude + (customerLatitude - warehouseLatitude) * progress
-            trackingSession.setCurrentLatitude(trackingSession.getWarehouseLatitude()
-            + (trackingSession.getCustomerLatitude()-trackingSession.getWarehouseLatitude())*progress);
-            // currentLongitude = warehouseLongitude + (customerLongitude - warehouseLongitude) * progress
-            trackingSession.setCurrentLongitude(trackingSession.getWarehouseLongitude()
-                    + (trackingSession.getCustomerLongitude()-trackingSession.getWarehouseLongitude())*progress);
+            trackingSession.setCurrentLatitude(calculateCurrentLatitude(trackingSession, progress));
+            trackingSession.setCurrentLongitude(calculateCurrentLongitude(trackingSession, progress));
             trackingSession.setUpdatedAt(Instant.now());
             trackingSessionRepository.save(trackingSession);
         }
@@ -74,7 +67,15 @@ public class TrackingSimulationService {
 
     }
 
+    private Double calculateCurrentLatitude(TrackingSession trackingSession, double progress) {
+        return trackingSession.getWarehouseLatitude()
+                + (trackingSession.getCustomerLatitude() - trackingSession.getWarehouseLatitude()) * progress;
+    }
 
+    private Double calculateCurrentLongitude(TrackingSession trackingSession, double progress) {
+        return trackingSession.getWarehouseLongitude()
+                + (trackingSession.getCustomerLongitude() - trackingSession.getWarehouseLongitude()) * progress;
+    }
 
 
 
