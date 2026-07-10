@@ -2,12 +2,13 @@ package com.code.prodapp.notificationservice.services;
 
 import com.code.prodapp.notificationservice.DTOs.CreateNotificationRequestDTO;
 import com.code.prodapp.notificationservice.entities.NotificationType;
+import com.code.prodapp.notificationservice.events.FulfillmentEvent;
+import com.code.prodapp.notificationservice.events.OrderConfirmedEvent;
+import com.code.prodapp.notificationservice.events.TrackingEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,76 +24,73 @@ public class NotificationEventService {
     private final NotificationService notificationService;
 
     @KafkaListener(topics = "order-events")
-    public void handleOrderEvent(Map<String, Object> event) {
-        String eventType = readString(event, "eventType");
-
-        if (ORDER_CONFIRMED_EVENT.equals(eventType)) {
+    public void handleOrderConfirmedEvent(OrderConfirmedEvent event) {
+        if (ORDER_CONFIRMED_EVENT.equals(event.getEventType())) {
             createNotification(
-                    event,
+                    event.getCustomerId(),
+                    event.getOrderNumber(),
                     NotificationType.ORDER_CONFIRMED,
                     "Order confirmed",
-                    "Your order #" + readLong(event, "orderNumber") + " has been confirmed."
+                    "Your order #" + event.getOrderNumber() + " has been confirmed."
             );
         }
     }
 
     @KafkaListener(topics = "fulfillment-events")
-    public void handleFulfillmentEvent(Map<String, Object> event) {
-        String eventType = readString(event, "eventType");
-
-        if (WAREHOUSE_ASSIGNED_EVENT.equals(eventType)) {
+    public void handleFulfillmentEvent(FulfillmentEvent event) {
+        if (WAREHOUSE_ASSIGNED_EVENT.equals(event.getEventType())) {
             createNotification(
-                    event,
+                    event.getCustomerId(),
+                    event.getOrderNumber(),
                     NotificationType.WAREHOUSE_ASSIGNED,
                     "Warehouse assigned",
-                    "A warehouse has been assigned for order #" + readLong(event, "orderNumber") + "."
+                    "A warehouse has been assigned for order #" + event.getOrderNumber() + "."
             );
             return;
         }
 
-        if (ROUTE_CALCULATED_EVENT.equals(eventType)) {
+        if (ROUTE_CALCULATED_EVENT.equals(event.getEventType())) {
             createNotification(
-                    event,
+                    event.getCustomerId(),
+                    event.getOrderNumber(),
                     NotificationType.ROUTE_CALCULATED,
                     "Route calculated",
-                    "A delivery route has been calculated for order #" + readLong(event, "orderNumber") + "."
+                    "A delivery route has been calculated for order #" + event.getOrderNumber() + "."
             );
         }
     }
 
     @KafkaListener(topics = "tracking-events")
-    public void handleTrackingEvent(Map<String, Object> event) {
-        String eventType = readString(event, "eventType");
-
-        if (ETA_UPDATED_EVENT.equals(eventType)) {
+    public void handleTrackingEvent(TrackingEvent event) {
+        if (ETA_UPDATED_EVENT.equals(event.getEventType())) {
             createNotification(
-                    event,
+                    event.getCustomerId(),
+                    event.getOrderNumber(),
                     NotificationType.ETA_UPDATED,
                     "ETA updated",
-                    "ETA updated for order #" + readLong(event, "orderNumber") + "."
+                    "ETA updated for order #" + event.getOrderNumber() + "."
             );
             return;
         }
 
-        if (ORDER_DELIVERED_EVENT.equals(eventType)) {
+        if (ORDER_DELIVERED_EVENT.equals(event.getEventType())) {
             createNotification(
-                    event,
+                    event.getCustomerId(),
+                    event.getOrderNumber(),
                     NotificationType.ORDER_DELIVERED,
                     "Order delivered",
-                    "Your order #" + readLong(event, "orderNumber") + " has been delivered."
+                    "Your order #" + event.getOrderNumber() + " has been delivered."
             );
         }
     }
 
     private void createNotification(
-            Map<String, Object> event,
+            Long customerId,
+            Long orderNumber,
             NotificationType notificationType,
             String title,
             String message
     ) {
-        Long customerId = readLong(event, "customerId");
-        Long orderNumber = readLong(event, "orderNumber");
-
         if (customerId == null) {
             log.info("Ignoring {} event without customerId for order {}", notificationType, orderNumber);
             return;
@@ -106,21 +104,5 @@ public class NotificationEventService {
         requestDTO.setMessage(message);
 
         notificationService.createNotification(requestDTO);
-    }
-
-    private String readString(Map<String, Object> event, String fieldName) {
-        Object value = event.get(fieldName);
-        return value == null ? null : value.toString();
-    }
-
-    private Long readLong(Map<String, Object> event, String fieldName) {
-        Object value = event.get(fieldName);
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        return Long.valueOf(value.toString());
     }
 }
