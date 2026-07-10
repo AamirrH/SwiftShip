@@ -125,4 +125,10 @@ public class DriverService {
         return driverRepository.save(driver);
     }
 
+    @Transactional
+    public Driver releaseDriver(Driver driver) {
+        driver.setDriverStatus(DriverStatus.AVAILABLE);
+        return driverRepository.save(driver);
+    }
+
 }

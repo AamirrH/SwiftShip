@@ -32,11 +32,10 @@ public class TrackingSessionService {
         Driver assignedDriver = driverService.driverAssignmentStrategy();
         // Create a session
         TrackingSession trackingSession = createTrackingSession(routeCalculatedEvent,assignedDriver);
-        // Driver starts driving
-        trackingSimulationService.startDelivery(routeCalculatedEvent.getOrderNumber());
         // Save the session.
         trackingSessionRepository.save(trackingSession);
-
+        // Driver starts driving
+        trackingSimulationService.startDelivery(routeCalculatedEvent.getOrderNumber());
 
     }
 
