@@ -1,5 +1,5 @@
 {
-  "name": "swiftship-frontend",
+  "name": "swiftship-frontend-service",
   "private": true,
   "version": "0.1.0",
   "type": "module",

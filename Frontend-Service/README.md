@@ -1,4 +1,4 @@
-# SwiftShip Frontend
+# SwiftShip Frontend Service
 
 Customer-facing React UI for SwiftShip. The app uses the Google Stitch visual direction:
 dark logistics console, Signal Orange actions, Sage/Amber status accents, Manrope headings,
