@@ -3,10 +3,13 @@ package com.code.prodapp.trackingservice.services;
 import com.code.prodapp.trackingservice.DTOs.TrackingSessionResponseDTO;
 import com.code.prodapp.trackingservice.entities.TrackingSession;
 import com.code.prodapp.trackingservice.entities.TrackingStatus;
+import com.code.prodapp.trackingservice.events.EtaUpdatedEvent;
+import com.code.prodapp.trackingservice.events.OrderDeliveredEvent;
 import com.code.prodapp.trackingservice.exceptions.TrackingSessionNotFoundException;
 import com.code.prodapp.trackingservice.repositories.TrackingSessionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +20,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TrackingSimulationService {
 
+    private static final String TRACKING_EVENTS_TOPIC = "tracking-events";
+    private static final String ETA_UPDATED_EVENT = "ETA_UPDATED";
+    private static final String ORDER_DELIVERED_EVENT = "ORDER_DELIVERED";
+
     private final TrackingSessionRepository trackingSessionRepository;
     private final DriverService driverService;
+    private final KafkaTemplate<String, Object> trackingKafkaTemplate;
     private final Double DELIVERY_SPEED = 30.0; // 30 km/hr or 0.00834 km/s
 
     // Driver does this, starts the delivery and sets status to TRANSIT
@@ -58,6 +66,7 @@ public class TrackingSimulationService {
             return;
         }
         for (TrackingSession trackingSession : trackingSessionList) {
+            // What if customer lives almost near to the warehouse? then remainingDistance and currentEtaMinutes might become negative so we take 0
             double remainingDistanceKm = Math.max(0.0,
                     trackingSession.getRemainingDistanceKm() - distanceCoveredIn5Seconds);
             double currentEtaMinutes = Math.max(0.0,
@@ -77,6 +86,10 @@ public class TrackingSimulationService {
             }
             trackingSession.setUpdatedAt(Instant.now());
             trackingSessionRepository.save(trackingSession);
+            publishEtaUpdatedEvent(trackingSession);
+            if (TrackingStatus.DELIVERED.equals(trackingSession.getTrackingStatus())) {
+                publishOrderDeliveredEvent(trackingSession);
+            }
         }
 
 
@@ -100,6 +113,44 @@ public class TrackingSimulationService {
         trackingSession.setCurrentEtaMinutes(0.0);
         trackingSession.setTrackingStatus(TrackingStatus.DELIVERED);
         driverService.releaseDriver(trackingSession.getDriver());
+    }
+
+    private void publishEtaUpdatedEvent(TrackingSession trackingSession) {
+        EtaUpdatedEvent etaUpdatedEvent = new EtaUpdatedEvent();
+        etaUpdatedEvent.setEventType(ETA_UPDATED_EVENT);
+        etaUpdatedEvent.setOrderNumber(trackingSession.getOrderNumber());
+        etaUpdatedEvent.setCustomerId(trackingSession.getCustomerId());
+        etaUpdatedEvent.setDriverId(trackingSession.getDriver().getDriverId());
+        etaUpdatedEvent.setCurrentLatitude(trackingSession.getCurrentLatitude());
+        etaUpdatedEvent.setCurrentLongitude(trackingSession.getCurrentLongitude());
+        etaUpdatedEvent.setRemainingDistanceKm(trackingSession.getRemainingDistanceKm());
+        etaUpdatedEvent.setEtaMinutes(trackingSession.getCurrentEtaMinutes());
+        etaUpdatedEvent.setTrackingStatus(trackingSession.getTrackingStatus().name());
+        etaUpdatedEvent.setUpdatedAt(trackingSession.getUpdatedAt());
+
+        trackingKafkaTemplate.send(
+                TRACKING_EVENTS_TOPIC,
+                trackingSession.getOrderNumber().toString(),
+                etaUpdatedEvent
+        );
+    }
+
+    private void publishOrderDeliveredEvent(TrackingSession trackingSession) {
+        OrderDeliveredEvent orderDeliveredEvent = new OrderDeliveredEvent();
+        orderDeliveredEvent.setEventType(ORDER_DELIVERED_EVENT);
+        orderDeliveredEvent.setOrderNumber(trackingSession.getOrderNumber());
+        orderDeliveredEvent.setCustomerId(trackingSession.getCustomerId());
+        orderDeliveredEvent.setDriverId(trackingSession.getDriver().getDriverId());
+        orderDeliveredEvent.setDeliveredLatitude(trackingSession.getCurrentLatitude());
+        orderDeliveredEvent.setDeliveredLongitude(trackingSession.getCurrentLongitude());
+        orderDeliveredEvent.setTrackingStatus(trackingSession.getTrackingStatus().name());
+        orderDeliveredEvent.setDeliveredAt(trackingSession.getUpdatedAt());
+
+        trackingKafkaTemplate.send(
+                TRACKING_EVENTS_TOPIC,
+                trackingSession.getOrderNumber().toString(),
+                orderDeliveredEvent
+        );
     }
 
 
