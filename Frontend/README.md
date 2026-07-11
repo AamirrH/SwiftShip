@@ -26,9 +26,12 @@ Copy `.env.example` to `.env` when you need to change the backend gateway URL.
 
 ```bash
 VITE_API_BASE_URL=http://localhost:9090
+VITE_NOTIFICATION_API_BASE_URL=http://localhost:8086
 ```
 
 The current backend gateway routes product, order, customer, and auth traffic through port `9090`.
+Notifications can be read directly from `notification-service` on port `8086` until `/notifications/**`
+is added to the gateway.
 
 ## Current Customer Flow
 

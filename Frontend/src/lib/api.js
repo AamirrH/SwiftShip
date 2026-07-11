@@ -1,7 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:9090";
+const NOTIFICATION_API_BASE_URL = import.meta.env.VITE_NOTIFICATION_API_BASE_URL ?? "http://localhost:8086";
 
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+async function request(path, options = {}, baseUrl = API_BASE_URL) {
+  const response = await fetch(`${baseUrl}${path}`, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
@@ -31,6 +32,18 @@ export const api = {
     }),
   getOrders: () => request("/orders"),
   getTracking: (orderNumber) => request(`/tracking/${orderNumber}`),
+  getCustomerNotifications: (customerId) =>
+    request(`/notifications/customer/${customerId}`, {}, NOTIFICATION_API_BASE_URL),
+  getUnreadCustomerNotifications: (customerId) =>
+    request(`/notifications/customer/${customerId}/unread`, {}, NOTIFICATION_API_BASE_URL),
+  markNotificationRead: (notificationId) =>
+    request(
+      `/notifications/${notificationId}/read`,
+      {
+        method: "PATCH",
+      },
+      NOTIFICATION_API_BASE_URL
+    ),
   login: (payload) =>
     request("/auth/login", {
       method: "POST",
