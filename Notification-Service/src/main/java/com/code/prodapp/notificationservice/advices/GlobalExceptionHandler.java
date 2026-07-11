@@ -1,5 +1,6 @@
 package com.code.prodapp.notificationservice.advices;
 
+import com.code.prodapp.notificationservice.exceptions.EmailDeliveryException;
 import com.code.prodapp.notificationservice.exceptions.NotificationNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotificationNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleNotificationNotFound(NotificationNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(EmailDeliveryException.class)
+    public ResponseEntity<Map<String, String>> handleEmailDelivery(EmailDeliveryException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                 .body(Map.of("message", exception.getMessage()));
     }
 
