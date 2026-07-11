@@ -18,10 +18,11 @@ const navItems = [
   { id: "catalog", label: "Catalog", icon: Boxes },
   { id: "orders", label: "Orders", icon: Truck },
   { id: "tracking", label: "Track", icon: MapPinned },
+  { id: "notifications", label: "Alerts", icon: Bell },
   { id: "account", label: "Account", icon: UserRound },
 ];
 
-export function AppShell({ activePage, cartCount, children, onNavigate, title }) {
+export function AppShell({ activePage, cartCount, children, notificationCount = 0, onNavigate, title }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -76,8 +77,13 @@ export function AppShell({ activePage, cartCount, children, onNavigate, title })
               <ShoppingCart size={19} />
               {cartCount > 0 && <span className="label-caps" style={{ color: "var(--primary)" }}>{cartCount}</span>}
             </button>
-            <button className="icon-button" title="Notifications">
+            <button className="icon-button" onClick={() => onNavigate("notifications")} title="Notifications">
               <Bell size={19} />
+              {notificationCount > 0 && (
+                <span className="label-caps" style={{ color: "var(--primary)" }}>
+                  {notificationCount}
+                </span>
+              )}
             </button>
             <button className="icon-button" onClick={() => onNavigate("account")} title="Settings">
               <Settings size={19} />

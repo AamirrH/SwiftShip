@@ -8,8 +8,11 @@ import { OrdersPage } from "./pages/OrdersPage.jsx";
 import { TrackingPage } from "./pages/TrackingPage.jsx";
 import { AccountPage } from "./pages/AccountPage.jsx";
 import { AuthPage } from "./pages/AuthPage.jsx";
-import { mockCart, mockProducts } from "./data/mockData.js";
+import { NotificationsPage } from "./pages/NotificationsPage.jsx";
+import { mockCart, mockNotifications, mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
+import { useApiResource } from "./hooks/useApiResource.js";
+import { api } from "./lib/api.js";
 
 const pageTitles = {
   home: "Home",
@@ -18,6 +21,7 @@ const pageTitles = {
   cart: "Cart",
   orders: "Orders",
   tracking: "Tracking",
+  notifications: "Notifications",
   account: "Account",
   auth: "Sign in",
 };
@@ -26,6 +30,11 @@ export default function App() {
   const [activePage, setActivePage] = useState(() => getPageFromHash());
   const [selectedProductId, setSelectedProductId] = useState(mockProducts[0].id);
   const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
+  const { data: unreadNotifications } = useApiResource(
+    () => api.getUnreadCustomerNotifications(1),
+    mockNotifications.filter((notification) => notification.readStatus === "UNREAD"),
+    []
+  );
 
   useEffect(() => {
     function syncPageFromHash() {
@@ -81,6 +90,7 @@ export default function App() {
     cart: <CartPage cart={cart} setCart={setCart} onNavigate={navigate} />,
     orders: <OrdersPage onNavigate={navigate} />,
     tracking: <TrackingPage />,
+    notifications: <NotificationsPage />,
     account: <AccountPage />,
     auth: <AuthPage onNavigate={navigate} />,
   };
@@ -89,6 +99,7 @@ export default function App() {
     <AppShell
       activePage={activePage}
       cartCount={cart.reduce((total, item) => total + item.quantity, 0)}
+      notificationCount={unreadNotifications.length}
       onNavigate={navigate}
       title={pageTitles[activePage]}
     >

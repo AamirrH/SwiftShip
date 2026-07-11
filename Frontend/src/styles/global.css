@@ -532,6 +532,54 @@ a {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
 }
 
+.notification-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  box-shadow: none;
+}
+
+.notification-card.unread {
+  border-color: rgba(255, 181, 157, 0.55);
+  background: rgba(39, 42, 49, 0.92);
+}
+
+.notification-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 181, 157, 0.12);
+  color: var(--primary);
+}
+
+.notification-card-header,
+.notification-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notification-order {
+  width: fit-content;
+  margin-top: 12px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(156, 212, 161, 0.12);
+  color: var(--secondary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.notification-toolbar {
+  justify-content: flex-start;
+  margin-bottom: 18px;
+}
+
 .bottom-nav {
   display: none;
 }
@@ -571,7 +619,7 @@ a {
     left: 14px;
     z-index: 20;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 6px;
     padding: 8px;
     border: 1px solid rgba(89, 65, 57, 0.72);
@@ -641,6 +689,15 @@ a {
 
   .stepper {
     grid-template-columns: 1fr;
+  }
+
+  .notification-card {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .notification-card .button {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .step::before {
