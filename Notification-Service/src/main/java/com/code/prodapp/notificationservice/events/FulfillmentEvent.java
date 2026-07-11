@@ -12,6 +12,7 @@ public class FulfillmentEvent {
     private String eventType;
     private Long orderNumber;
     private Long customerId;
+    private String customerEmail;
     private UUID warehouseId;
     private String warehouseName;
     private String city;

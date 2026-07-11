@@ -10,6 +10,7 @@ public class OrderConfirmedEvent {
     private String eventType;
     private Long orderNumber;
     private Long customerId;
+    private String customerEmail;
     private String orderStatus;
     private String deliveryAddress;
     private Double deliveryLat;
