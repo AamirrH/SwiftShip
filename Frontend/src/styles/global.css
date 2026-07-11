@@ -414,6 +414,13 @@ a {
   gap: 24px;
 }
 
+.orders-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  gap: 24px;
+  align-items: start;
+}
+
 .order-row,
 .cart-row {
   display: grid;
@@ -427,6 +434,20 @@ a {
 .order-row:last-child,
 .cart-row:last-child {
   border-bottom: 0;
+}
+
+.order-row.interactive {
+  cursor: pointer;
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+
+.order-row.interactive:hover,
+.order-row.interactive.active {
+  background: rgba(255, 181, 157, 0.06);
+}
+
+.order-row.interactive.active {
+  box-shadow: inset 4px 0 0 var(--primary);
 }
 
 .thumb {
@@ -580,6 +601,16 @@ a {
   margin-bottom: 18px;
 }
 
+.empty-state {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border: 1px dashed rgba(169, 138, 128, 0.5);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  text-align: center;
+}
+
 .bottom-nav {
   display: none;
 }
@@ -594,6 +625,7 @@ a {
   }
 
   .split,
+  .orders-workspace,
   .grid.three,
   .grid.four {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -648,6 +680,7 @@ a {
   .grid.two,
   .grid.three,
   .grid.four,
+  .orders-workspace,
   .split {
     grid-template-columns: 1fr;
   }
