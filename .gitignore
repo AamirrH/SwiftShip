@@ -25,3 +25,4 @@ Config-Server/src/main/resources/application.yml
 Warehouse-Service/src/main/resources/application.properties
 Routing-Service/src/main/resources/application.properties
 Tracking-Service/src/main/resources/application.properties
+Notification-Service/src/main/resources/application.properties

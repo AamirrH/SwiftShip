@@ -21,6 +21,7 @@ public class TrackingSessionService {
     private final TrackingSessionRepository trackingSessionRepository;
     private final TrackingSimulationService trackingSimulationService;
     private final DriverService driverService;
+    private final TrackingSessionMapper trackingSessionMapper;
 
     @Transactional
     @KafkaListener(topics = "fulfillment-events")
@@ -43,7 +44,7 @@ public class TrackingSessionService {
         TrackingSession trackingSession = trackingSessionRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new TrackingSessionNotFoundException("Tracking session not found for order " + orderNumber));
 
-        return mapToDTO(trackingSession);
+        return trackingSessionMapper.mapToDTO(trackingSession);
     }
 
     private TrackingSession createTrackingSession(RouteCalculatedEvent routeCalculatedEvent, Driver assignedDriver){
@@ -77,36 +78,5 @@ public class TrackingSessionService {
 
         return trackingSession;
     }
-
-    public TrackingSessionResponseDTO mapToDTO(TrackingSession trackingSession) {
-        Driver driver = trackingSession.getDriver();
-
-        return new TrackingSessionResponseDTO(
-                trackingSession.getTrackingId(),
-                trackingSession.getOrderNumber(),
-                trackingSession.getCustomerId(),
-                trackingSession.getWarehouseId(),
-                trackingSession.getSelectedRouteId(),
-                driver.getDriverId(),
-                driver.getDriverName(),
-                trackingSession.getWarehouseLatitude(),
-                trackingSession.getWarehouseLongitude(),
-                trackingSession.getCustomerLatitude(),
-                trackingSession.getCustomerLongitude(),
-                trackingSession.getCustomerAddress(),
-                trackingSession.getCurrentLatitude(),
-                trackingSession.getCurrentLongitude(),
-                trackingSession.getTotalDistanceKm(),
-                trackingSession.getRemainingDistanceKm(),
-                trackingSession.getInitialEtaMinutes(),
-                trackingSession.getCurrentEtaMinutes(),
-                trackingSession.getTrackingStatus(),
-                trackingSession.getCreatedAt(),
-                trackingSession.getUpdatedAt()
-        );
-    }
-
-
-
 
 }
