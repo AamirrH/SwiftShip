@@ -16,6 +16,7 @@ public class OrderDeliveredEvent {
     private String eventType;
     private Long orderNumber;
     private Long customerId;
+    private String customerEmail;
     private Long driverId;
     private Double deliveredLatitude;
     private Double deliveredLongitude;

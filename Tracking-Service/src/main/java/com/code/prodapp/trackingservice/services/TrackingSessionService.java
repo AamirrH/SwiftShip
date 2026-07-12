@@ -52,6 +52,7 @@ public class TrackingSessionService {
         TrackingSession trackingSession = new TrackingSession();
         trackingSession.setOrderNumber(routeCalculatedEvent.getOrderNumber());
         trackingSession.setCustomerId(routeCalculatedEvent.getCustomerId());
+        trackingSession.setCustomerEmail(routeCalculatedEvent.getCustomerEmail());
         trackingSession.setWarehouseId(routeCalculatedEvent.getWarehouseId());
         trackingSession.setSelectedRouteId(routeCalculatedEvent.getSelectedRouteId());
         trackingSession.setDriver(assignedDriver);

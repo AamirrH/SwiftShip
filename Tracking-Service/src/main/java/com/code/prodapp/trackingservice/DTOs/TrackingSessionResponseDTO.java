@@ -18,6 +18,7 @@ public class TrackingSessionResponseDTO {
     private Long trackingId;
     private Long orderNumber;
     private Long customerId;
+    private String customerEmail;
     private UUID warehouseId;
     private Long selectedRouteId;
 

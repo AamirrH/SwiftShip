@@ -17,6 +17,7 @@ public class RouteCalculatedEvent {
 
     private Long orderNumber;
     private Long customerId;
+    private String customerEmail;
     private UUID warehouseId;
 
     private Long selectedRouteId;

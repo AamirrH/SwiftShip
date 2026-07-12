@@ -125,6 +125,7 @@ public class TrackingSimulationService {
         etaUpdatedEvent.setEventType(ETA_UPDATED_EVENT);
         etaUpdatedEvent.setOrderNumber(trackingSession.getOrderNumber());
         etaUpdatedEvent.setCustomerId(trackingSession.getCustomerId());
+        etaUpdatedEvent.setCustomerEmail(trackingSession.getCustomerEmail());
         etaUpdatedEvent.setDriverId(trackingSession.getDriver().getDriverId());
         etaUpdatedEvent.setCurrentLatitude(trackingSession.getCurrentLatitude());
         etaUpdatedEvent.setCurrentLongitude(trackingSession.getCurrentLongitude());
@@ -145,6 +146,7 @@ public class TrackingSimulationService {
         orderDeliveredEvent.setEventType(ORDER_DELIVERED_EVENT);
         orderDeliveredEvent.setOrderNumber(trackingSession.getOrderNumber());
         orderDeliveredEvent.setCustomerId(trackingSession.getCustomerId());
+        orderDeliveredEvent.setCustomerEmail(trackingSession.getCustomerEmail());
         orderDeliveredEvent.setDriverId(trackingSession.getDriver().getDriverId());
         orderDeliveredEvent.setDeliveredLatitude(trackingSession.getCurrentLatitude());
         orderDeliveredEvent.setDeliveredLongitude(trackingSession.getCurrentLongitude());

@@ -28,6 +28,9 @@ public class TrackingSession {
     @Column(name = "customer_id", nullable = false)
     private Long customerId;
 
+    @Column(name = "customer_email")
+    private String customerEmail;
+
     @Column(name = "warehouse_id", nullable = false)
     private UUID warehouseId;
 

@@ -15,6 +15,7 @@ public class TrackingSessionMapper {
                 trackingSession.getTrackingId(),
                 trackingSession.getOrderNumber(),
                 trackingSession.getCustomerId(),
+                trackingSession.getCustomerEmail(),
                 trackingSession.getWarehouseId(),
                 trackingSession.getSelectedRouteId(),
                 driver.getDriverId(),
