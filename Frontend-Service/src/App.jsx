@@ -14,7 +14,7 @@ import { AdminRoutesPage } from "./pages/AdminRoutesPage.jsx";
 import { mockCart, mockNotifications, mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 import { useApiResource } from "./hooks/useApiResource.js";
-import { api } from "./lib/api.js";
+import { api, setAccessToken } from "./lib/api.js";
 
 const pageTitles = {
   home: "Home",
@@ -41,6 +41,15 @@ export default function App() {
   );
 
   useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    const oauthAccessToken = queryParams.get("accessToken");
+
+    if (oauthAccessToken) {
+      setAccessToken(oauthAccessToken);
+      window.history.replaceState({}, document.title, "/#home");
+      setActivePage("home");
+    }
+
     function syncPageFromHash() {
       setActivePage(getPageFromHash());
     }

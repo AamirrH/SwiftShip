@@ -1,15 +1,34 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:9090";
-const NOTIFICATION_API_BASE_URL = import.meta.env.VITE_NOTIFICATION_API_BASE_URL ?? "http://localhost:8086";
-const ROUTING_API_BASE_URL = import.meta.env.VITE_ROUTING_API_BASE_URL ?? "http://localhost:8084";
+const ACCESS_TOKEN_STORAGE_KEY = "swiftship.accessToken";
 
-async function request(path, options = {}, baseUrl = API_BASE_URL) {
-  const response = await fetch(`${baseUrl}${path}`, {
+export function getAccessToken() {
+  return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export function setAccessToken(accessToken) {
+  if (!accessToken) return;
+  window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+}
+
+export function clearAccessToken() {
+  window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+async function request(path, options = {}) {
+  const accessToken = getAccessToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
     ...options,
+    headers,
   });
 
   if (!response.ok) {
@@ -32,7 +51,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getOrders: () => request("/orders"),
-  getTracking: (orderNumber) => request(`/tracking/${orderNumber}`),
+  getTracking: (orderNumber) => request(`/tracking/orders/${orderNumber}`),
   getWarehouses: () => request("/admin/warehouses"),
   getWarehouse: (id) => request(`/admin/warehouses/${id}`),
   createWarehouse: (payload) =>
@@ -51,26 +70,18 @@ export const api = {
     }),
   findNearestWarehouse: ({ lat, lon }) => request(`/admin/warehouses/nearest?lat=${lat}&lon=${lon}`),
   calculateRoutes: (payload) =>
-    request(
-      "/routes",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
-      },
-      ROUTING_API_BASE_URL
-    ),
+    request("/routes", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   getCustomerNotifications: (customerId) =>
-    request(`/notifications/customer/${customerId}`, {}, NOTIFICATION_API_BASE_URL),
+    request(`/notifications/customer/${customerId}`),
   getUnreadCustomerNotifications: (customerId) =>
-    request(`/notifications/customer/${customerId}/unread`, {}, NOTIFICATION_API_BASE_URL),
+    request(`/notifications/customer/${customerId}/unread`),
   markNotificationRead: (notificationId) =>
-    request(
-      `/notifications/${notificationId}/read`,
-      {
-        method: "PATCH",
-      },
-      NOTIFICATION_API_BASE_URL
-    ),
+    request(`/notifications/${notificationId}/read`, {
+      method: "PATCH",
+    }),
   login: (payload) =>
     request("/auth/login", {
       method: "POST",

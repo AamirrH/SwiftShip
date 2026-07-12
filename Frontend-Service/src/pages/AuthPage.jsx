@@ -2,7 +2,7 @@ import { LogIn, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
-import { api } from "../lib/api.js";
+import { api, setAccessToken } from "../lib/api.js";
 
 export function AuthPage({ onNavigate }) {
   const [mode, setMode] = useState("login");
@@ -14,7 +14,8 @@ export function AuthPage({ onNavigate }) {
     const payload = Object.fromEntries(form.entries());
     try {
       if (mode === "login") {
-        await api.login({ username: payload.username, password: payload.password });
+        const loginResponse = await api.login({ username: payload.username, password: payload.password });
+        setAccessToken(loginResponse.accessToken);
       } else {
         await api.signup(payload);
       }
