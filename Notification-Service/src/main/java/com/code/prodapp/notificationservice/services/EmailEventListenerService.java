@@ -86,6 +86,7 @@ public class EmailEventListenerService {
         }
     }
 
+    // Helper Method for Sending an Email
     private void sendEventEmail(
             String customerEmail,
             Long orderNumber,

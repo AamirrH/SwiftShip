@@ -24,6 +24,7 @@ public class TrackingSimulationService {
     private static final String ETA_UPDATED_EVENT = "ETA_UPDATED";
     private static final String ORDER_DELIVERED_EVENT = "ORDER_DELIVERED";
 
+    private final LiveTrackingStateService liveTrackingStateService;
     private final TrackingSessionRepository trackingSessionRepository;
     private final DriverService driverService;
     private final KafkaTemplate<String, Object> trackingKafkaTemplate;
@@ -85,7 +86,11 @@ public class TrackingSimulationService {
                 markDeliveryComplete(trackingSession);
             }
             trackingSession.setUpdatedAt(Instant.now());
+            // Saves to Database
             trackingSessionRepository.save(trackingSession);
+            // Saves to Redis
+            liveTrackingStateService.saveLatestState(trackingSession);
+
             publishEtaUpdatedEvent(trackingSession);
             if (TrackingStatus.DELIVERED.equals(trackingSession.getTrackingStatus())) {
                 publishOrderDeliveredEvent(trackingSession);

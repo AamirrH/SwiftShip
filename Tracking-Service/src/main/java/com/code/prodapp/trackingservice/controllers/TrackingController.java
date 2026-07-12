@@ -16,7 +16,7 @@ public class TrackingController {
 
     private final TrackingSessionService trackingSessionService;
 
-    @GetMapping("/{orderNumber}")
+    @GetMapping("/orders/{orderNumber}")
     public ResponseEntity<TrackingSessionResponseDTO> getTrackingSessionByOrderNumber(@PathVariable Long orderNumber) {
         return ResponseEntity.ok(trackingSessionService.getTrackingSessionByOrderNumber(orderNumber));
     }
