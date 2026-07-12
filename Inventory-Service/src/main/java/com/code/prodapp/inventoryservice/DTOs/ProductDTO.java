@@ -18,6 +18,8 @@ public class ProductDTO {
 
     private Double productPrice;
 
+    private String image;
+
     private Integer stock;
 
 }

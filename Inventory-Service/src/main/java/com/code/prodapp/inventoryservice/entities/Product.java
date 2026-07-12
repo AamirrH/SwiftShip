@@ -1,10 +1,7 @@
 package com.code.prodapp.inventoryservice.entities;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +23,9 @@ public class Product {
     private String productName;
 
     private Double productPrice;
+
+    @Column(length = 1024)
+    private String image;
 
     // Stock MUST always be a whole number.
     private Integer stock;

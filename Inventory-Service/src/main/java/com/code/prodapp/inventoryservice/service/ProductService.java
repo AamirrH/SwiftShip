@@ -55,6 +55,7 @@ public class ProductService {
         Product product = new Product();
         product.setProductName(requestDTO.getProductName());
         product.setProductPrice(requestDTO.getProductPrice());
+        product.setImage(requestDTO.getImage());
         product.setStock(requestDTO.getStock());
 
         return modelMapper.map(productRepository.save(product), ProductDTO.class);
@@ -67,6 +68,7 @@ public class ProductService {
         Product product = findProductEntityById(id);
         product.setProductName(requestDTO.getProductName());
         product.setProductPrice(requestDTO.getProductPrice());
+        product.setImage(requestDTO.getImage());
         product.setStock(requestDTO.getStock());
 
         return modelMapper.map(productRepository.save(product), ProductDTO.class);
@@ -83,6 +85,9 @@ public class ProductService {
         }
         if (requestDTO.getProductPrice() != null) {
             product.setProductPrice(requestDTO.getProductPrice());
+        }
+        if (requestDTO.getImage() != null) {
+            product.setImage(requestDTO.getImage());
         }
         if (requestDTO.getStock() != null) {
             product.setStock(requestDTO.getStock());

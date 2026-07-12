@@ -11,5 +11,7 @@ public class UpdateProductRequestDTO {
 
     private Double productPrice;
 
+    private String image;
+
     private Integer stock;
 }
