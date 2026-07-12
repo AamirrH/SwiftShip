@@ -103,6 +103,7 @@ public class RoutingService {
         routeCalculatedEvent.setEventType(ROUTE_CALCULATED_EVENT);
         routeCalculatedEvent.setOrderNumber(warehouseAssignedEvent.getOrderNumber());
         routeCalculatedEvent.setCustomerId(warehouseAssignedEvent.getCustomerId());
+        routeCalculatedEvent.setCustomerEmail(warehouseAssignedEvent.getCustomerEmail());
         routeCalculatedEvent.setWarehouseId(warehouseAssignedEvent.getWarehouseId());
         routeCalculatedEvent.setSelectedRouteId(modelRouteResponse.getSelectedRouteId());
         routeCalculatedEvent.setTotalDistance(modelRouteResponse.getTotalDistance());
@@ -178,4 +179,3 @@ public class RoutingService {
     }
 
 }
-
