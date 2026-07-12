@@ -6,6 +6,7 @@ import com.code.prodapp.authservice.DTOs.LoginResponseDTO;
 import com.code.prodapp.authservice.DTOs.SignupRequestDTO;
 import com.code.prodapp.authservice.DTOs.SignupResponseDTO;
 import com.code.prodapp.authservice.entities.UserEntity;
+import com.code.prodapp.authservice.entities.UserRole;
 import com.code.prodapp.authservice.exceptions.TokenException;
 import com.code.prodapp.authservice.exceptions.UserAlreadyExistsException;
 import com.code.prodapp.authservice.repository.UserRepository;
@@ -43,6 +44,7 @@ public class AuthService {
         user.setUsername(username);
         user.setPassword(hashedPassword);
         user.setEmail(email);
+        user.setRole(resolveSignupRole(signupRequestDTO.getRole()));
         UserEntity savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, SignupResponseDTO.class);
 
@@ -100,7 +102,15 @@ public class AuthService {
         user.setPassword(bCryptPasswordEncoder.encode(UUID.randomUUID().toString()));
         user.setAuthProvider("GOOGLE");
         user.setProviderId(providerId);
+        user.setRole(UserRole.CUSTOMER);
         return userRepository.save(user);
+    }
+
+    private UserRole resolveSignupRole(String requestedRole) {
+        if (requestedRole == null || requestedRole.isBlank()) {
+            return UserRole.CUSTOMER;
+        }
+        return UserRole.valueOf(requestedRole.toUpperCase());
     }
 
     private String buildOauthUsername(String email, String name, String providerId) {
