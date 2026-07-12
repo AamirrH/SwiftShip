@@ -1,5 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:9090";
 const NOTIFICATION_API_BASE_URL = import.meta.env.VITE_NOTIFICATION_API_BASE_URL ?? "http://localhost:8086";
+const ROUTING_API_BASE_URL = import.meta.env.VITE_ROUTING_API_BASE_URL ?? "http://localhost:8084";
 
 async function request(path, options = {}, baseUrl = API_BASE_URL) {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -32,6 +33,32 @@ export const api = {
     }),
   getOrders: () => request("/orders"),
   getTracking: (orderNumber) => request(`/tracking/${orderNumber}`),
+  getWarehouses: () => request("/admin/warehouses"),
+  getWarehouse: (id) => request(`/admin/warehouses/${id}`),
+  createWarehouse: (payload) =>
+    request("/admin/warehouses", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateWarehouse: (id, payload) =>
+    request(`/admin/warehouses/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  deleteWarehouse: (id) =>
+    request(`/admin/warehouses/${id}`, {
+      method: "DELETE",
+    }),
+  findNearestWarehouse: ({ lat, lon }) => request(`/admin/warehouses/nearest?lat=${lat}&lon=${lon}`),
+  calculateRoutes: (payload) =>
+    request(
+      "/routes",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      ROUTING_API_BASE_URL
+    ),
   getCustomerNotifications: (customerId) =>
     request(`/notifications/customer/${customerId}`, {}, NOTIFICATION_API_BASE_URL),
   getUnreadCustomerNotifications: (customerId) =>

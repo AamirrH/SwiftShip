@@ -214,6 +214,70 @@ export const mockNotifications = [
   },
 ];
 
+export const mockWarehouses = [
+  {
+    id: "8a39c2a7-73de-4c63-b4a1-b8f3b67a91b1",
+    warehouseName: "Koramangala Rapid Hub",
+    city: "Bengaluru",
+    lat: 12.9352,
+    lng: 77.6245,
+    capacity: 9200,
+    active: true,
+  },
+  {
+    id: "edb5ac32-e283-4187-bf70-44935038c0ec",
+    warehouseName: "Indiranagar Dark Store",
+    city: "Bengaluru",
+    lat: 12.9784,
+    lng: 77.6408,
+    capacity: 5400,
+    active: true,
+  },
+  {
+    id: "bf96dfbd-a9d7-4c8b-8429-48051d31c909",
+    warehouseName: "HSR Reserve Facility",
+    city: "Bengaluru",
+    lat: 12.9116,
+    lng: 77.6389,
+    capacity: 7800,
+    active: false,
+  },
+  {
+    id: "776fdd44-a43e-489b-a04c-05c96bd3fc19",
+    warehouseName: "Whitefield Express Node",
+    city: "Bengaluru",
+    lat: 12.9698,
+    lng: 77.75,
+    capacity: 11800,
+    active: true,
+  },
+];
+
+export const mockRouteOptions = [
+  {
+    routeId: 1,
+    totalDistance: 7.8,
+    timeToReach: 28,
+  },
+  {
+    routeId: 2,
+    totalDistance: 9.4,
+    timeToReach: 24,
+  },
+  {
+    routeId: 3,
+    totalDistance: 6.9,
+    timeToReach: 34,
+  },
+];
+
+export const mockSelectedRoute = {
+  routeId: 1,
+  totalDistance: 7.8,
+  timeToReach: 28,
+  reasoning: "Balanced distance and ETA with fewer congestion points near the destination.",
+};
+
 export const mockTracking = {
   orderNumber: 8829,
   driverName: "Arjun Mehta",
