@@ -278,6 +278,39 @@ export const mockSelectedRoute = {
   reasoning: "Balanced distance and ETA with fewer congestion points near the destination.",
 };
 
+export const mockSelectedRouteRecords = [
+  {
+    serialId: "fe6dbd98-94f5-43be-bfd9-c41cc1e59ad2",
+    selectedRouteId: 1,
+    customerId: 1,
+    orderId: 8829,
+    warehouseId: mockWarehouses[0].id,
+    customerAddress: "18th Main Road, Koramangala, Bengaluru",
+    customerLat: 12.9716,
+    customerLng: 77.5946,
+    warehouseLat: mockWarehouses[0].lat,
+    warehouseLng: mockWarehouses[0].lng,
+    totalDistance: 7.8,
+    timeToReach: 28,
+    reasoning: "Balanced distance and ETA with fewer congestion points near the destination.",
+  },
+  {
+    serialId: "6774fd23-8a47-4878-b6e2-33143cc746c2",
+    selectedRouteId: 2,
+    customerId: 1,
+    orderId: 7721,
+    warehouseId: mockWarehouses[1].id,
+    customerAddress: "Indiranagar 100 Feet Road, Bengaluru",
+    customerLat: 12.9784,
+    customerLng: 77.6408,
+    warehouseLat: mockWarehouses[1].lat,
+    warehouseLng: mockWarehouses[1].lng,
+    totalDistance: 5.6,
+    timeToReach: 21,
+    reasoning: "Lower ETA from the assigned dark store with a direct arterial connection.",
+  },
+];
+
 export const mockTracking = {
   orderNumber: 8829,
   driverName: "Arjun Mehta",

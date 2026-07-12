@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
 import { api } from "../lib/api.js";
-import { mockRouteOptions, mockSelectedRoute, mockWarehouses } from "../data/mockData.js";
+import { mockRouteOptions, mockSelectedRoute, mockSelectedRouteRecords, mockWarehouses } from "../data/mockData.js";
 
 export function AdminRoutesPage() {
   const [routeOptions, setRouteOptions] = useState(mockRouteOptions);
@@ -125,7 +125,7 @@ export function AdminRoutesPage() {
               <div>
                 <h3 className="section-title" style={{ fontSize: 19, margin: 0 }}>Route #{route.routeId}</h3>
                 <p className="muted" style={{ margin: "5px 0 0" }}>
-                  {route.totalDistance.toFixed(2)} km · {route.timeToReach.toFixed(1)} min
+                  {route.totalDistance.toFixed(2)} km - {route.timeToReach.toFixed(1)} min
                 </p>
               </div>
               <strong>{scoreRoute(route)}</strong>
@@ -133,6 +133,43 @@ export function AdminRoutesPage() {
           ))}
         </Card>
       </div>
+
+      <Card padded={false} style={{ marginTop: 24 }}>
+        <div className="admin-table-header">
+          <div>
+            <span className="label-caps">Selected route records</span>
+            <h2 className="section-title" style={{ fontSize: 24, margin: "6px 0 0" }}>
+              Persisted route decisions
+            </h2>
+          </div>
+          <span className="status success">{mockSelectedRouteRecords.length} stored</span>
+        </div>
+        {mockSelectedRouteRecords.map((record) => (
+          <div className="selected-route-row" key={record.serialId}>
+            <div>
+              <span className="label-caps">Order</span>
+              <strong>#{record.orderId}</strong>
+            </div>
+            <div>
+              <span className="label-caps">Route</span>
+              <strong>#{record.selectedRouteId}</strong>
+            </div>
+            <div>
+              <span className="label-caps">Customer</span>
+              <strong>{record.customerId}</strong>
+            </div>
+            <div>
+              <span className="label-caps">Distance</span>
+              <strong>{record.totalDistance.toFixed(2)} km</strong>
+            </div>
+            <div>
+              <span className="label-caps">ETA</span>
+              <strong>{record.timeToReach.toFixed(1)} min</strong>
+            </div>
+            <p className="muted">{record.reasoning}</p>
+          </div>
+        ))}
+      </Card>
     </section>
   );
 }
