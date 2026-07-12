@@ -16,6 +16,7 @@ public class WarehouseAssignedEvent {
 
     // Customer-part
     private Long customerId;
+    private String customerEmail;
     private double customerLatitude;
     private double customerLongitude;
     private String customerAddress;

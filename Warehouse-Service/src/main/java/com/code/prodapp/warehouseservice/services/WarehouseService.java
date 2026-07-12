@@ -134,6 +134,7 @@ public class WarehouseService {
         warehouseAssignedEvent.setEventType(WAREHOUSE_ASSIGNED_EVENT);
         warehouseAssignedEvent.setOrderNumber(orderConfirmedEvent.getOrderNumber());
         warehouseAssignedEvent.setCustomerId(orderConfirmedEvent.getCustomerId());
+        warehouseAssignedEvent.setCustomerEmail(orderConfirmedEvent.getCustomerEmail());
         warehouseAssignedEvent.setCustomerAddress(orderConfirmedEvent.getDeliveryAddress());
         warehouseAssignedEvent.setCustomerLatitude(latitude);
         warehouseAssignedEvent.setCustomerLongitude(longitude);
