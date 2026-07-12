@@ -29,6 +29,7 @@ public class JWTService {
                 .subject(String.valueOf(user.getId()))
                 .claim("username",user.getUsername())
                 .claim("email",user.getEmail())
+                .claim("role", user.getRole().name())
                 .claim("authorities",user.getAuthorities())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 // Expires after 1 Minute
@@ -42,6 +43,7 @@ public class JWTService {
                 .subject(user.getId().toString())
                 .claim("username",user.getUsername())
                 .claim("email",user.getEmail())
+                .claim("role", user.getRole().name())
                 .claim("authorities",user.getAuthorities())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 // Refresh Token Expires after 1 Day
