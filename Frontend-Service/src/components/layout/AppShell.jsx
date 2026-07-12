@@ -1,6 +1,7 @@
 import {
   Bell,
   Boxes,
+  Building2,
   Home,
   MapPinned,
   PackageCheck,
@@ -22,6 +23,10 @@ const navItems = [
   { id: "account", label: "Account", icon: UserRound },
 ];
 
+const adminNavItems = [
+  { id: "adminWarehouses", label: "Warehouses", icon: Building2 },
+];
+
 export function AppShell({ activePage, cartCount, children, notificationCount = 0, onNavigate, title }) {
   return (
     <div className="app-shell">
@@ -38,6 +43,17 @@ export function AppShell({ activePage, cartCount, children, notificationCount = 
 
         <nav className="nav-list" aria-label="Primary navigation">
           {navItems.map((item) => (
+            <button
+              className={`nav-item ${activePage === item.id ? "active" : ""}`}
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+            >
+              <item.icon size={20} />
+              {item.label}
+            </button>
+          ))}
+          <div className="nav-section-label">Admin</div>
+          {adminNavItems.map((item) => (
             <button
               className={`nav-item ${activePage === item.id ? "active" : ""}`}
               key={item.id}
@@ -96,6 +112,16 @@ export function AppShell({ activePage, cartCount, children, notificationCount = 
 
       <nav className="bottom-nav" aria-label="Mobile navigation">
         {navItems.map((item) => (
+          <button
+            className={activePage === item.id ? "active" : ""}
+            key={item.id}
+            onClick={() => onNavigate(item.id)}
+            title={item.label}
+          >
+            <item.icon size={20} />
+          </button>
+        ))}
+        {adminNavItems.map((item) => (
           <button
             className={activePage === item.id ? "active" : ""}
             key={item.id}
