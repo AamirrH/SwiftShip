@@ -2,6 +2,7 @@ package com.code.prodapp.orderservice.service;
 
 import com.code.prodapp.orderservice.DTOs.CreateCustomerAddressRequestDTO;
 import com.code.prodapp.orderservice.DTOs.CustomerAddressResponseDTO;
+import com.code.prodapp.orderservice.DTOs.GeocodingResultDTO;
 import com.code.prodapp.orderservice.DTOs.UpdateCustomerAddressRequestDTO;
 import com.code.prodapp.orderservice.entities.Customer;
 import com.code.prodapp.orderservice.entities.CustomerAddress;
@@ -21,6 +22,7 @@ public class CustomerAddressService {
 
     private final CustomerAddressRepository customerAddressRepository;
     private final CustomerService customerService;
+    private final GeoapifyGeocodingService geoapifyGeocodingService;
 
     public List<CustomerAddressResponseDTO> getCustomerAddresses(Long customerId) {
         log.info("Getting addresses for customer {}", customerId);
@@ -50,8 +52,7 @@ public class CustomerAddressService {
         address.setCity(requestDTO.getCity());
         address.setState(requestDTO.getState());
         address.setPincode(requestDTO.getPincode());
-        address.setLat(requestDTO.getLat());
-        address.setLng(requestDTO.getLng());
+        setCoordinates(address, requestDTO.getLat(), requestDTO.getLng());
         address.setDefaultAddress(Boolean.TRUE.equals(requestDTO.getDefaultAddress()));
 
         return mapToResponseDTO(customerAddressRepository.save(address));
@@ -71,8 +72,7 @@ public class CustomerAddressService {
         address.setCity(requestDTO.getCity());
         address.setState(requestDTO.getState());
         address.setPincode(requestDTO.getPincode());
-        address.setLat(requestDTO.getLat());
-        address.setLng(requestDTO.getLng());
+        setCoordinates(address, requestDTO.getLat(), requestDTO.getLng());
         address.setDefaultAddress(Boolean.TRUE.equals(requestDTO.getDefaultAddress()));
 
         return mapToResponseDTO(customerAddressRepository.save(address));
@@ -109,6 +109,27 @@ public class CustomerAddressService {
                 address.getLat(),
                 address.getLng(),
                 address.getDefaultAddress()
+        );
+    }
+
+    private void setCoordinates(CustomerAddress address, Double lat, Double lng) {
+        if (lat != null && lng != null) {
+            address.setLat(lat);
+            address.setLng(lng);
+            return;
+        }
+
+        GeocodingResultDTO geocodingResultDTO = geoapifyGeocodingService.geocodeAddress(buildAddressForGeocoding(address));
+        address.setLat(geocodingResultDTO.getLat());
+        address.setLng(geocodingResultDTO.getLng());
+    }
+
+    private String buildAddressForGeocoding(CustomerAddress address) {
+        return String.join(", ",
+                address.getAddressLine(),
+                address.getCity(),
+                address.getState(),
+                address.getPincode()
         );
     }
 }
