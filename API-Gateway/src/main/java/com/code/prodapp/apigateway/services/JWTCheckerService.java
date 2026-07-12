@@ -30,6 +30,11 @@ public class JWTCheckerService {
         return claims.get("email", String.class);
     }
 
+    public String getRoleFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("role", String.class);
+    }
+
     private Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(HMACGeneratedKey())

@@ -33,11 +33,21 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     String token = authToken.split("Bearer ")[1];
                     Long userId = jwtCheckerService.getUserIdFromToken(token);
                     String email = jwtCheckerService.getEmailFromToken(token);
+                    String role = jwtCheckerService.getRoleFromToken(token);
+
+                    if (config.getRole() != null
+                            && !config.getRole().isBlank()
+                            && !config.getRole().equalsIgnoreCase(role)) {
+                        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                        return exchange.getResponse().setComplete();
+                    }
+
                     ServerHttpRequest request = exchange
                             .getRequest()
                             .mutate()
                             .header("X-User-Id", String.valueOf(userId))
                             .header("X-User-Email", email)
+                            .header("X-User-Role", role)
                             .build();
                     return chain.filter(exchange.mutate().request(request).build());
                 } catch (Exception e) {
