@@ -219,6 +219,7 @@ public class ProductService {
         orderConfirmedEvent.setEventType(ORDER_CONFIRMED_EVENT);
         orderConfirmedEvent.setOrderNumber(orderEvent.getOrderNumber());
         orderConfirmedEvent.setCustomerId(orderEvent.getCustomerId());
+        orderConfirmedEvent.setCustomerEmail(orderEvent.getCustomerEmail());
         orderConfirmedEvent.setOrderStatus("CONFIRMED");
         orderConfirmedEvent.setDeliveryAddress(orderEvent.getDeliveryAddress());
         // X-Coordinate
@@ -232,4 +233,3 @@ public class ProductService {
 
 
 }
-
