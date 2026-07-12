@@ -35,9 +35,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     String email = jwtCheckerService.getEmailFromToken(token);
                     String role = jwtCheckerService.getRoleFromToken(token);
 
-                    if (config.getRole() != null
-                            && !config.getRole().isBlank()
-                            && !config.getRole().equalsIgnoreCase(role)) {
+                    if (!hasRequiredRole(config.getRole(), role)) {
                         exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                         return exchange.getResponse().setComplete();
                     }
@@ -57,6 +55,19 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             }
         });
+    }
+
+    private boolean hasRequiredRole(String requiredRole, String actualRole) {
+        if (requiredRole == null || requiredRole.isBlank()) {
+            return true;
+        }
+        if (actualRole == null || actualRole.isBlank()) {
+            return false;
+        }
+        if (requiredRole.equalsIgnoreCase(actualRole)) {
+            return true;
+        }
+        return "CUSTOMER".equalsIgnoreCase(requiredRole) && "ADMIN".equalsIgnoreCase(actualRole);
     }
 
 
