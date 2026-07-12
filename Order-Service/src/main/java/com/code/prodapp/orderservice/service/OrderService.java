@@ -65,7 +65,7 @@ public class OrderService {
     @CircuitBreaker(name = "orderCircuitBreaker",fallbackMethod = "createOrderFallbackMethod")
     @RateLimiter(name = "orderServiceRateLimiter",fallbackMethod = "createOrderFallbackMethod")
     @Transactional
-    public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
+    public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO, String userEmail) {
 
         log.info("Creating Order {}", orderRequestDTO);
 
@@ -80,6 +80,9 @@ public class OrderService {
                 orderRequestDTO.getCustomerId(),
                 orderRequestDTO.getCustomerAddressId()
         );
+        if (userEmail != null && !userEmail.isBlank()) {
+            customerAddress.getCustomer().setEmail(userEmail);
+        }
         // Calculate the total price, manually
         double totalPrice = 0.0;
         for(ReturnedItemsDTO returnedItemsDTO : returnedItemsDTOList){
@@ -115,6 +118,7 @@ public class OrderService {
         orderEvent.setEventType(ORDER_PLACED_EVENT);
         orderEvent.setOrderNumber(savedOrder.getId());
         orderEvent.setCustomerId(savedOrder.getCustomer().getId());
+        orderEvent.setCustomerEmail(savedOrder.getCustomer().getEmail());
         orderEvent.setDeliveryAddress(savedOrder.getDeliveryAddressSnapshot());
         orderEvent.setDeliveryLat(savedOrder.getDeliveryLat());
         orderEvent.setDeliveryLng(savedOrder.getDeliveryLng());

@@ -14,6 +14,7 @@ public class OrderEvent {
     private String eventType;
     private Long orderNumber;
     private Long customerId;
+    private String customerEmail;
     private String deliveryAddress;
     private Double deliveryLat;
     private Double deliveryLng;

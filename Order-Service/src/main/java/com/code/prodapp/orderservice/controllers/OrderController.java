@@ -41,8 +41,11 @@ public class OrderController {
     }
 
     @PostMapping("/createOrder")
-    public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO orderRequestDTO){
-        return ResponseEntity.ok(orderService.createOrder(orderRequestDTO));
+    public ResponseEntity<OrderResponseDTO> createOrder(
+            @RequestBody OrderRequestDTO orderRequestDTO,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
+    ){
+        return ResponseEntity.ok(orderService.createOrder(orderRequestDTO, userEmail));
     }
 
     @PutMapping("/cancelOrder/{id}")
