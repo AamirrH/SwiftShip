@@ -10,6 +10,7 @@ import { AccountPage } from "./pages/AccountPage.jsx";
 import { AuthPage } from "./pages/AuthPage.jsx";
 import { NotificationsPage } from "./pages/NotificationsPage.jsx";
 import { AdminWarehousesPage } from "./pages/AdminWarehousesPage.jsx";
+import { AdminRoutesPage } from "./pages/AdminRoutesPage.jsx";
 import { mockCart, mockNotifications, mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 import { useApiResource } from "./hooks/useApiResource.js";
@@ -24,6 +25,7 @@ const pageTitles = {
   tracking: "Tracking",
   notifications: "Notifications",
   adminWarehouses: "Admin Warehouses",
+  adminRoutes: "Admin Routes",
   account: "Account",
   auth: "Sign in",
 };
@@ -94,6 +96,7 @@ export default function App() {
     tracking: <TrackingPage />,
     notifications: <NotificationsPage />,
     adminWarehouses: <AdminWarehousesPage />,
+    adminRoutes: <AdminRoutesPage />,
     account: <AccountPage />,
     auth: <AuthPage onNavigate={navigate} />,
   };

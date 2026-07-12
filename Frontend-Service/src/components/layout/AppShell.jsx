@@ -5,6 +5,7 @@ import {
   Home,
   MapPinned,
   PackageCheck,
+  Route,
   Search,
   Settings,
   ShoppingCart,
@@ -25,6 +26,7 @@ const navItems = [
 
 const adminNavItems = [
   { id: "adminWarehouses", label: "Warehouses", icon: Building2 },
+  { id: "adminRoutes", label: "Routes", icon: Route },
 ];
 
 export function AppShell({ activePage, cartCount, children, notificationCount = 0, onNavigate, title }) {
