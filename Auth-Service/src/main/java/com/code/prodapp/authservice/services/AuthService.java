@@ -17,6 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -74,6 +76,51 @@ public class AuthService {
 
         String newAccessToken = jwtService.generateAccessToken(user);
         return new LoginResponseDTO(user.getUsername(), newAccessToken, refreshToken);
+    }
+
+    public LoginResponseDTO oauthLogin(String email, String name, String providerId) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseGet(() -> createOauthUser(email, name, providerId));
+
+        user.setAuthProvider("GOOGLE");
+        user.setProviderId(providerId);
+        userRepository.save(user);
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        return new LoginResponseDTO(user.getUsername(), accessToken, refreshToken);
+    }
+
+    private UserEntity createOauthUser(String email, String name, String providerId) {
+        String username = buildOauthUsername(email, name, providerId);
+
+        UserEntity user = new UserEntity();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(bCryptPasswordEncoder.encode(UUID.randomUUID().toString()));
+        user.setAuthProvider("GOOGLE");
+        user.setProviderId(providerId);
+        return userRepository.save(user);
+    }
+
+    private String buildOauthUsername(String email, String name, String providerId) {
+        String baseUsername = email != null && email.contains("@")
+                ? email.substring(0, email.indexOf("@"))
+                : name;
+
+        if (baseUsername == null || baseUsername.isBlank()) {
+            baseUsername = "google_user";
+        }
+
+        String username = baseUsername.replaceAll("[^a-zA-Z0-9_]", "_");
+        if (!userRepository.existsByUsername(username)) {
+            return username;
+        }
+
+        String suffix = providerId == null || providerId.length() < 6
+                ? UUID.randomUUID().toString().substring(0, 8)
+                : providerId.substring(providerId.length() - 6);
+        return username + "_" + suffix;
     }
 
 }
