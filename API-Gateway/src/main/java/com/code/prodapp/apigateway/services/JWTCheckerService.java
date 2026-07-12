@@ -21,12 +21,21 @@ public class JWTCheckerService {
 
     // This method verifies JWT and also returns the userId from token of the User.
     public Long getUserIdFromToken(String token){
-        Claims claims = Jwts.parser()
+        Claims claims = parseClaims(token);
+        return Long.valueOf(claims.getSubject());
+    }
+
+    public String getEmailFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("email", String.class);
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(HMACGeneratedKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return Long.valueOf(claims.getSubject());
     }
 
 

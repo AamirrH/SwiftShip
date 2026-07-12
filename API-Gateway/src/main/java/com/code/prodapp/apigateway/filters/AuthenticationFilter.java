@@ -32,10 +32,12 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 try {
                     String token = authToken.split("Bearer ")[1];
                     Long userId = jwtCheckerService.getUserIdFromToken(token);
+                    String email = jwtCheckerService.getEmailFromToken(token);
                     ServerHttpRequest request = exchange
                             .getRequest()
                             .mutate()
                             .header("X-User-Id", String.valueOf(userId))
+                            .header("X-User-Email", email)
                             .build();
                     return chain.filter(exchange.mutate().request(request).build());
                 } catch (Exception e) {
