@@ -27,6 +27,10 @@ public class UserEntity implements UserDetails {
     @Column(nullable = false,unique = true)
     private String email;
 
+    private String authProvider;
+
+    private String providerId;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
