@@ -23,7 +23,10 @@ public class NotificationEventService {
 
     private final NotificationService notificationService;
 
-    @KafkaListener(topics = "order-events")
+    @KafkaListener(
+            topics = "order-events",
+            properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.OrderConfirmedEvent"
+    )
     public void handleOrderConfirmedEvent(OrderConfirmedEvent event) {
         if (ORDER_CONFIRMED_EVENT.equals(event.getEventType())) {
             createNotification(
@@ -36,7 +39,10 @@ public class NotificationEventService {
         }
     }
 
-    @KafkaListener(topics = "fulfillment-events")
+    @KafkaListener(
+            topics = "fulfillment-events",
+            properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.FulfillmentEvent"
+    )
     public void handleFulfillmentEvent(FulfillmentEvent event) {
         if (WAREHOUSE_ASSIGNED_EVENT.equals(event.getEventType())) {
             createNotification(
@@ -60,7 +66,10 @@ public class NotificationEventService {
         }
     }
 
-    @KafkaListener(topics = "tracking-events")
+    @KafkaListener(
+            topics = "tracking-events",
+            properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.TrackingEvent"
+    )
     public void handleTrackingEvent(TrackingEvent event) {
         if (ETA_UPDATED_EVENT.equals(event.getEventType())) {
             createNotification(

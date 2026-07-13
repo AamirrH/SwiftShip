@@ -25,7 +25,11 @@ public class EmailEventListenerService {
 
     private final EmailService emailService;
 
-    @KafkaListener(topics = "order-events", groupId = "notification-email-service")
+    @KafkaListener(
+            topics = "order-events",
+            groupId = "notification-email-service",
+            properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.OrderConfirmedEvent"
+    )
     public void handleOrderEvent(OrderConfirmedEvent event) {
         if (ORDER_CONFIRMED_EVENT.equals(event.getEventType())) {
             sendEventEmail(
@@ -38,7 +42,11 @@ public class EmailEventListenerService {
         }
     }
 
-    @KafkaListener(topics = "fulfillment-events", groupId = "notification-email-service")
+    @KafkaListener(
+            topics = "fulfillment-events",
+            groupId = "notification-email-service",
+            properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.FulfillmentEvent"
+    )
     public void handleFulfillmentEvent(FulfillmentEvent event) {
         if (WAREHOUSE_ASSIGNED_EVENT.equals(event.getEventType())) {
             sendEventEmail(
@@ -62,7 +70,11 @@ public class EmailEventListenerService {
         }
     }
 
-    @KafkaListener(topics = "tracking-events", groupId = "notification-email-service")
+    @KafkaListener(
+            topics = "tracking-events",
+            groupId = "notification-email-service",
+            properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.TrackingEvent"
+    )
     public void handleTrackingEvent(TrackingEvent event) {
         if (ETA_UPDATED_EVENT.equals(event.getEventType())) {
             sendEventEmail(
