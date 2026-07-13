@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:9090";
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL ?? API_BASE_URL;
 const ACCESS_TOKEN_STORAGE_KEY = "swiftship.accessToken";
 
 export function getAccessToken() {
@@ -45,6 +46,7 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  getGoogleOAuthUrl: () => `${AUTH_BASE_URL}/oauth2/authorization/google`,
   getProducts: () => request("/products"),
   getProduct: (id) => request(`/products/${id}`),
   createOrder: (payload) =>

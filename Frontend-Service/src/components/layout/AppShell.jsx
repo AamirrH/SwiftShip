@@ -3,6 +3,7 @@ import {
   Boxes,
   Building2,
   Home,
+  LogIn,
   MapPinned,
   PackageCheck,
   Route,
@@ -21,6 +22,7 @@ const navItems = [
   { id: "orders", label: "Orders", icon: Truck },
   { id: "tracking", label: "Track", icon: MapPinned },
   { id: "notifications", label: "Alerts", icon: Bell },
+  { id: "auth", label: "Sign in", icon: LogIn },
   { id: "account", label: "Account", icon: UserRound },
 ];
 

@@ -1,67 +1,201 @@
-import { LogIn, UserPlus } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CheckCircle2,
+  Chrome,
+  KeyRound,
+  LogIn,
+  Mail,
+  ShieldCheck,
+  UserRound,
+  UserPlus,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
 import { api, setAccessToken } from "../lib/api.js";
 
+const authBenefits = [
+  "Track every order from stock reservation to delivery",
+  "Receive in-app ETA, warehouse, and route notifications",
+  "Reuse saved customer details across checkout flows",
+];
+
 export function AuthPage({ onNavigate }) {
   const [mode, setMode] = useState("login");
-  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState({ type: "idle", text: "" });
+  const title = mode === "login" ? "Welcome back" : "Create customer account";
+  const submitLabel = mode === "login" ? "Login securely" : "Create account";
+
+  const helperText = useMemo(
+    () =>
+      mode === "login"
+        ? "Use your SwiftShip username and password, or continue with your Google account."
+        : "Customer signup maps to the backend auth DTO with the CUSTOMER role selected for you.",
+    [mode]
+  );
+
+  function switchMode(nextMode) {
+    setMode(nextMode);
+    setMessage({ type: "idle", text: "" });
+  }
+
+  function handleGoogleAuth() {
+    window.location.assign(api.getGoogleOAuthUrl());
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
+    setIsSubmitting(true);
+    setMessage({ type: "idle", text: "" });
+
     const form = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(form.entries());
+    const username = String(form.get("username") ?? "").trim();
+    const password = String(form.get("password") ?? "");
+    const email = String(form.get("email") ?? "").trim();
+
     try {
       if (mode === "login") {
-        const loginResponse = await api.login({ username: payload.username, password: payload.password });
+        const loginResponse = await api.login({ username, password });
         setAccessToken(loginResponse.accessToken);
-      } else {
-        await api.signup(payload);
+        setMessage({ type: "success", text: "Logged in successfully. Taking you to SwiftShip." });
+        onNavigate("home");
+        return;
       }
-      setMessage("Connected to SwiftShip successfully.");
+
+      await api.signup({
+        username,
+        email,
+        password,
+        role: "CUSTOMER",
+      });
+      const loginResponse = await api.login({ username, password });
+      setAccessToken(loginResponse.accessToken);
+      setMessage({ type: "success", text: "Account created and logged in successfully." });
       onNavigate("home");
-    } catch {
-      setMessage("Backend is not reachable yet. The frontend is ready for the gateway.");
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error.status === 401
+            ? "Those credentials were not accepted. Check the username and password."
+            : "Auth service is not reachable yet, but this screen is wired to the gateway contracts.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <section className="page">
-      <div className="split" style={{ alignItems: "center" }}>
-        <div>
-          <span className="label-caps">Secure access</span>
-          <h1 className="page-title">Sign in to your SwiftShip account</h1>
-          <p className="muted">Uses `/auth/login` and `/auth/signup` through the API gateway with refresh-token cookie support.</p>
+    <section className="page auth-page">
+      <div className="auth-shell">
+        <div className="auth-story">
+          <span className="label-caps">Customer access</span>
+          <h1 className="page-title">Order faster, track cleaner, stay notified.</h1>
+          <p className="muted">
+            Sign in before checkout so SwiftShip can reserve inventory, attach delivery updates to your account,
+            and keep notifications tied to the same customer flow.
+          </p>
+
+          <div className="auth-benefits">
+            {authBenefits.map((benefit) => (
+              <div className="auth-benefit" key={benefit}>
+                <CheckCircle2 size={18} />
+                <span>{benefit}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="auth-service-strip">
+            <ServiceStep icon={UserRound} label="Customer" value="Profile secured" />
+            <ServiceStep icon={BadgeCheck} label="JWT" value="Bearer access" />
+            <ServiceStep icon={ShieldCheck} label="Refresh" value="HTTP-only cookie" />
+          </div>
         </div>
-        <Card>
-          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-            <button className={`button ${mode === "login" ? "primary" : "secondary"}`} onClick={() => setMode("login")}>
-              <LogIn size={17} /> Login
+
+        <Card className="auth-panel">
+          <div className="auth-panel-header">
+            <div>
+              <span className="label-caps">SwiftShip ID</span>
+              <h2 className="section-title">{title}</h2>
+              <p className="muted">{helperText}</p>
+            </div>
+            <div className="auth-panel-icon">
+              {mode === "login" ? <LogIn size={22} /> : <UserPlus size={22} />}
+            </div>
+          </div>
+
+          <div className="auth-mode-toggle" role="tablist" aria-label="Authentication mode">
+            <button
+              aria-selected={mode === "login"}
+              className={mode === "login" ? "active" : ""}
+              onClick={() => switchMode("login")}
+              role="tab"
+              type="button"
+            >
+              <LogIn size={16} />
+              Login
             </button>
-            <button className={`button ${mode === "signup" ? "primary" : "secondary"}`} onClick={() => setMode("signup")}>
-              <UserPlus size={17} /> Signup
+            <button
+              aria-selected={mode === "signup"}
+              className={mode === "signup" ? "active" : ""}
+              onClick={() => switchMode("signup")}
+              role="tab"
+              type="button"
+            >
+              <UserPlus size={16} />
+              Signup
             </button>
           </div>
-          <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
-            {mode === "signup" && <Field label="Name" name="name" placeholder="Your name" />}
-            <Field label="Username" name="username" placeholder="aamir" />
-            {mode === "signup" && <Field label="Email" name="email" placeholder="aamir@example.com" />}
-            <Field label="Password" name="password" placeholder="Password" type="password" />
-            <Button>{mode === "login" ? "Login" : "Create account"}</Button>
+
+          <button className="oauth-button" onClick={handleGoogleAuth} type="button">
+            <Chrome size={18} />
+            Continue with Google
+            <ArrowRight size={17} />
+          </button>
+
+          <div className="auth-divider">
+            <span>or continue with password</span>
+          </div>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <Field icon={UserRound} label="Username" name="username" placeholder="aamir_customer" />
+            {mode === "signup" && (
+              <Field icon={Mail} label="Email" name="email" placeholder="aamir@example.com" type="email" />
+            )}
+            <Field icon={KeyRound} label="Password" name="password" placeholder="Password" type="password" />
+            <Button disabled={isSubmitting}>
+              {submitLabel}
+              <ArrowRight size={17} />
+            </Button>
           </form>
-          {message && <p className="muted" style={{ marginBottom: 0 }}>{message}</p>}
+
+          {message.text && <p className={`auth-message ${message.type}`}>{message.text}</p>}
         </Card>
       </div>
     </section>
   );
 }
 
-function Field({ label, ...props }) {
+function Field({ icon: Icon, label, ...props }) {
   return (
-    <label>
+    <label className="auth-field">
       <span className="label-caps">{label}</span>
-      <input className="input" required style={{ marginTop: 8 }} {...props} />
+      <span>
+        <Icon size={18} />
+        <input className="input" required {...props} />
+      </span>
     </label>
+  );
+}
+
+function ServiceStep({ icon: Icon, label, value }) {
+  return (
+    <div>
+      <Icon size={19} />
+      <span className="label-caps">{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
