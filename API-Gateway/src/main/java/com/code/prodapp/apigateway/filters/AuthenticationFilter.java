@@ -3,6 +3,7 @@ package com.code.prodapp.apigateway.filters;
 import com.code.prodapp.apigateway.services.JWTCheckerService;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,10 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     @Override
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) ->  {
+            if (HttpMethod.OPTIONS.equals(exchange.getRequest().getMethod())) {
+                return chain.filter(exchange);
+            }
+
             String authToken = exchange.getRequest().getHeaders().getFirst("Authorization");
             if(authToken == null || !authToken.startsWith("Bearer ")) {
                 // No Token Found, do not accept this request

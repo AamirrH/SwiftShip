@@ -32,7 +32,9 @@ async function request(path, options = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(`SwiftShip API error ${response.status}`);
+    const error = new Error(`SwiftShip API error ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
 
   if (response.status === 204) {

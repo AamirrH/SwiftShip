@@ -6,6 +6,7 @@ import { api } from "../lib/api.js";
 
 export function CartPage({ cart, onNavigate, setCart }) {
   const [checkoutStatus, setCheckoutStatus] = useState("idle");
+  const [checkoutError, setCheckoutError] = useState("");
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const handling = cart.length ? 199 : 0;
   const total = subtotal + handling;
@@ -34,14 +35,26 @@ export function CartPage({ cart, onNavigate, setCart }) {
     };
 
     setCheckoutStatus("submitting");
+    setCheckoutError("");
 
     try {
       await api.createOrder(payload);
       setCheckoutStatus("success");
       setCart([]);
       onNavigate("orders");
-    } catch {
+    } catch (error) {
       setCheckoutStatus("offline");
+      if (error.status === 401) {
+        setCheckoutError("Please login again before placing the order.");
+      } else if (error.status === 403) {
+        setCheckoutError("Your account is not allowed to place this order.");
+      } else if (error.status === 503) {
+        setCheckoutError("Gateway is running, but Order-Service is not registered/reachable yet.");
+      } else if (error.status) {
+        setCheckoutError(`Backend rejected the order with status ${error.status}.`);
+      } else {
+        setCheckoutError("Gateway is not reachable yet. The order payload is ready for `/orders/createOrder`.");
+      }
     }
   }
 
@@ -119,7 +132,7 @@ export function CartPage({ cart, onNavigate, setCart }) {
             </Button>
             {checkoutStatus === "offline" && (
               <p className="muted" style={{ marginBottom: 0 }}>
-                Gateway is not reachable yet. The order payload is ready for `/orders/createOrder`.
+                {checkoutError}
               </p>
             )}
           </Card>
