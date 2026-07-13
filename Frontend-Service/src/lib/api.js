@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:9090";
-const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL ?? API_BASE_URL;
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL ?? "http://localhost:9040";
 const ACCESS_TOKEN_STORAGE_KEY = "swiftship.accessToken";
 
 export function getAccessToken() {
