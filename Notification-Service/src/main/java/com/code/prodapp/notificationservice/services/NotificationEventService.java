@@ -28,6 +28,11 @@ public class NotificationEventService {
             properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.OrderConfirmedEvent"
     )
     public void handleOrderConfirmedEvent(OrderConfirmedEvent event) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerId={}",
+                "order-events",
+                event.getEventType(),
+                event.getOrderNumber(),
+                event.getCustomerId());
         if (ORDER_CONFIRMED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),
@@ -44,6 +49,11 @@ public class NotificationEventService {
             properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.FulfillmentEvent"
     )
     public void handleFulfillmentEvent(FulfillmentEvent event) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerId={}",
+                "fulfillment-events",
+                event.getEventType(),
+                event.getOrderNumber(),
+                event.getCustomerId());
         if (WAREHOUSE_ASSIGNED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),
@@ -71,6 +81,11 @@ public class NotificationEventService {
             properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.TrackingEvent"
     )
     public void handleTrackingEvent(TrackingEvent event) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerId={}",
+                "tracking-events",
+                event.getEventType(),
+                event.getOrderNumber(),
+                event.getCustomerId());
         if (ETA_UPDATED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),

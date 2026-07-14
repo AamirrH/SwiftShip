@@ -128,6 +128,11 @@ public class OrderService {
                 .collect(Collectors.toList())
         );
 
+        log.info("Kafka send topic={} eventType={} orderNumber={} customerId={}",
+                ORDER_EVENTS_TOPIC,
+                orderEvent.getEventType(),
+                orderEvent.getOrderNumber(),
+                orderEvent.getCustomerId());
         orderEventKafkaTemplate.send(ORDER_EVENTS_TOPIC,orderEvent);
 
         List<ItemResponseDTO> savedItems = savedOrder.getItems()
@@ -177,6 +182,11 @@ public class OrderService {
     @Transactional
     @KafkaListener(topics = ORDER_EVENTS_TOPIC)
     public void handleOrderConfirmedEvent(OrderConfirmedEvent orderConfirmedEvent) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerId={}",
+                ORDER_EVENTS_TOPIC,
+                orderConfirmedEvent.getEventType(),
+                orderConfirmedEvent.getOrderNumber(),
+                orderConfirmedEvent.getCustomerId());
         if (!ORDER_CONFIRMED_EVENT.equals(orderConfirmedEvent.getEventType())) {
             return;
         }

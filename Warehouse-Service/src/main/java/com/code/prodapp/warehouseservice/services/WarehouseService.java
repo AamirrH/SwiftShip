@@ -119,6 +119,11 @@ public class WarehouseService {
     @Transactional
     @KafkaListener(topics = ORDER_EVENTS_TOPIC)
     public void handleOrderConfirmedEvent(OrderConfirmedEvent orderConfirmedEvent) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerId={}",
+                ORDER_EVENTS_TOPIC,
+                orderConfirmedEvent.getEventType(),
+                orderConfirmedEvent.getOrderNumber(),
+                orderConfirmedEvent.getCustomerId());
         if (!ORDER_CONFIRMED_EVENT.equals(orderConfirmedEvent.getEventType())) {
             return;
         }
@@ -144,6 +149,11 @@ public class WarehouseService {
         warehouseAssignedEvent.setWarehouseLatitude(warehouseResponseDTO.getLat());
         warehouseAssignedEvent.setWarehouseLongitude(warehouseResponseDTO.getLng());
         // Warehouse has been assigned, shortest path need to be found now.
+        log.info("Kafka send topic={} eventType={} orderNumber={} warehouseId={}",
+                FULFILLMENT_EVENTS_TOPIC,
+                warehouseAssignedEvent.getEventType(),
+                warehouseAssignedEvent.getOrderNumber(),
+                warehouseAssignedEvent.getWarehouseId());
         warehouseAssignedKafkaTemplate.send(
                 FULFILLMENT_EVENTS_TOPIC,
                 orderConfirmedEvent.getOrderNumber().toString(),

@@ -10,6 +10,7 @@ import com.code.prodapp.routingservice.exceptions.RouteServiceDownException;
 import com.code.prodapp.routingservice.repositories.RouteRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RoutingService {
 
     private static final String FULFILLMENT_EVENTS_TOPIC = "fulfillment-events";
@@ -63,6 +65,11 @@ public class RoutingService {
     @Transactional
     @KafkaListener(topics = FULFILLMENT_EVENTS_TOPIC)
     public void handleWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} warehouseId={}",
+                FULFILLMENT_EVENTS_TOPIC,
+                warehouseAssignedEvent.getEventType(),
+                warehouseAssignedEvent.getOrderNumber(),
+                warehouseAssignedEvent.getWarehouseId());
         if (!WAREHOUSE_ASSIGNED_EVENT.equals(warehouseAssignedEvent.getEventType())) {
             return;
         }
@@ -115,6 +122,11 @@ public class RoutingService {
         routeCalculatedEvent.setWarehouseLatitude(warehouseLatitude);
         routeCalculatedEvent.setWarehouseLongitude(warehouseLongitude);
 
+        log.info("Kafka send topic={} eventType={} orderNumber={} selectedRouteId={}",
+                FULFILLMENT_EVENTS_TOPIC,
+                routeCalculatedEvent.getEventType(),
+                routeCalculatedEvent.getOrderNumber(),
+                routeCalculatedEvent.getSelectedRouteId());
         routingKafkaTemplate.send(
                 FULFILLMENT_EVENTS_TOPIC,
                 warehouseAssignedEvent.getOrderNumber().toString(),

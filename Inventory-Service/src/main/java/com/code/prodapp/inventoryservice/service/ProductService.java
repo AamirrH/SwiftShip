@@ -180,6 +180,11 @@ public class ProductService {
     @Transactional
     @KafkaListener(topics = ORDER_EVENTS_TOPIC)
     public void handleOrderPlacedEvent(OrderEvent orderEvent) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerId={}",
+                ORDER_EVENTS_TOPIC,
+                orderEvent.getEventType(),
+                orderEvent.getOrderNumber(),
+                orderEvent.getCustomerId());
         if (!ORDER_PLACED_EVENT.equals(orderEvent.getEventType())) {
             return;
         }
@@ -231,6 +236,11 @@ public class ProductService {
         orderConfirmedEvent.setDeliveryLng(orderEvent.getDeliveryLng());
         // Y-Coordinate
         orderConfirmedEvent.setDeliveryLat(orderEvent.getDeliveryLat());
+        log.info("Kafka send topic={} eventType={} orderNumber={} customerId={}",
+                ORDER_EVENTS_TOPIC,
+                orderConfirmedEvent.getEventType(),
+                orderConfirmedEvent.getOrderNumber(),
+                orderConfirmedEvent.getCustomerId());
         orderConfirmedKafkaTemplate.send(ORDER_EVENTS_TOPIC, orderEvent.getOrderNumber().toString(), orderConfirmedEvent);
 
     }

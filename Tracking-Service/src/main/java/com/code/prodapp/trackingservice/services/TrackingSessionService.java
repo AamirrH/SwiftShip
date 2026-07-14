@@ -9,6 +9,7 @@ import com.code.prodapp.trackingservice.exceptions.TrackingSessionNotFoundExcept
 import com.code.prodapp.trackingservice.repositories.TrackingSessionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TrackingSessionService {
 
     private final TrackingSessionRepository trackingSessionRepository;
@@ -26,6 +28,11 @@ public class TrackingSessionService {
     @Transactional
     @KafkaListener(topics = "fulfillment-events")
     public void handleRouteCalculatedEvent(RouteCalculatedEvent routeCalculatedEvent){
+        log.info("Kafka receive topic={} eventType={} orderNumber={} selectedRouteId={}",
+                "fulfillment-events",
+                routeCalculatedEvent.getEventType(),
+                routeCalculatedEvent.getOrderNumber(),
+                routeCalculatedEvent.getSelectedRouteId());
         if (!"ROUTE_CALCULATED".equals(routeCalculatedEvent.getEventType())) {
             return;
         }

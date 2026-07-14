@@ -9,6 +9,7 @@ import com.code.prodapp.trackingservice.exceptions.TrackingSessionNotFoundExcept
 import com.code.prodapp.trackingservice.repositories.TrackingSessionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TrackingSimulationService {
 
     private static final String TRACKING_EVENTS_TOPIC = "tracking-events";
@@ -134,6 +136,12 @@ public class TrackingSimulationService {
         etaUpdatedEvent.setTrackingStatus(trackingSession.getTrackingStatus().name());
         etaUpdatedEvent.setUpdatedAt(trackingSession.getUpdatedAt());
 
+        log.info("Kafka send topic={} eventType={} orderNumber={} etaMinutes={} remainingDistanceKm={}",
+                TRACKING_EVENTS_TOPIC,
+                etaUpdatedEvent.getEventType(),
+                etaUpdatedEvent.getOrderNumber(),
+                etaUpdatedEvent.getEtaMinutes(),
+                etaUpdatedEvent.getRemainingDistanceKm());
         trackingKafkaTemplate.send(
                 TRACKING_EVENTS_TOPIC,
                 trackingSession.getOrderNumber().toString(),
@@ -153,6 +161,11 @@ public class TrackingSimulationService {
         orderDeliveredEvent.setTrackingStatus(trackingSession.getTrackingStatus().name());
         orderDeliveredEvent.setDeliveredAt(trackingSession.getUpdatedAt());
 
+        log.info("Kafka send topic={} eventType={} orderNumber={} driverId={}",
+                TRACKING_EVENTS_TOPIC,
+                orderDeliveredEvent.getEventType(),
+                orderDeliveredEvent.getOrderNumber(),
+                orderDeliveredEvent.getDriverId());
         trackingKafkaTemplate.send(
                 TRACKING_EVENTS_TOPIC,
                 trackingSession.getOrderNumber().toString(),

@@ -31,6 +31,11 @@ public class EmailEventListenerService {
             properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.OrderConfirmedEvent"
     )
     public void handleOrderEvent(OrderConfirmedEvent event) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerEmail={}",
+                "order-events",
+                event.getEventType(),
+                event.getOrderNumber(),
+                event.getCustomerEmail());
         if (ORDER_CONFIRMED_EVENT.equals(event.getEventType())) {
             sendEventEmail(
                     event.getCustomerEmail(),
@@ -48,6 +53,11 @@ public class EmailEventListenerService {
             properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.FulfillmentEvent"
     )
     public void handleFulfillmentEvent(FulfillmentEvent event) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerEmail={}",
+                "fulfillment-events",
+                event.getEventType(),
+                event.getOrderNumber(),
+                event.getCustomerEmail());
         if (WAREHOUSE_ASSIGNED_EVENT.equals(event.getEventType())) {
             sendEventEmail(
                     event.getCustomerEmail(),
@@ -76,6 +86,11 @@ public class EmailEventListenerService {
             properties = "spring.json.value.default.type=com.code.prodapp.notificationservice.events.TrackingEvent"
     )
     public void handleTrackingEvent(TrackingEvent event) {
+        log.info("Kafka receive topic={} eventType={} orderNumber={} customerEmail={}",
+                "tracking-events",
+                event.getEventType(),
+                event.getOrderNumber(),
+                event.getCustomerEmail());
         if (ETA_UPDATED_EVENT.equals(event.getEventType())) {
             sendEventEmail(
                     event.getCustomerEmail(),
