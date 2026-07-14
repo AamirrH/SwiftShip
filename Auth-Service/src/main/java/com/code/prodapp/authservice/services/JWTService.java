@@ -19,6 +19,8 @@ public class JWTService {
 
     @Value("${jwt.SecretKey}")
     private String key ;
+    private static final long ACCESS_TOKEN_VALIDITY_MS = 60 * 60 * 1000;
+    private static final long REFRESH_TOKEN_VALIDITY_MS = 24 * 60 * 60 * 1000;
 
     private SecretKey HMACGeneratedKey(){
         return Keys.hmacShaKeyFor(key.getBytes(StandardCharsets.UTF_8));
@@ -32,8 +34,8 @@ public class JWTService {
                 .claim("role", user.getRole().name())
                 .claim("authorities",user.getAuthorities())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                // Expires after 1 Minute
-                .expiration(new  Date(System.currentTimeMillis() + 60*1000))
+                // Expires after 1 Hour
+                .expiration(new  Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY_MS))
                 .signWith(HMACGeneratedKey())
                 .compact();
     }
@@ -47,7 +49,7 @@ public class JWTService {
                 .claim("authorities",user.getAuthorities())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 // Refresh Token Expires after 1 Day
-                .expiration(new  Date(System.currentTimeMillis() + 60*1000*60*24))
+                .expiration(new  Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY_MS))
                 .signWith(HMACGeneratedKey())
                 .compact();
     }

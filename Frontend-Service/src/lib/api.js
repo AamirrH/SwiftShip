@@ -33,8 +33,17 @@ async function request(path, options = {}) {
   });
 
   if (!response.ok) {
+    let responseBody = null;
+    try {
+      responseBody = await response.json();
+    } catch {
+      responseBody = null;
+    }
+
     const error = new Error(`SwiftShip API error ${response.status}`);
     error.status = response.status;
+    error.body = responseBody;
+    error.messageFromServer = responseBody?.message;
     throw error;
   }
 

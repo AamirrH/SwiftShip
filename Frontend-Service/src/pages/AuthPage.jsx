@@ -75,11 +75,20 @@ export function AuthPage({ onNavigate }) {
       setMessage({ type: "success", text: "Account created and logged in successfully." });
       onNavigate("home");
     } catch (error) {
+      const serverMessage = error.messageFromServer;
       setMessage({
         type: "error",
         text:
-          error.status === 401
+          serverMessage
+            ? serverMessage
+            : error.status === 401
             ? "Those credentials were not accepted. Check the username and password."
+            : error.status === 403
+            ? "You are not allowed to access this auth action."
+            : error.status === 409
+            ? "A user with that username or email already exists."
+            : error.status === 500
+            ? "Auth service hit a backend error. Check the Auth-Service logs."
             : "Auth service is not reachable yet, but this screen is wired to the gateway contracts.",
       });
     } finally {
