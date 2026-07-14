@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -15,6 +16,9 @@ class EmailServiceResendIntegrationTest {
 
     @Test
     void sendsEmailThroughRealResendApi() {
+        assumeTrue(Boolean.getBoolean("run.resend.integration"),
+                "Set -Drun.resend.integration=true to run this real email test");
+
         String apiKey = readConfig("resend.api-key", "RESEND_API_KEY");
         String fromEmail = readConfig("resend.from-email", "RESEND_FROM_EMAIL");
         String recipient = readConfig("resend.test-recipient", "RESEND_TEST_RECIPIENT");
@@ -48,7 +52,22 @@ class EmailServiceResendIntegrationTest {
         if (hasText(systemProperty)) {
             return systemProperty;
         }
-        return System.getenv(environmentVariableName);
+        String environmentVariable = System.getenv(environmentVariableName);
+        if (hasText(environmentVariable)) {
+            return environmentVariable;
+        }
+        return readLocalApplicationProperty(systemPropertyName);
+    }
+
+    private String readLocalApplicationProperty(String propertyName) {
+        try (var inputStream = java.nio.file.Files.newInputStream(
+                java.nio.file.Path.of("src", "main", "resources", "application.properties"))) {
+            Properties properties = new Properties();
+            properties.load(inputStream);
+            return properties.getProperty(propertyName);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private boolean hasText(String value) {
