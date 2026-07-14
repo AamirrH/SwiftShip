@@ -64,6 +64,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getOrders: () => request("/orders"),
+  getCustomerAddresses: (customerId) => request(`/customers/${customerId}/addresses`),
   getTracking: (orderNumber) => request(`/tracking/orders/${orderNumber}`),
   getWarehouses: () => request("/admin/warehouses"),
   getWarehouse: (id) => request(`/admin/warehouses/${id}`),

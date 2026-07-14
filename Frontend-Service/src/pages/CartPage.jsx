@@ -1,15 +1,51 @@
 import { CreditCard, Minus, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
+import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
+
+const DEFAULT_CUSTOMER_ID = 7;
+const fallbackAddresses = [
+  {
+    id: 3,
+    label: "Work",
+    addressLine: "EON Free Zone, Kharadi",
+    city: "Pune",
+    state: "Maharashtra",
+    pincode: "411014",
+    lat: 18.5515,
+    lng: 73.9349,
+    defaultAddress: true,
+  },
+  {
+    id: 1,
+    label: "Home",
+    addressLine: "Flat 101, North Main Road, Koregaon Park",
+    city: "Pune",
+    state: "Maharashtra",
+    pincode: "411001",
+    lat: 18.5362,
+    lng: 73.8939,
+    defaultAddress: false,
+  },
+];
 
 export function CartPage({ cart, onNavigate, setCart }) {
   const [checkoutStatus, setCheckoutStatus] = useState("idle");
   const [checkoutError, setCheckoutError] = useState("");
+  const { data: addresses, status: addressStatus } = useApiResource(
+    () => api.getCustomerAddresses(DEFAULT_CUSTOMER_ID),
+    fallbackAddresses,
+    []
+  );
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const handling = cart.length ? 199 : 0;
   const total = subtotal + handling;
+  const sortedAddresses = useMemo(
+    () => [...addresses].sort((a, b) => Number(Boolean(b.defaultAddress)) - Number(Boolean(a.defaultAddress))),
+    [addresses]
+  );
 
   function updateQuantity(id, nextQuantity) {
     setCart((items) =>
@@ -22,12 +58,15 @@ export function CartPage({ cart, onNavigate, setCart }) {
     if (cart.length === 0) return;
 
     const form = new FormData(event.currentTarget);
+    const selectedAddressId = Number(form.get("customerAddressId"));
+    const selectedAddress =
+      sortedAddresses.find((address) => address.id === selectedAddressId) ?? sortedAddresses[0];
     const payload = {
-      customerId: Number(form.get("customerId")),
-      customerAddressId: Number(form.get("customerAddressId")),
-      deliveryAddress: form.get("deliveryAddress"),
-      deliveryLat: Number(form.get("deliveryLat")),
-      deliveryLng: Number(form.get("deliveryLng")),
+      customerId: DEFAULT_CUSTOMER_ID,
+      customerAddressId: selectedAddress.id,
+      deliveryAddress: formatAddress(selectedAddress),
+      deliveryLat: selectedAddress.lat,
+      deliveryLng: selectedAddress.lng,
       items: cart.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -102,23 +141,21 @@ export function CartPage({ cart, onNavigate, setCart }) {
         <form onSubmit={placeOrder}>
           <Card>
             <span className="label-caps">Delivery details</span>
-            <div className="grid two" style={{ gap: 12, marginTop: 14 }}>
-              <Field defaultValue="7" label="Customer ID" name="customerId" type="number" />
-              <Field defaultValue="3" label="Address ID" name="customerAddressId" type="number" />
-              <Field defaultValue="18.5515" label="Latitude" name="deliveryLat" step="0.0001" type="number" />
-              <Field defaultValue="73.9349" label="Longitude" name="deliveryLng" step="0.0001" type="number" />
-            </div>
-            <label style={{ display: "block", marginTop: 12 }}>
-              <span className="label-caps">Delivery address</span>
-              <textarea
-                className="input"
-                defaultValue="EON Free Zone, Kharadi, Pune, Maharashtra, 411014"
-                name="deliveryAddress"
-                required
-                rows="3"
-                style={{ marginTop: 8, paddingBottom: 10, paddingTop: 10, resize: "vertical" }}
-              />
+            <label style={{ display: "block", marginTop: 14 }}>
+              <span className="label-caps">Deliver to</span>
+              <select className="input" defaultValue={getDefaultAddressId(sortedAddresses)} name="customerAddressId" required style={{ marginTop: 8 }}>
+                {sortedAddresses.map((address) => (
+                  <option key={address.id} value={address.id}>
+                    {formatAddressOption(address)}
+                  </option>
+                ))}
+              </select>
             </label>
+            {addressStatus === "fallback" && (
+              <p className="muted" style={{ marginBottom: 0 }}>
+                Showing saved test addresses until customer addresses load from the gateway.
+              </p>
+            )}
 
             <div style={{ borderTop: "1px solid rgba(89,65,57,.45)", marginTop: 18, paddingTop: 16 }}>
               <span className="label-caps">Order summary</span>
@@ -142,13 +179,17 @@ export function CartPage({ cart, onNavigate, setCart }) {
   );
 }
 
-function Field({ label, ...props }) {
-  return (
-    <label>
-      <span className="label-caps">{label}</span>
-      <input className="input" required style={{ marginTop: 8 }} {...props} />
-    </label>
-  );
+function getDefaultAddressId(addresses) {
+  return addresses.find((address) => address.defaultAddress)?.id ?? addresses[0]?.id ?? "";
+}
+
+function formatAddressOption(address) {
+  const label = address.label ? `${address.label} - ` : "";
+  return `${label}${formatAddress(address)}`;
+}
+
+function formatAddress(address) {
+  return [address.addressLine, address.city, address.state, address.pincode].filter(Boolean).join(", ");
 }
 
 function SummaryRow({ label, strong, value }) {

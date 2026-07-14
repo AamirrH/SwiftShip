@@ -69,7 +69,7 @@ export function NotificationsPage() {
       <div className="grid three" style={{ marginBottom: 24 }}>
         <SummaryCard label="Unread" value={unreadCount} />
         <SummaryCard label="Total notifications" value={notifications.length} />
-        <SummaryCard label="Customer ID" value={CUSTOMER_ID} />
+        <SummaryCard label="Delivery updates" value="Live" />
       </div>
 
       <div className="notification-toolbar">

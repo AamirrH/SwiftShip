@@ -26,13 +26,13 @@ export function AccountPage() {
             <Field label="Full name" value="Aamir Customer" />
             <Field label="Phone" value="+91 98765 43210" />
             <Field label="Email" value="aamir@example.com" />
-            <Field label="Customer ID" value="1" />
+            <Field label="Membership" value="SwiftShip customer" />
           </div>
         </Card>
 
         <div className="grid">
-          <Preference icon={Home} label="Default address" value="Koramangala, Bengaluru" />
-          <Preference icon={MapPinned} label="Saved pin" value="12.9352, 77.6245" />
+          <Preference icon={Home} label="Default address" value="EON Free Zone, Kharadi, Pune" />
+          <Preference icon={MapPinned} label="Saved locations" value="Home, Work" />
           <Preference icon={Bell} label="Notifications" value="Order, ETA, delivered" />
         </div>
       </div>
