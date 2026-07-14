@@ -72,8 +72,7 @@ public class TrackingSimulationService {
             // What if customer lives almost near to the warehouse? then remainingDistance and currentEtaMinutes might become negative so we take 0
             double remainingDistanceKm = Math.max(0.0,
                     trackingSession.getRemainingDistanceKm() - distanceCoveredIn5Seconds);
-            double currentEtaMinutes = Math.max(0.0,
-                    trackingSession.getCurrentEtaMinutes() - (5.0 / 60.0));
+            double currentEtaMinutes = Math.max(0.0, (remainingDistanceKm / DELIVERY_SPEED) * 60.0);
 
             trackingSession.setRemainingDistanceKm(remainingDistanceKm);
             trackingSession.setCurrentEtaMinutes(currentEtaMinutes);
