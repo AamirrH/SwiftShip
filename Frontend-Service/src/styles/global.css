@@ -30,6 +30,24 @@ img {
   display: block;
 }
 
+button,
+.card,
+.nav-item,
+.section-title,
+.page-title,
+.muted,
+strong {
+  min-width: 0;
+}
+
+p,
+strong,
+.section-title,
+.page-title,
+.muted {
+  overflow-wrap: anywhere;
+}
+
 a {
   color: inherit;
 }
@@ -152,6 +170,13 @@ a {
   backdrop-filter: blur(18px);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .content {
   min-width: 0;
 }
@@ -195,7 +220,7 @@ a {
 }
 
 .grid.four {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .card {
@@ -1222,10 +1247,20 @@ a {
   }
 
   .topbar {
+    flex-wrap: wrap;
     padding: 14px 18px;
   }
 
+  .topbar-search {
+    order: 3;
+    width: 100% !important;
+  }
+
   .page {
+    padding: 24px 18px 92px;
+  }
+
+  .health-page {
     padding: 24px 18px 92px;
   }
 
@@ -1285,6 +1320,16 @@ a {
     display: none;
   }
 
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .user-pill {
+    flex: 1;
+    max-width: none;
+  }
+
   .page-header {
     align-items: flex-start;
     flex-direction: column;
@@ -1296,11 +1341,13 @@ a {
   }
 
   .hero-panel {
-    min-height: 620px;
+    min-height: auto;
   }
 
   .hero-copy {
-    inset: 32px 20px;
+    position: relative;
+    inset: auto;
+    padding: 32px 20px;
   }
 
   .hero-highlights {
@@ -1322,10 +1369,26 @@ a {
   .row-action {
     grid-column: 1 / -1;
     justify-self: stretch;
+    text-align: left !important;
   }
 
   .row-action .button {
     width: 100%;
+  }
+
+  .row-action .button + .button {
+    margin-top: 8px;
+    margin-left: 0 !important;
+  }
+
+  .auth-story {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .auth-panel-header,
+  .health-check-header {
+    flex-direction: column;
   }
 
   .stepper {
@@ -1343,5 +1406,38 @@ a {
 
   .step::before {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .page,
+  .health-page {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .card-pad {
+    padding: 18px;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .bottom-nav {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+  }
+
+  .thumb {
+    width: 72px;
+    height: 64px;
   }
 }

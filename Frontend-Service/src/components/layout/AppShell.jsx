@@ -110,7 +110,7 @@ export function AppShell({ activePage, authUser, cartCount, children, notificati
               <input className="input" placeholder="Search products, orders, tracking..." style={{ paddingLeft: 42 }} />
             </div>
           </div>
-          <div style={{ alignItems: "center", display: "flex", gap: 10 }}>
+          <div className="topbar-actions">
             {authUser ? (
               <button className="user-pill" onClick={() => onNavigate("account")} title="Account">
                 <UserRound size={17} />
