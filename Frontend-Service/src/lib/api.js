@@ -157,6 +157,7 @@ export const api = {
     request(`/notifications/${notificationId}/read`, {
       method: "PATCH",
     }),
+  getPlatformHealth: () => request("/platform/health"),
   login: (payload) =>
     request("/auth/login", {
       method: "POST",

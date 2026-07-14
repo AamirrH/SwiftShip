@@ -5,6 +5,6 @@ function badgeTone(value) {
   return "danger";
 }
 
-export function StatusBadge({ children }) {
-  return <span className={`status ${badgeTone(children)}`}>{children}</span>;
+export function StatusBadge({ children, variant }) {
+  return <span className={`status ${variant ?? badgeTone(children)}`}>{children}</span>;
 }

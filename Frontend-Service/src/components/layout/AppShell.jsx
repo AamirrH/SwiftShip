@@ -2,6 +2,7 @@ import {
   Bell,
   Boxes,
   Building2,
+  Activity,
   Home,
   LogIn,
   LogOut,
@@ -29,6 +30,7 @@ const navItems = [
 const adminNavItems = [
   { id: "adminWarehouses", label: "Warehouses", icon: Building2 },
   { id: "adminRoutes", label: "Routes", icon: Route },
+  { id: "health", label: "Health", icon: Activity },
 ];
 
 export function AppShell({ activePage, authUser, cartCount, children, notificationCount = 0, onLogout, onNavigate, title }) {

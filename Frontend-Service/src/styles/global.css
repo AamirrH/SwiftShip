@@ -724,6 +724,77 @@ a {
   color: var(--error);
 }
 
+.health-page {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.health-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.health-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.health-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.health-summary .card {
+  display: grid;
+  gap: 8px;
+}
+
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.health-check-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.health-check-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.health-check-header .section-title {
+  margin: 6px 0 0;
+  font-size: 20px;
+}
+
+.health-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.health-meta span {
+  padding: 5px 9px;
+  border: 1px solid rgba(169, 138, 128, 0.32);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .orders-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
@@ -1136,6 +1207,7 @@ a {
 
   .split,
   .account-overview,
+  .health-grid,
   .orders-workspace,
   .admin-workspace,
   .route-admin-grid,
@@ -1193,6 +1265,8 @@ a {
   .grid.two,
   .grid.three,
   .grid.four,
+  .health-summary,
+  .health-grid,
   .auth-shell,
   .auth-service-strip,
   .orders-workspace,
@@ -1212,6 +1286,11 @@ a {
   }
 
   .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .health-header {
     align-items: flex-start;
     flex-direction: column;
   }

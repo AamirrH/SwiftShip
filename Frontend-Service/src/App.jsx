@@ -11,6 +11,7 @@ import { AuthPage } from "./pages/AuthPage.jsx";
 import { NotificationsPage } from "./pages/NotificationsPage.jsx";
 import { AdminWarehousesPage } from "./pages/AdminWarehousesPage.jsx";
 import { AdminRoutesPage } from "./pages/AdminRoutesPage.jsx";
+import { HealthPage } from "./pages/HealthPage.jsx";
 import { mockCart, mockNotifications, mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 import { useApiResource } from "./hooks/useApiResource.js";
@@ -26,12 +27,13 @@ const pageTitles = {
   notifications: "Notifications",
   adminWarehouses: "Admin Warehouses",
   adminRoutes: "Admin Routes",
+  health: "Platform Health",
   account: "Account",
   auth: "Sign in",
 };
 
 const DEFAULT_CUSTOMER_ID = 7;
-const adminPages = new Set(["adminWarehouses", "adminRoutes"]);
+const adminPages = new Set(["adminWarehouses", "adminRoutes", "health"]);
 
 export default function App() {
   const [activePage, setActivePage] = useState(() => getPageFromHash());
@@ -136,9 +138,14 @@ export default function App() {
     notifications: <NotificationsPage />,
     adminWarehouses: <AdminWarehousesPage />,
     adminRoutes: <AdminRoutesPage />,
+    health: <HealthPage onNavigate={navigate} />,
     account: <AccountPage authUser={authUser} />,
     auth: <AuthPage onAuthSuccess={saveAuthUser} onNavigate={navigate} />,
   };
+
+  if (activePage === "health" && authUser?.role === "ADMIN") {
+    return <HealthPage onNavigate={navigate} />;
+  }
 
   return (
     <AppShell
