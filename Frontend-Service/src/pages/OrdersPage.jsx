@@ -1,5 +1,5 @@
 import { ArrowRight, BellRing, PackageCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NotificationCard } from "../components/notifications/NotificationCard.jsx";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
@@ -19,7 +19,7 @@ export function OrdersPage({ onNavigate, onTrackOrder }) {
     [customerId]
   );
   const [readOverrides, setReadOverrides] = useState({});
-  const orders = data.map(normalizeOrder);
+  const orders = useMemo(() => groupOrderRows(data).map(normalizeOrder), [data]);
   const [selectedOrderId, setSelectedOrderId] = useState(orders[0]?.id);
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? orders[0];
   const selectedOrderNotifications = useMemo(
@@ -42,6 +42,16 @@ export function OrdersPage({ onNavigate, onTrackOrder }) {
       // Keep the optimistic read state while notification-service is offline.
     }
   }
+
+  useEffect(() => {
+    if (!orders.length) {
+      setSelectedOrderId(undefined);
+      return;
+    }
+    if (!orders.some((order) => order.id === selectedOrderId)) {
+      setSelectedOrderId(orders[0].id);
+    }
+  }, [orders, selectedOrderId]);
 
   return (
     <section className="page">
@@ -135,8 +145,8 @@ export function OrdersPage({ onNavigate, onTrackOrder }) {
 
 function normalizeOrder(order) {
   return {
-    id: order.id,
-    number: order.number ?? `ORD-${order.id}`,
+    id: getOrderId(order),
+    number: order.number ?? `ORD-${getOrderId(order)}`,
     status: order.status ?? order.orderStatus ?? "Reserved",
     eta: order.eta ?? "Calculating",
     placedAt: order.placedAt ?? "Recently",
@@ -144,6 +154,41 @@ function normalizeOrder(order) {
     destination: order.destination ?? order.deliveryAddress ?? "Saved delivery address",
     itemCount: order.itemCount ?? order.items?.length ?? 0,
   };
+}
+
+function groupOrderRows(rows) {
+  const grouped = new Map();
+  rows.forEach((row) => {
+    const orderId = getOrderId(row);
+    if (!orderId) return;
+
+    const existing = grouped.get(orderId);
+    if (!existing) {
+      grouped.set(orderId, row);
+      return;
+    }
+
+    grouped.set(orderId, {
+      ...existing,
+      ...row,
+      items: mergeItems(existing.items, row.items),
+      itemCount: Math.max(existing.itemCount ?? 0, row.itemCount ?? 0),
+    });
+  });
+  return [...grouped.values()];
+}
+
+function mergeItems(currentItems = [], nextItems = []) {
+  const items = new Map();
+  [...currentItems, ...nextItems].forEach((item) => {
+    const key = item.id ?? `${item.productId}-${item.quantity}`;
+    items.set(key, item);
+  });
+  return [...items.values()];
+}
+
+function getOrderId(order) {
+  return order.id ?? order.orderId ?? order.orderNumber;
 }
 
 function fallbackMessage(error, resourceName) {
