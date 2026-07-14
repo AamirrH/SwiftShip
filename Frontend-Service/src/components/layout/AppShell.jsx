@@ -4,6 +4,7 @@ import {
   Building2,
   Home,
   LogIn,
+  LogOut,
   MapPinned,
   PackageCheck,
   Route,
@@ -22,7 +23,6 @@ const navItems = [
   { id: "orders", label: "Orders", icon: Truck },
   { id: "tracking", label: "Track", icon: MapPinned },
   { id: "notifications", label: "Alerts", icon: Bell },
-  { id: "auth", label: "Sign in", icon: LogIn },
   { id: "account", label: "Account", icon: UserRound },
 ];
 
@@ -31,7 +31,11 @@ const adminNavItems = [
   { id: "adminRoutes", label: "Routes", icon: Route },
 ];
 
-export function AppShell({ activePage, cartCount, children, notificationCount = 0, onNavigate, title }) {
+export function AppShell({ activePage, authUser, cartCount, children, notificationCount = 0, onLogout, onNavigate, title }) {
+  const primaryNavItems = authUser
+    ? navItems
+    : [...navItems.filter((item) => item.id !== "account"), { id: "auth", label: "Sign in", icon: LogIn }];
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -46,7 +50,7 @@ export function AppShell({ activePage, cartCount, children, notificationCount = 
         </div>
 
         <nav className="nav-list" aria-label="Primary navigation">
-          {navItems.map((item) => (
+          {primaryNavItems.map((item) => (
             <button
               className={`nav-item ${activePage === item.id ? "active" : ""}`}
               key={item.id}
@@ -56,6 +60,12 @@ export function AppShell({ activePage, cartCount, children, notificationCount = 
               {item.label}
             </button>
           ))}
+          {authUser && (
+            <button className="nav-item" onClick={onLogout}>
+              <LogOut size={20} />
+              Logout
+            </button>
+          )}
           <div className="nav-section-label">Admin</div>
           {adminNavItems.map((item) => (
             <button
@@ -92,7 +102,18 @@ export function AppShell({ activePage, cartCount, children, notificationCount = 
               <input className="input" placeholder="Search products, orders, tracking..." style={{ paddingLeft: 42 }} />
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ alignItems: "center", display: "flex", gap: 10 }}>
+            {authUser ? (
+              <button className="user-pill" onClick={() => onNavigate("account")} title="Account">
+                <UserRound size={17} />
+                <span>{authUser.username}</span>
+              </button>
+            ) : (
+              <button className="user-pill" onClick={() => onNavigate("auth")} title="Sign in">
+                <LogIn size={17} />
+                <span>Sign in</span>
+              </button>
+            )}
             <button className="icon-button" onClick={() => onNavigate("cart")} title="Cart">
               <ShoppingCart size={19} />
               {cartCount > 0 && <span className="label-caps" style={{ color: "var(--primary)" }}>{cartCount}</span>}
@@ -115,7 +136,7 @@ export function AppShell({ activePage, cartCount, children, notificationCount = 
       </main>
 
       <nav className="bottom-nav" aria-label="Mobile navigation">
-        {navItems.map((item) => (
+        {primaryNavItems.map((item) => (
           <button
             className={activePage === item.id ? "active" : ""}
             key={item.id}
@@ -125,6 +146,11 @@ export function AppShell({ activePage, cartCount, children, notificationCount = 
             <item.icon size={20} />
           </button>
         ))}
+        {authUser && (
+          <button onClick={onLogout} title="Logout">
+            <LogOut size={20} />
+          </button>
+        )}
         {adminNavItems.map((item) => (
           <button
             className={activePage === item.id ? "active" : ""}

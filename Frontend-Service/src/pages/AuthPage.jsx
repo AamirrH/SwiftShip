@@ -21,7 +21,7 @@ const authBenefits = [
   "Reuse saved customer details across checkout flows",
 ];
 
-export function AuthPage({ onNavigate }) {
+export function AuthPage({ onAuthSuccess, onNavigate }) {
   const [mode, setMode] = useState("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "idle", text: "" });
@@ -59,6 +59,7 @@ export function AuthPage({ onNavigate }) {
       if (mode === "login") {
         const loginResponse = await api.login({ username, password });
         setAccessToken(loginResponse.accessToken);
+        onAuthSuccess({ username: loginResponse.username ?? username, provider: "Password" });
         setMessage({ type: "success", text: "Logged in successfully. Taking you to SwiftShip." });
         onNavigate("home");
         return;
@@ -72,6 +73,7 @@ export function AuthPage({ onNavigate }) {
       });
       const loginResponse = await api.login({ username, password });
       setAccessToken(loginResponse.accessToken);
+      onAuthSuccess({ username: loginResponse.username ?? username, email, provider: "Password" });
       setMessage({ type: "success", text: "Account created and logged in successfully." });
       onNavigate("home");
     } catch (error) {

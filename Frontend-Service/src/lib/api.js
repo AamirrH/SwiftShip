@@ -1,5 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:9090";
 const ACCESS_TOKEN_STORAGE_KEY = "swiftship.accessToken";
+const AUTH_USER_STORAGE_KEY = "swiftship.authUser";
 
 export function getAccessToken() {
   return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
@@ -10,8 +11,30 @@ export function setAccessToken(accessToken) {
   window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
 }
 
+export function getAuthUser() {
+  const storedUser = window.localStorage.getItem(AUTH_USER_STORAGE_KEY);
+  if (!storedUser) return null;
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+    return null;
+  }
+}
+
+export function setAuthUser(authUser) {
+  if (!authUser?.username) return;
+  window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(authUser));
+}
+
 export function clearAccessToken() {
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export function clearAuthSession() {
+  window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
 }
 
 async function request(path, options = {}) {

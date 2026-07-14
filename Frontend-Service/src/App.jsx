@@ -14,7 +14,7 @@ import { AdminRoutesPage } from "./pages/AdminRoutesPage.jsx";
 import { mockCart, mockNotifications, mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 import { useApiResource } from "./hooks/useApiResource.js";
-import { api, setAccessToken } from "./lib/api.js";
+import { api, clearAuthSession, getAuthUser, setAccessToken, setAuthUser } from "./lib/api.js";
 
 const pageTitles = {
   home: "Home",
@@ -36,6 +36,7 @@ export default function App() {
   const [activePage, setActivePage] = useState(() => getPageFromHash());
   const [selectedProduct, setSelectedProduct] = useState(mockProducts[0]);
   const [selectedOrderNumber, setSelectedOrderNumber] = useState(null);
+  const [authUser, setCurrentAuthUser] = useState(() => getAuthUser());
   const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
   const { data: unreadNotifications } = useApiResource(
     () => api.getUnreadCustomerNotifications(DEFAULT_CUSTOMER_ID),
@@ -46,9 +47,13 @@ export default function App() {
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     const oauthAccessToken = queryParams.get("accessToken");
+    const oauthUsername = queryParams.get("username");
 
     if (oauthAccessToken) {
       setAccessToken(oauthAccessToken);
+      if (oauthUsername) {
+        saveAuthUser({ username: oauthUsername, provider: "Google" });
+      }
       window.history.replaceState({}, document.title, "/#home");
       setActivePage("home");
     }
@@ -94,6 +99,17 @@ export default function App() {
     });
   }
 
+  function saveAuthUser(nextAuthUser) {
+    setAuthUser(nextAuthUser);
+    setCurrentAuthUser(nextAuthUser);
+  }
+
+  function logout() {
+    clearAuthSession();
+    setCurrentAuthUser(null);
+    navigate("home");
+  }
+
   const pages = {
     home: <HomePage onNavigate={navigate} onOpenProduct={openProduct} onAddToCart={addToCart} />,
     catalog: <CatalogPage onOpenProduct={openProduct} onAddToCart={addToCart} />,
@@ -104,8 +120,8 @@ export default function App() {
     notifications: <NotificationsPage />,
     adminWarehouses: <AdminWarehousesPage />,
     adminRoutes: <AdminRoutesPage />,
-    account: <AccountPage />,
-    auth: <AuthPage onNavigate={navigate} />,
+    account: <AccountPage authUser={authUser} />,
+    auth: <AuthPage onAuthSuccess={saveAuthUser} onNavigate={navigate} />,
   };
 
   return (
@@ -113,6 +129,8 @@ export default function App() {
       activePage={activePage}
       cartCount={cart.reduce((total, item) => total + item.quantity, 0)}
       notificationCount={unreadNotifications.length}
+      authUser={authUser}
+      onLogout={logout}
       onNavigate={navigate}
       title={pageTitles[activePage]}
     >

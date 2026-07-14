@@ -36,7 +36,7 @@ const fallbackAddresses = [
   },
 ];
 
-export function AccountPage() {
+export function AccountPage({ authUser }) {
   const { data: loadedAddresses, status: addressStatus } = useApiResource(
     () => api.getCustomerAddresses(DEFAULT_CUSTOMER_ID),
     fallbackAddresses,
@@ -53,6 +53,8 @@ export function AccountPage() {
     [addresses]
   );
   const defaultAddress = sortedAddresses.find((address) => address.defaultAddress) ?? sortedAddresses[0];
+  const displayName = authUser?.username ?? "Aamir Customer";
+  const displayEmail = authUser?.email ?? "Signed in customer";
 
   useEffect(() => {
     setAddresses(loadedAddresses);
@@ -127,14 +129,14 @@ export function AccountPage() {
             <div style={{ display: "flex", gap: 16, marginBottom: 22 }}>
               <div className="brand-mark"><UserRound size={22} /></div>
               <div>
-                <h2 className="section-title" style={{ margin: 0 }}>Aamir Customer</h2>
-                <p className="muted" style={{ margin: "4px 0 0" }}>aamir@example.com</p>
+                <h2 className="section-title" style={{ margin: 0 }}>{displayName}</h2>
+                <p className="muted" style={{ margin: "4px 0 0" }}>{displayEmail}</p>
               </div>
             </div>
             <div className="grid two">
-              <Field label="Full name" value="Aamir Customer" />
+              <Field label="Full name" value={displayName} />
               <Field label="Phone" value="+91 98765 43210" />
-              <Field label="Email" value="aamir@example.com" />
+              <Field label="Email" value={displayEmail} />
               <Field label="Membership" value="SwiftShip customer" />
             </div>
           </Card>
