@@ -23,7 +23,7 @@ export function ProductCard({ product, onAddToCart, onOpenProduct }) {
         <div style={{ alignItems: "center", display: "flex", justifyContent: "space-between", marginTop: "auto" }}>
           <span className="price">Rs. {product.productPrice.toLocaleString("en-IN")}</span>
           <div style={{ display: "flex", gap: 8 }}>
-            <Button variant="secondary" onClick={() => onOpenProduct(product.id)} title="View details">
+            <Button variant="secondary" onClick={() => onOpenProduct(product)} title="View details">
               <Eye size={17} />
             </Button>
             <Button onClick={() => onAddToCart(product)} title="Add to cart">

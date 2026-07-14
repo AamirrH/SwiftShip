@@ -103,16 +103,16 @@ export function CartPage({ cart, onNavigate, setCart }) {
           <Card>
             <span className="label-caps">Delivery details</span>
             <div className="grid two" style={{ gap: 12, marginTop: 14 }}>
-              <Field defaultValue="1" label="Customer ID" name="customerId" type="number" />
-              <Field defaultValue="1" label="Address ID" name="customerAddressId" type="number" />
-              <Field defaultValue="12.9352" label="Latitude" name="deliveryLat" step="0.0001" type="number" />
-              <Field defaultValue="77.6245" label="Longitude" name="deliveryLng" step="0.0001" type="number" />
+              <Field defaultValue="7" label="Customer ID" name="customerId" type="number" />
+              <Field defaultValue="3" label="Address ID" name="customerAddressId" type="number" />
+              <Field defaultValue="18.5515" label="Latitude" name="deliveryLat" step="0.0001" type="number" />
+              <Field defaultValue="73.9349" label="Longitude" name="deliveryLng" step="0.0001" type="number" />
             </div>
             <label style={{ display: "block", marginTop: 12 }}>
               <span className="label-caps">Delivery address</span>
               <textarea
                 className="input"
-                defaultValue="18th Main Road, Koramangala, Bengaluru"
+                defaultValue="EON Free Zone, Kharadi, Pune, Maharashtra, 411014"
                 name="deliveryAddress"
                 required
                 rows="3"

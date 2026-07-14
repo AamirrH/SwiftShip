@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppShell } from "./components/layout/AppShell.jsx";
 import { HomePage } from "./pages/HomePage.jsx";
 import { CatalogPage } from "./pages/CatalogPage.jsx";
@@ -30,12 +30,15 @@ const pageTitles = {
   auth: "Sign in",
 };
 
+const DEFAULT_CUSTOMER_ID = 7;
+
 export default function App() {
   const [activePage, setActivePage] = useState(() => getPageFromHash());
-  const [selectedProductId, setSelectedProductId] = useState(mockProducts[0].id);
+  const [selectedProduct, setSelectedProduct] = useState(mockProducts[0]);
+  const [selectedOrderNumber, setSelectedOrderNumber] = useState(null);
   const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
   const { data: unreadNotifications } = useApiResource(
-    () => api.getUnreadCustomerNotifications(1),
+    () => api.getUnreadCustomerNotifications(DEFAULT_CUSTOMER_ID),
     mockNotifications.filter((notification) => notification.readStatus === "UNREAD"),
     []
   );
@@ -58,19 +61,14 @@ export default function App() {
     return () => window.removeEventListener("hashchange", syncPageFromHash);
   }, []);
 
-  const selectedProduct = useMemo(
-    () => mockProducts.find((product) => product.id === selectedProductId) ?? mockProducts[0],
-    [selectedProductId]
-  );
-
   function navigate(page) {
     window.location.hash = page;
     setActivePage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function openProduct(productId) {
-    setSelectedProductId(productId);
+  function openProduct(product) {
+    setSelectedProduct(product);
     navigate("product");
   }
 
@@ -101,8 +99,8 @@ export default function App() {
     catalog: <CatalogPage onOpenProduct={openProduct} onAddToCart={addToCart} />,
     product: <ProductPage product={selectedProduct} onBack={() => navigate("catalog")} onAddToCart={addToCart} />,
     cart: <CartPage cart={cart} setCart={setCart} onNavigate={navigate} />,
-    orders: <OrdersPage onNavigate={navigate} />,
-    tracking: <TrackingPage />,
+    orders: <OrdersPage onNavigate={navigate} onTrackOrder={setSelectedOrderNumber} />,
+    tracking: <TrackingPage orderNumber={selectedOrderNumber} />,
     notifications: <NotificationsPage />,
     adminWarehouses: <AdminWarehousesPage />,
     adminRoutes: <AdminRoutesPage />,

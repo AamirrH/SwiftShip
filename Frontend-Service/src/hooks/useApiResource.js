@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 export function useApiResource(fetcher, fallback, dependencies = []) {
   const [data, setData] = useState(fallback);
   const [status, setStatus] = useState("idle");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
     setStatus("loading");
+    setError(null);
 
     fetcher()
       .then((result) => {
@@ -14,8 +16,9 @@ export function useApiResource(fetcher, fallback, dependencies = []) {
         setData(result);
         setStatus("ready");
       })
-      .catch(() => {
+      .catch((caughtError) => {
         if (!active) return;
+        setError(caughtError);
         setData(fallback);
         setStatus("fallback");
       });
@@ -25,5 +28,5 @@ export function useApiResource(fetcher, fallback, dependencies = []) {
     };
   }, dependencies);
 
-  return { data, status };
+  return { data, status, error };
 }

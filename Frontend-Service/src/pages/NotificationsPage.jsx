@@ -7,10 +7,10 @@ import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
 import { mockNotifications } from "../data/mockData.js";
 
-const CUSTOMER_ID = 1;
+const CUSTOMER_ID = 7;
 
 export function NotificationsPage() {
-  const { data, status } = useApiResource(() => api.getCustomerNotifications(CUSTOMER_ID), mockNotifications, []);
+  const { data, status, error } = useApiResource(() => api.getCustomerNotifications(CUSTOMER_ID), mockNotifications, []);
   const [readOverrides, setReadOverrides] = useState({});
   const [filter, setFilter] = useState("all");
 
@@ -56,7 +56,7 @@ export function NotificationsPage() {
           <h1 className="page-title">Notification center</h1>
           <p className="muted">
             {status === "fallback"
-              ? "Showing sample notifications until notification-service is running."
+              ? fallbackMessage(error)
               : "Synced from notification-service."}
           </p>
         </div>
@@ -95,6 +95,13 @@ export function NotificationsPage() {
       </div>
     </section>
   );
+}
+
+function fallbackMessage(error) {
+  if (!error?.status) {
+    return "Cannot reach gateway for notifications; showing sample notifications.";
+  }
+  return `Backend returned ${error.status} for notifications; showing sample notifications.`;
 }
 
 function SummaryCard({ label, value }) {

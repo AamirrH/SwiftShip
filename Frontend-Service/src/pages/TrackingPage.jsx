@@ -8,8 +8,9 @@ import { api } from "../lib/api.js";
 import { useApiResource } from "../hooks/useApiResource.js";
 import { mockTracking } from "../data/mockData.js";
 
-export function TrackingPage() {
-  const { data } = useApiResource(() => api.getTracking(mockTracking.orderNumber), mockTracking, []);
+export function TrackingPage({ orderNumber }) {
+  const trackingOrderNumber = orderNumber ?? mockTracking.orderNumber;
+  const { data, status, error } = useApiResource(() => api.getTracking(trackingOrderNumber), mockTracking, [trackingOrderNumber]);
   const tracking = {
     ...mockTracking,
     ...data,
@@ -23,7 +24,9 @@ export function TrackingPage() {
         <div>
           <span className="label-caps">Live order tracking</span>
           <h1 className="page-title">Order #{tracking.orderNumber}</h1>
-          <p className="muted">{tracking.customerAddress}</p>
+          <p className="muted">
+            {status === "fallback" ? fallbackMessage(error) : tracking.customerAddress}
+          </p>
         </div>
         <StatusBadge>{String(tracking.status ?? tracking.trackingStatus).replaceAll("_", " ")}</StatusBadge>
       </div>
@@ -55,6 +58,16 @@ export function TrackingPage() {
       </div>
     </section>
   );
+}
+
+function fallbackMessage(error) {
+  if (!error?.status) {
+    return "Cannot reach gateway for tracking; showing local demo tracking.";
+  }
+  if (error.status === 404) {
+    return "Tracking session was not created for this order yet.";
+  }
+  return `Backend returned ${error.status} for tracking; showing local demo tracking.`;
 }
 
 function Info({ icon: Icon, label, value }) {

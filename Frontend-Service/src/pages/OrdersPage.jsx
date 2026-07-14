@@ -8,14 +8,15 @@ import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
 import { mockNotifications, mockOrders } from "../data/mockData.js";
 
-const CUSTOMER_ID = 1;
+const DEFAULT_CUSTOMER_ID = 7;
 
-export function OrdersPage({ onNavigate }) {
-  const { data, status } = useApiResource(api.getOrders, mockOrders, []);
+export function OrdersPage({ onNavigate, onTrackOrder }) {
+  const { data, status, error } = useApiResource(api.getOrders, mockOrders, []);
+  const customerId = data.find((order) => order.customerId)?.customerId ?? DEFAULT_CUSTOMER_ID;
   const { data: notifications } = useApiResource(
-    () => api.getCustomerNotifications(CUSTOMER_ID),
+    () => api.getCustomerNotifications(customerId),
     mockNotifications,
-    []
+    [customerId]
   );
   const [readOverrides, setReadOverrides] = useState({});
   const orders = data.map(normalizeOrder);
@@ -49,7 +50,7 @@ export function OrdersPage({ onNavigate }) {
           <span className="label-caps">Customer orders</span>
           <h1 className="page-title">Order history</h1>
           <p className="muted">
-            {status === "fallback" ? "Showing local demo orders until the gateway is running." : "Synced from `/orders`."}
+            {status === "fallback" ? fallbackMessage(error, "orders") : "Synced from `/orders`."}
           </p>
         </div>
         <Button onClick={() => onNavigate("catalog")}>
@@ -89,6 +90,7 @@ export function OrdersPage({ onNavigate }) {
                       variant="ghost"
                       onClick={(event) => {
                         event.stopPropagation();
+                        onTrackOrder(order.id);
                         onNavigate("tracking");
                       }}
                     >
@@ -135,11 +137,18 @@ function normalizeOrder(order) {
   return {
     id: order.id,
     number: order.number ?? `ORD-${order.id}`,
-    status: order.status ?? "Reserved",
+    status: order.status ?? order.orderStatus ?? "Reserved",
     eta: order.eta ?? "Calculating",
     placedAt: order.placedAt ?? "Recently",
     total: order.total ?? order.totalPrice ?? 0,
     destination: order.destination ?? order.deliveryAddress ?? "Saved delivery address",
     itemCount: order.itemCount ?? order.items?.length ?? 0,
   };
+}
+
+function fallbackMessage(error, resourceName) {
+  if (!error?.status) {
+    return `Cannot reach gateway for ${resourceName}; showing local demo data.`;
+  }
+  return `Backend returned ${error.status} for ${resourceName}; showing local demo data.`;
 }
