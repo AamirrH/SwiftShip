@@ -25,6 +25,8 @@ public class TrackingSimulationService {
     private static final String TRACKING_EVENTS_TOPIC = "tracking-events";
     private static final String ETA_UPDATED_EVENT = "ETA_UPDATED";
     private static final String ORDER_DELIVERED_EVENT = "ORDER_DELIVERED";
+    private static final long SIMULATION_TICK_MILLISECONDS = 60000;
+    private static final double SIMULATION_TICK_SECONDS = SIMULATION_TICK_MILLISECONDS / 1000.0;
 
     private final LiveTrackingStateService liveTrackingStateService;
     private final TrackingSessionRepository trackingSessionRepository;
@@ -56,12 +58,13 @@ public class TrackingSimulationService {
     }
 
 
-    // @Schedule runs every 5 seconds when the application starts BUT the main application must have @EnableScheduling
+    // @Schedule runs every 60 seconds when the application starts BUT the main application must have @EnableScheduling
+    // 60 seconds keeps production/free-tier database, Redis, and Kafka writes much lower than a 5 second tick.
     // Important Point -> The delivery should be simulated whether it is tracked.
     @Transactional
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = SIMULATION_TICK_MILLISECONDS)
     public void simulateActiveDeliveries() {
-        Double distanceCoveredIn5Seconds = (DELIVERY_SPEED/3600.0)*5;
+        Double distanceCoveredInCurrentTick = (DELIVERY_SPEED/3600.0)*SIMULATION_TICK_SECONDS;
         List<TrackingSession> trackingSessionList = trackingSessionRepository
                 .findAllByTrackingStatus(TrackingStatus.IN_TRANSIT);
         // If deliveries have not started, return.
@@ -71,7 +74,7 @@ public class TrackingSimulationService {
         for (TrackingSession trackingSession : trackingSessionList) {
             // What if customer lives almost near to the warehouse? then remainingDistance and currentEtaMinutes might become negative so we take 0
             double remainingDistanceKm = Math.max(0.0,
-                    trackingSession.getRemainingDistanceKm() - distanceCoveredIn5Seconds);
+                    trackingSession.getRemainingDistanceKm() - distanceCoveredInCurrentTick);
             double currentEtaMinutes = Math.max(0.0, (remainingDistanceKm / DELIVERY_SPEED) * 60.0);
 
             trackingSession.setRemainingDistanceKm(remainingDistanceKm);
@@ -79,7 +82,9 @@ public class TrackingSimulationService {
 
             // progress -> distanceCovered/totalDistance
             double distanceCovered = trackingSession.getTotalDistanceKm()-trackingSession.getRemainingDistanceKm();
-            double progress = Math.min(1.0, distanceCovered/trackingSession.getTotalDistanceKm());
+            double progress = trackingSession.getTotalDistanceKm() == 0.0
+                    ? 1.0
+                    : Math.min(1.0, distanceCovered/trackingSession.getTotalDistanceKm());
 
             trackingSession.setCurrentLatitude(calculateCurrentLatitude(trackingSession, progress));
             trackingSession.setCurrentLongitude(calculateCurrentLongitude(trackingSession, progress));
