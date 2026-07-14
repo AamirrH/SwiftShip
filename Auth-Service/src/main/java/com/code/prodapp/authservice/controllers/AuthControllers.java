@@ -10,6 +10,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,19 +20,32 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthControllers {
 
     private final AuthService authService;
 
     @PostMapping("/signup")
     public ResponseEntity<SignupResponseDTO> signup(@RequestBody SignupRequestDTO signupRequestDTO) {
-        return ResponseEntity.ok(authService.signup(signupRequestDTO));
+        log.info("Auth signup request username={} email={} role={}",
+                signupRequestDTO.getUsername(),
+                signupRequestDTO.getEmail(),
+                signupRequestDTO.getRole());
+        SignupResponseDTO signupResponseDTO = authService.signup(signupRequestDTO);
+        log.info("Auth signup completed username={} email={}",
+                signupRequestDTO.getUsername(),
+                signupRequestDTO.getEmail());
+        return ResponseEntity.ok(signupResponseDTO);
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO,
                                                   HttpServletResponse response) {
+       log.info("Auth login request username={}", loginRequestDTO.getUsername());
        LoginResponseDTO loginResponseDTO = authService.login(loginRequestDTO);
+       log.info("Auth login completed username={} responseUsername={}",
+               loginRequestDTO.getUsername(),
+               loginResponseDTO.getUsername());
        // Creating a Cookie
         Cookie cookie = new Cookie("RefreshToken", loginResponseDTO.getRefreshToken());
         cookie.setHttpOnly(true);
@@ -44,6 +58,7 @@ public class AuthControllers {
 
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponseDTO> refresh(HttpServletRequest request) {
+        log.info("Auth refresh request received");
         String refreshToken = null;
         Cookie[] requestCookies = request.getCookies();
         if (requestCookies == null) {
@@ -57,7 +72,9 @@ public class AuthControllers {
             }
         }
 
-        return ResponseEntity.ok(authService.refreshAccessToken(refreshToken));
+        LoginResponseDTO loginResponseDTO = authService.refreshAccessToken(refreshToken);
+        log.info("Auth refresh completed username={}", loginResponseDTO.getUsername());
+        return ResponseEntity.ok(loginResponseDTO);
 
     }
 

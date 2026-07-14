@@ -6,6 +6,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final AuthService authService;
@@ -36,8 +38,16 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
         String providerId = oAuth2User.getAttribute("sub");
+        log.info("OAuth2 login success from provider uri={} email={} name={} providerIdPresent={}",
+                request.getRequestURI(),
+                email,
+                name,
+                providerId != null && !providerId.isBlank());
 
         LoginResponseDTO loginResponseDTO = authService.oauthLogin(email, name, providerId);
+        log.info("OAuth2 login mapped to SwiftShip user username={} redirectBase={}",
+                loginResponseDTO.getUsername(),
+                successRedirectUrl);
 
         Cookie refreshTokenCookie = new Cookie("RefreshToken", loginResponseDTO.getRefreshToken());
         refreshTokenCookie.setHttpOnly(true);
@@ -51,6 +61,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 .build()
                 .toUriString();
 
+        log.info("OAuth2 login redirecting browser to frontend success url");
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }
