@@ -53,7 +53,7 @@ public class SelectedRoute {
     @Column(name = "minutes_to_reach", nullable = false)
     private double timeToReach;
 
-    @Column(name = "model_reasoning", nullable = false, length = 100)
+    @Column(name = "model_reasoning", length = 1000)
     private String reasoning;
 
 }

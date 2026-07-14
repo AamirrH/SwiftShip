@@ -105,6 +105,11 @@ public class RoutingService {
         selectedRoute.setTimeToReach(modelRouteResponse.getTimeToReach());
         selectedRoute.setReasoning(modelRouteResponse.getReasoning());
         routeRepository.save(selectedRoute);
+        log.info("Saved selected route for orderNumber={} selectedRouteId={} totalDistance={} timeToReach={}",
+                selectedRoute.getOrderId(),
+                selectedRoute.getSelectedRouteId(),
+                selectedRoute.getTotalDistance(),
+                selectedRoute.getTimeToReach());
 
         RouteCalculatedEvent routeCalculatedEvent = new RouteCalculatedEvent();
         routeCalculatedEvent.setEventType(ROUTE_CALCULATED_EVENT);
