@@ -7,7 +7,8 @@ import { mockOrders, mockProducts } from "../data/mockData.js";
 
 export function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
   const { data: products, status } = useApiResource(api.getProducts, mockProducts, []);
-  const featured = products.slice(0, 4).map((product, index) => ({
+  const featuredProducts = rotateProductsByDay(products).slice(0, 4);
+  const featured = featuredProducts.map((product, index) => ({
     ...mockProducts[index],
     ...product,
     image: product.image ?? mockProducts[index % mockProducts.length].image,
@@ -74,4 +75,12 @@ export function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
       </div>
     </section>
   );
+}
+
+function rotateProductsByDay(products) {
+  if (products.length === 0) return products;
+  const today = new Date();
+  const daySeed = Math.floor(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000);
+  const startIndex = daySeed % products.length;
+  return [...products.slice(startIndex), ...products.slice(0, startIndex)];
 }
