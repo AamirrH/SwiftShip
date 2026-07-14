@@ -19,6 +19,7 @@ public class OrderResponseDTO {
     private Long customerAddressId;
     private List<ItemResponseDTO> items;
     private BigDecimal totalPrice;
+    private String orderStatus;
     private String deliveryAddress;
     private Double deliveryLat;
     private Double deliveryLng;

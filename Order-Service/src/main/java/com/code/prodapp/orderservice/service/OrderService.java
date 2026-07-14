@@ -46,18 +46,19 @@ public class OrderService {
     private final CustomerAddressService customerAddressService;
 
 
-    public List<OrderRequestDTO> getAllOrders(){
-        log.info("Getting all products");
+    public List<OrderResponseDTO> getAllOrders(){
+        log.info("Getting all orders");
         return orderRepository.findAll()
                 .stream()
-                .map(order -> modelMapper.map(order,OrderRequestDTO.class))
+                .map(this::mapOrderToResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    public OrderRequestDTO getOrderById(Long id){
+    public OrderResponseDTO getOrderById(Long id){
         log.info("Getting order by id {}", id);
-        return modelMapper.map(orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Inventory Not Found")),OrderRequestDTO.class);
+        Orders order = orderRepository.findById(id)
+                .orElseThrow(() -> new OrderNotFoundException("Order Not Found"));
+        return mapOrderToResponseDTO(order);
     }
 
 
@@ -145,6 +146,7 @@ public class OrderService {
                 savedOrder.getCustomerAddress().getId(),
                 savedItems,
                 BigDecimal.valueOf(savedOrder.getPrice()),
+                savedOrder.getOrderStatus().name(),
                 savedOrder.getDeliveryAddressSnapshot(),
                 savedOrder.getDeliveryLat(),
                 savedOrder.getDeliveryLng()
@@ -208,6 +210,24 @@ public class OrderService {
                 address.getCity(),
                 address.getState(),
                 address.getPincode()
+        );
+    }
+
+    private OrderResponseDTO mapOrderToResponseDTO(Orders order) {
+        List<ItemResponseDTO> items = order.getItems()
+                .stream()
+                .map(item -> new ItemResponseDTO(item.getId(), item.getProductId(), item.getQuantity()))
+                .toList();
+        return new OrderResponseDTO(
+                order.getId(),
+                order.getCustomer().getId(),
+                order.getCustomerAddress().getId(),
+                items,
+                BigDecimal.valueOf(order.getPrice()),
+                order.getOrderStatus().name(),
+                order.getDeliveryAddressSnapshot(),
+                order.getDeliveryLat(),
+                order.getDeliveryLng()
         );
     }
 
