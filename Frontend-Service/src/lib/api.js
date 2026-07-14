@@ -110,6 +110,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  cancelOrder: (orderId) =>
+    request(`/orders/cancelOrder/${orderId}`, {
+      method: "PUT",
+    }),
   getOrders: () => request("/orders"),
   getCustomerAddresses: (customerId) => request(`/customers/${customerId}/addresses`),
   createCustomerAddress: (customerId, payload) =>

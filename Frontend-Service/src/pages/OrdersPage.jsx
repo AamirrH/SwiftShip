@@ -10,7 +10,7 @@ import { mockNotifications, mockOrders } from "../data/mockData.js";
 
 const DEFAULT_CUSTOMER_ID = 7;
 
-export function OrdersPage({ onNavigate, onTrackOrder }) {
+export function OrdersPage({ onNavigate, onOrderCancelled, onTrackOrder }) {
   const { data, status, error } = useApiResource(api.getOrders, mockOrders, []);
   const customerId = data.find((order) => order.customerId)?.customerId ?? DEFAULT_CUSTOMER_ID;
   const { data: notifications } = useApiResource(
@@ -19,9 +19,14 @@ export function OrdersPage({ onNavigate, onTrackOrder }) {
     [customerId]
   );
   const [readOverrides, setReadOverrides] = useState({});
+  const [statusOverrides, setStatusOverrides] = useState({});
   const orders = useMemo(() => groupOrderRows(data).map(normalizeOrder), [data]);
+  const visibleOrders = orders.map((order) => ({
+    ...order,
+    status: statusOverrides[order.id] ?? order.status,
+  }));
   const [selectedOrderId, setSelectedOrderId] = useState(orders[0]?.id);
-  const selectedOrder = orders.find((order) => order.id === selectedOrderId) ?? orders[0];
+  const selectedOrder = visibleOrders.find((order) => order.id === selectedOrderId) ?? visibleOrders[0];
   const selectedOrderNotifications = useMemo(
     () =>
       notifications
@@ -40,6 +45,19 @@ export function OrdersPage({ onNavigate, onTrackOrder }) {
       await api.markNotificationRead(notificationId);
     } catch {
       // Keep the optimistic read state while notification-service is offline.
+    }
+  }
+
+  async function cancelOrder(orderId) {
+    const confirmed = window.confirm(`Cancel order #${orderId}?`);
+    if (!confirmed) return;
+
+    try {
+      await api.cancelOrder(orderId);
+      setStatusOverrides((current) => ({ ...current, [orderId]: "CANCELLED" }));
+      onOrderCancelled?.(`Order #${orderId} has been cancelled`);
+    } catch (error) {
+      onOrderCancelled?.(error.status ? `Could not cancel order #${orderId}. Backend returned ${error.status}.` : "Gateway is not reachable.");
     }
   }
 
@@ -70,7 +88,7 @@ export function OrdersPage({ onNavigate, onTrackOrder }) {
 
       <div className="orders-workspace">
         <Card padded={false}>
-          {orders.map((order) => {
+          {visibleOrders.map((order) => {
             const relatedUnreadCount = notifications.filter(
               (notification) => notification.orderNumber === order.id && notification.readStatus === "UNREAD"
             ).length;
@@ -106,6 +124,18 @@ export function OrdersPage({ onNavigate, onTrackOrder }) {
                     >
                       Details <ArrowRight size={16} />
                     </Button>
+                    {canCancelOrder(order.status) && (
+                      <Button
+                        variant="secondary"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          cancelOrder(order.id);
+                        }}
+                        style={{ marginLeft: 8 }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -189,6 +219,10 @@ function mergeItems(currentItems = [], nextItems = []) {
 
 function getOrderId(order) {
   return order.id ?? order.orderId ?? order.orderNumber;
+}
+
+function canCancelOrder(status) {
+  return !["CANCELLED", "DELIVERED"].includes(String(status).toUpperCase());
 }
 
 function fallbackMessage(error, resourceName) {
