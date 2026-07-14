@@ -130,7 +130,7 @@ export default function App() {
     home: <HomePage onNavigate={navigate} onOpenProduct={openProduct} onAddToCart={addToCart} />,
     catalog: <CatalogPage onOpenProduct={openProduct} onAddToCart={addToCart} />,
     product: <ProductPage product={selectedProduct} onBack={() => navigate("catalog")} onAddToCart={addToCart} />,
-    cart: <CartPage cart={cart} setCart={setCart} onNavigate={navigate} />,
+    cart: <CartPage cart={cart} onOrderPlaced={showToast} setCart={setCart} onNavigate={navigate} />,
     orders: <OrdersPage onNavigate={navigate} onTrackOrder={setSelectedOrderNumber} />,
     tracking: <TrackingPage orderNumber={selectedOrderNumber} />,
     notifications: <NotificationsPage />,

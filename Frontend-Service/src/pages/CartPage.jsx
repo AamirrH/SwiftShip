@@ -31,7 +31,7 @@ const fallbackAddresses = [
   },
 ];
 
-export function CartPage({ cart, onNavigate, setCart }) {
+export function CartPage({ cart, onNavigate, onOrderPlaced, setCart }) {
   const [checkoutStatus, setCheckoutStatus] = useState("idle");
   const [checkoutError, setCheckoutError] = useState("");
   const { data: addresses, status: addressStatus } = useApiResource(
@@ -77,9 +77,10 @@ export function CartPage({ cart, onNavigate, setCart }) {
     setCheckoutError("");
 
     try {
-      await api.createOrder(payload);
+      const createdOrder = await api.createOrder(payload);
       setCheckoutStatus("success");
       setCart([]);
+      onOrderPlaced?.(`Order #${createdOrder.id} has been placed successfully`);
       onNavigate("orders");
     } catch (error) {
       setCheckoutStatus("offline");
