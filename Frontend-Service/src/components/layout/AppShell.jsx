@@ -32,9 +32,11 @@ const adminNavItems = [
 ];
 
 export function AppShell({ activePage, authUser, cartCount, children, notificationCount = 0, onLogout, onNavigate, title }) {
+  const isAdmin = authUser?.role === "ADMIN";
   const primaryNavItems = authUser
     ? navItems
     : [...navItems.filter((item) => item.id !== "account"), { id: "auth", label: "Sign in", icon: LogIn }];
+  const visibleAdminNavItems = isAdmin ? adminNavItems : [];
 
   return (
     <div className="app-shell">
@@ -66,17 +68,21 @@ export function AppShell({ activePage, authUser, cartCount, children, notificati
               Logout
             </button>
           )}
-          <div className="nav-section-label">Admin</div>
-          {adminNavItems.map((item) => (
-            <button
-              className={`nav-item ${activePage === item.id ? "active" : ""}`}
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-            >
-              <item.icon size={20} />
-              {item.label}
-            </button>
-          ))}
+          {visibleAdminNavItems.length > 0 && (
+            <>
+              <div className="nav-section-label">Admin</div>
+              {visibleAdminNavItems.map((item) => (
+                <button
+                  className={`nav-item ${activePage === item.id ? "active" : ""}`}
+                  key={item.id}
+                  onClick={() => onNavigate(item.id)}
+                >
+                  <item.icon size={20} />
+                  {item.label}
+                </button>
+              ))}
+            </>
+          )}
         </nav>
 
         <Button onClick={() => onNavigate("catalog")}>
@@ -151,7 +157,7 @@ export function AppShell({ activePage, authUser, cartCount, children, notificati
             <LogOut size={20} />
           </button>
         )}
-        {adminNavItems.map((item) => (
+        {visibleAdminNavItems.map((item) => (
           <button
             className={activePage === item.id ? "active" : ""}
             key={item.id}

@@ -13,7 +13,7 @@ import {
 import { useMemo, useState } from "react";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
-import { api, setAccessToken } from "../lib/api.js";
+import { api, buildAuthUser, setAccessToken } from "../lib/api.js";
 
 const authBenefits = [
   "Track every order from stock reservation to delivery",
@@ -59,7 +59,11 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
       if (mode === "login") {
         const loginResponse = await api.login({ username, password });
         setAccessToken(loginResponse.accessToken);
-        onAuthSuccess({ username: loginResponse.username ?? username, provider: "Password" });
+        onAuthSuccess(buildAuthUser({
+          accessToken: loginResponse.accessToken,
+          provider: "Password",
+          username: loginResponse.username ?? username,
+        }));
         setMessage({ type: "success", text: "Logged in successfully. Taking you to SwiftShip." });
         onNavigate("home");
         return;
@@ -73,7 +77,12 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
       });
       const loginResponse = await api.login({ username, password });
       setAccessToken(loginResponse.accessToken);
-      onAuthSuccess({ username: loginResponse.username ?? username, email, provider: "Password" });
+      onAuthSuccess(buildAuthUser({
+        accessToken: loginResponse.accessToken,
+        email,
+        provider: "Password",
+        username: loginResponse.username ?? username,
+      }));
       setMessage({ type: "success", text: "Account created and logged in successfully." });
       onNavigate("home");
     } catch (error) {

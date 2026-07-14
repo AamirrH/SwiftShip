@@ -14,7 +14,7 @@ import { AdminRoutesPage } from "./pages/AdminRoutesPage.jsx";
 import { mockCart, mockNotifications, mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 import { useApiResource } from "./hooks/useApiResource.js";
-import { api, clearAuthSession, getAuthUser, setAccessToken, setAuthUser } from "./lib/api.js";
+import { api, buildAuthUser, clearAuthSession, getAuthUser, setAccessToken, setAuthUser } from "./lib/api.js";
 
 const pageTitles = {
   home: "Home",
@@ -31,6 +31,7 @@ const pageTitles = {
 };
 
 const DEFAULT_CUSTOMER_ID = 7;
+const adminPages = new Set(["adminWarehouses", "adminRoutes"]);
 
 export default function App() {
   const [activePage, setActivePage] = useState(() => getPageFromHash());
@@ -52,7 +53,7 @@ export default function App() {
     if (oauthAccessToken) {
       setAccessToken(oauthAccessToken);
       if (oauthUsername) {
-        saveAuthUser({ username: oauthUsername, provider: "Google" });
+        saveAuthUser(buildAuthUser({ accessToken: oauthAccessToken, provider: "Google", username: oauthUsername }));
       }
       window.history.replaceState({}, document.title, "/#home");
       setActivePage("home");
@@ -65,6 +66,12 @@ export default function App() {
     window.addEventListener("hashchange", syncPageFromHash);
     return () => window.removeEventListener("hashchange", syncPageFromHash);
   }, []);
+
+  useEffect(() => {
+    if (adminPages.has(activePage) && authUser?.role !== "ADMIN") {
+      navigate("home");
+    }
+  }, [activePage, authUser]);
 
   function navigate(page) {
     window.location.hash = page;

@@ -28,6 +28,17 @@ export function setAuthUser(authUser) {
   window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(authUser));
 }
 
+export function buildAuthUser({ accessToken, email, provider, username }) {
+  const tokenPayload = decodeJwtPayload(accessToken);
+  return {
+    email: email ?? tokenPayload?.email,
+    provider,
+    role: tokenPayload?.role ?? "CUSTOMER",
+    userId: tokenPayload?.sub,
+    username: username ?? tokenPayload?.email ?? "SwiftShip user",
+  };
+}
+
 export function clearAccessToken() {
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
 }
@@ -35,6 +46,20 @@ export function clearAccessToken() {
 export function clearAuthSession() {
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+}
+
+function decodeJwtPayload(accessToken) {
+  if (!accessToken) return null;
+  const [, payload] = accessToken.split(".");
+  if (!payload) return null;
+
+  try {
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decodedPayload = window.atob(normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "="));
+    return JSON.parse(decodedPayload);
+  } catch {
+    return null;
+  }
 }
 
 async function request(path, options = {}) {
