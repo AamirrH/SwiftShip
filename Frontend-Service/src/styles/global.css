@@ -288,6 +288,21 @@ a {
   white-space: nowrap;
 }
 
+.app-toast {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 40;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 181, 157, 0.38);
+  border-radius: var(--radius-md);
+  background: rgba(29, 32, 38, 0.94);
+  box-shadow: var(--shadow-soft);
+  color: var(--text);
+  font-weight: 800;
+}
+
 .input {
   width: 100%;
   min-height: 42px;

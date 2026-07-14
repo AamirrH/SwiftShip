@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppShell } from "./components/layout/AppShell.jsx";
 import { HomePage } from "./pages/HomePage.jsx";
 import { CatalogPage } from "./pages/CatalogPage.jsx";
@@ -38,6 +38,8 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(mockProducts[0]);
   const [selectedOrderNumber, setSelectedOrderNumber] = useState(null);
   const [authUser, setCurrentAuthUser] = useState(() => getAuthUser());
+  const [toastMessage, setToastMessage] = useState("");
+  const toastTimeoutRef = useRef(null);
   const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
   const { data: unreadNotifications } = useApiResource(
     () => api.getUnreadCustomerNotifications(DEFAULT_CUSTOMER_ID),
@@ -104,6 +106,13 @@ export default function App() {
         },
       ];
     });
+    showToast(`${product.productName} has been added to Cart`);
+  }
+
+  function showToast(message) {
+    setToastMessage(message);
+    window.clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = window.setTimeout(() => setToastMessage(""), 2600);
   }
 
   function saveAuthUser(nextAuthUser) {
@@ -142,6 +151,7 @@ export default function App() {
       title={pageTitles[activePage]}
     >
       {pages[activePage]}
+      {toastMessage && <div className="app-toast">{toastMessage}</div>}
     </AppShell>
   );
 }
