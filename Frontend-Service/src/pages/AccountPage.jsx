@@ -110,8 +110,8 @@ export function AccountPage() {
   }
 
   return (
-    <section className="page">
-      <form onSubmit={saveAddress}>
+    <section className="page account-page">
+      <form className="account-form" onSubmit={saveAddress}>
         <div className="page-header">
           <div>
             <span className="label-caps">Customer profile</span>
@@ -122,8 +122,8 @@ export function AccountPage() {
           </Button>
         </div>
 
-        <div className="split">
-          <Card>
+        <div className="account-overview">
+          <Card className="account-profile-card">
             <div style={{ display: "flex", gap: 16, marginBottom: 22 }}>
               <div className="brand-mark"><UserRound size={22} /></div>
               <div>
@@ -139,15 +139,15 @@ export function AccountPage() {
             </div>
           </Card>
 
-          <div className="grid">
+          <div className="account-preferences">
             <Preference icon={Home} label="Default address" value={formatAddress(defaultAddress)} />
             <Preference icon={MapPinned} label="Saved locations" value={savedLocationLabels(sortedAddresses)} />
             <Preference icon={Bell} label="Notifications" value="Order, ETA, delivered" />
           </div>
         </div>
 
-        <Card>
-          <div className="page-header" style={{ marginBottom: 18 }}>
+        <Card className="account-address-card">
+          <div className="account-card-header">
             <div>
               <span className="label-caps">Delivery address</span>
               <h2 className="section-title" style={{ marginTop: 6 }}>Change saved address</h2>
