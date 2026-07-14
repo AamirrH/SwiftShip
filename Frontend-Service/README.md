@@ -26,17 +26,14 @@ Copy `.env.example` to `.env` when you need to change the backend gateway URL.
 
 ```bash
 VITE_API_BASE_URL=http://localhost:9090
-VITE_AUTH_BASE_URL=http://localhost:9040
 ```
 
 The backend gateway routes auth, product, order, customer, warehouse, routing, tracking, and
 notification traffic through port `9090`. Login responses return an access token that the frontend
 stores locally and sends as a `Bearer` token on gateway-protected requests.
 
-Google OAuth starts at `${VITE_AUTH_BASE_URL}/oauth2/authorization/google` and returns with an
-`accessToken` query parameter, which the app stores automatically. If the gateway does not yet route
-`/oauth2/**` and `/login/oauth2/**`, point `VITE_AUTH_BASE_URL` directly at Auth-Service during
-local OAuth testing. The local Auth-Service default used here is `http://localhost:9040`.
+Google OAuth starts at `${VITE_API_BASE_URL}/oauth2/authorization/google` through the gateway and
+returns with an `accessToken` query parameter, which the app stores automatically.
 
 ## Current Customer Flow
 

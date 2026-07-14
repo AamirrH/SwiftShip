@@ -89,7 +89,7 @@ export function AuthPage({ onNavigate }) {
             ? "A user with that username or email already exists."
             : error.status === 500
             ? "Auth service hit a backend error. Check the Auth-Service logs."
-            : "Auth service is not reachable yet, but this screen is wired to the gateway contracts.",
+            : "Gateway is not reachable yet, or the auth route is not available through the gateway.",
       });
     } finally {
       setIsSubmitting(false);
