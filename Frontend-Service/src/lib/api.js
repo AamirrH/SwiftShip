@@ -65,6 +65,16 @@ export const api = {
     }),
   getOrders: () => request("/orders"),
   getCustomerAddresses: (customerId) => request(`/customers/${customerId}/addresses`),
+  createCustomerAddress: (customerId, payload) =>
+    request(`/customers/${customerId}/addresses`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateCustomerAddress: (customerId, addressId, payload) =>
+    request(`/customers/${customerId}/addresses/${addressId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
   getTracking: (orderNumber) => request(`/tracking/orders/${orderNumber}`),
   getWarehouses: () => request("/admin/warehouses"),
   getWarehouse: (id) => request(`/admin/warehouses/${id}`),

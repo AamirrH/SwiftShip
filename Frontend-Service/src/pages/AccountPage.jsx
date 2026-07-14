@@ -1,50 +1,250 @@
 import { Bell, Home, MapPinned, UserRound } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
+import { useApiResource } from "../hooks/useApiResource.js";
+import { api } from "../lib/api.js";
+
+const DEFAULT_CUSTOMER_ID = 7;
+const emptyAddress = {
+  label: "Home",
+  addressLine: "",
+  city: "",
+  state: "",
+  pincode: "",
+  defaultAddress: true,
+};
+
+const fallbackAddresses = [
+  {
+    id: 3,
+    label: "Work",
+    addressLine: "EON Free Zone, Kharadi",
+    city: "Pune",
+    state: "Maharashtra",
+    pincode: "411014",
+    defaultAddress: true,
+  },
+  {
+    id: 1,
+    label: "Home",
+    addressLine: "Flat 101, North Main Road, Koregaon Park",
+    city: "Pune",
+    state: "Maharashtra",
+    pincode: "411001",
+    defaultAddress: false,
+  },
+];
 
 export function AccountPage() {
+  const { data: loadedAddresses, status: addressStatus } = useApiResource(
+    () => api.getCustomerAddresses(DEFAULT_CUSTOMER_ID),
+    fallbackAddresses,
+    []
+  );
+  const [addresses, setAddresses] = useState(fallbackAddresses);
+  const [selectedAddressId, setSelectedAddressId] = useState(fallbackAddresses[0].id);
+  const [addressForm, setAddressForm] = useState(fallbackAddresses[0]);
+  const [saveStatus, setSaveStatus] = useState("idle");
+  const [saveMessage, setSaveMessage] = useState("");
+
+  const sortedAddresses = useMemo(
+    () => [...addresses].sort((a, b) => Number(Boolean(b.defaultAddress)) - Number(Boolean(a.defaultAddress))),
+    [addresses]
+  );
+  const defaultAddress = sortedAddresses.find((address) => address.defaultAddress) ?? sortedAddresses[0];
+
+  useEffect(() => {
+    setAddresses(loadedAddresses);
+    const nextAddress = loadedAddresses.find((address) => address.defaultAddress) ?? loadedAddresses[0] ?? emptyAddress;
+    setSelectedAddressId(nextAddress.id ?? "new");
+    setAddressForm(nextAddress);
+  }, [loadedAddresses]);
+
+  function selectAddress(addressId) {
+    if (addressId === "new") {
+      setSelectedAddressId("new");
+      setAddressForm(emptyAddress);
+      return;
+    }
+
+    const nextAddress = addresses.find((address) => String(address.id) === addressId);
+    if (!nextAddress) return;
+    setSelectedAddressId(nextAddress.id);
+    setAddressForm(nextAddress);
+  }
+
+  function updateAddressField(field, value) {
+    setAddressForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function saveAddress(event) {
+    event.preventDefault();
+    setSaveStatus("saving");
+    setSaveMessage("");
+
+    const payload = {
+      label: addressForm.label,
+      addressLine: addressForm.addressLine,
+      city: addressForm.city,
+      state: addressForm.state,
+      pincode: addressForm.pincode,
+      defaultAddress: Boolean(addressForm.defaultAddress),
+    };
+
+    try {
+      const savedAddress =
+        selectedAddressId === "new"
+          ? await api.createCustomerAddress(DEFAULT_CUSTOMER_ID, payload)
+          : await api.updateCustomerAddress(DEFAULT_CUSTOMER_ID, selectedAddressId, payload);
+
+      setAddresses((current) => upsertAddress(current, savedAddress));
+      setSelectedAddressId(savedAddress.id);
+      setAddressForm(savedAddress);
+      setSaveStatus("saved");
+      setSaveMessage("Address saved.");
+    } catch (error) {
+      setSaveStatus("error");
+      setSaveMessage(error.status ? `Backend rejected the address with status ${error.status}.` : "Gateway is not reachable.");
+    }
+  }
+
   return (
     <section className="page">
-      <div className="page-header">
-        <div>
-          <span className="label-caps">Customer profile</span>
-          <h1 className="page-title">Account settings</h1>
+      <form onSubmit={saveAddress}>
+        <div className="page-header">
+          <div>
+            <span className="label-caps">Customer profile</span>
+            <h1 className="page-title">Account settings</h1>
+          </div>
+          <Button disabled={saveStatus === "saving"} type="submit">
+            {saveStatus === "saving" ? "Saving..." : "Save changes"}
+          </Button>
         </div>
-        <Button>Save changes</Button>
-      </div>
 
-      <div className="split">
-        <Card>
-          <div style={{ display: "flex", gap: 16, marginBottom: 22 }}>
-            <div className="brand-mark"><UserRound size={22} /></div>
-            <div>
-              <h2 className="section-title" style={{ margin: 0 }}>Aamir Customer</h2>
-              <p className="muted" style={{ margin: "4px 0 0" }}>aamir@example.com</p>
+        <div className="split">
+          <Card>
+            <div style={{ display: "flex", gap: 16, marginBottom: 22 }}>
+              <div className="brand-mark"><UserRound size={22} /></div>
+              <div>
+                <h2 className="section-title" style={{ margin: 0 }}>Aamir Customer</h2>
+                <p className="muted" style={{ margin: "4px 0 0" }}>aamir@example.com</p>
+              </div>
             </div>
-          </div>
-          <div className="grid two">
-            <Field label="Full name" value="Aamir Customer" />
-            <Field label="Phone" value="+91 98765 43210" />
-            <Field label="Email" value="aamir@example.com" />
-            <Field label="Membership" value="SwiftShip customer" />
-          </div>
-        </Card>
+            <div className="grid two">
+              <Field label="Full name" value="Aamir Customer" />
+              <Field label="Phone" value="+91 98765 43210" />
+              <Field label="Email" value="aamir@example.com" />
+              <Field label="Membership" value="SwiftShip customer" />
+            </div>
+          </Card>
 
-        <div className="grid">
-          <Preference icon={Home} label="Default address" value="EON Free Zone, Kharadi, Pune" />
-          <Preference icon={MapPinned} label="Saved locations" value="Home, Work" />
-          <Preference icon={Bell} label="Notifications" value="Order, ETA, delivered" />
+          <div className="grid">
+            <Preference icon={Home} label="Default address" value={formatAddress(defaultAddress)} />
+            <Preference icon={MapPinned} label="Saved locations" value={savedLocationLabels(sortedAddresses)} />
+            <Preference icon={Bell} label="Notifications" value="Order, ETA, delivered" />
+          </div>
         </div>
-      </div>
+
+        <Card>
+          <div className="page-header" style={{ marginBottom: 18 }}>
+            <div>
+              <span className="label-caps">Delivery address</span>
+              <h2 className="section-title" style={{ marginTop: 6 }}>Change saved address</h2>
+            </div>
+            {addressStatus === "fallback" && (
+              <span className="muted">Using sample addresses until the gateway responds.</span>
+            )}
+          </div>
+
+          <label>
+            <span className="label-caps">Choose address</span>
+            <select
+              className="input"
+              onChange={(event) => selectAddress(event.target.value)}
+              style={{ marginTop: 8 }}
+              value={String(selectedAddressId)}
+            >
+              {sortedAddresses.map((address) => (
+                <option key={address.id} value={address.id}>
+                  {address.label || "Saved address"}
+                </option>
+              ))}
+              <option value="new">Add new address</option>
+            </select>
+          </label>
+
+          <div className="grid two" style={{ gap: 12, marginTop: 14 }}>
+            <EditableField label="Label" onChange={(value) => updateAddressField("label", value)} value={addressForm.label} />
+            <EditableField label="Pincode" onChange={(value) => updateAddressField("pincode", value)} value={addressForm.pincode} />
+            <EditableField label="City" onChange={(value) => updateAddressField("city", value)} value={addressForm.city} />
+            <EditableField label="State" onChange={(value) => updateAddressField("state", value)} value={addressForm.state} />
+          </div>
+
+          <label style={{ display: "block", marginTop: 12 }}>
+            <span className="label-caps">Address line</span>
+            <textarea
+              className="input"
+              onChange={(event) => updateAddressField("addressLine", event.target.value)}
+              required
+              rows="3"
+              style={{ marginTop: 8, paddingBottom: 10, paddingTop: 10, resize: "vertical" }}
+              value={addressForm.addressLine}
+            />
+          </label>
+
+          <label style={{ alignItems: "center", display: "flex", gap: 10, marginTop: 14 }}>
+            <input
+              checked={Boolean(addressForm.defaultAddress)}
+              onChange={(event) => updateAddressField("defaultAddress", event.target.checked)}
+              type="checkbox"
+            />
+            <span className="muted">Use this as my default delivery address</span>
+          </label>
+
+          {saveMessage && (
+            <p className={saveStatus === "error" ? "" : "muted"} style={{ marginBottom: 0 }}>
+              {saveMessage}
+            </p>
+          )}
+        </Card>
+      </form>
     </section>
   );
+}
+
+function upsertAddress(addresses, savedAddress) {
+  const nextAddresses = addresses.filter((address) => address.id !== savedAddress.id);
+  if (savedAddress.defaultAddress) {
+    return [{ ...savedAddress }, ...nextAddresses.map((address) => ({ ...address, defaultAddress: false }))];
+  }
+  return [{ ...savedAddress }, ...nextAddresses];
+}
+
+function savedLocationLabels(addresses) {
+  const labels = addresses.map((address) => address.label).filter(Boolean);
+  return labels.length ? labels.join(", ") : "No saved locations";
+}
+
+function formatAddress(address) {
+  if (!address) return "No default address";
+  return [address.addressLine, address.city, address.state, address.pincode].filter(Boolean).join(", ");
 }
 
 function Field({ label, value }) {
   return (
     <label>
       <span className="label-caps">{label}</span>
-      <input className="input" defaultValue={value} style={{ marginTop: 8 }} />
+      <input className="input" defaultValue={value} readOnly style={{ marginTop: 8 }} />
+    </label>
+  );
+}
+
+function EditableField({ label, onChange, value }) {
+  return (
+    <label>
+      <span className="label-caps">{label}</span>
+      <input className="input" onChange={(event) => onChange(event.target.value)} required style={{ marginTop: 8 }} value={value ?? ""} />
     </label>
   );
 }
