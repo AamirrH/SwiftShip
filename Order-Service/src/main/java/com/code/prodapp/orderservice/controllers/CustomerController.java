@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -40,10 +41,44 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.getCustomerById(customerId));
     }
 
+    @GetMapping("/me/addresses")
+    public ResponseEntity<List<CustomerAddressResponseDTO>> getMyCustomerAddresses(
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
+    ) {
+        return ResponseEntity.ok(customerAddressService.getCustomerAddresses(
+                customerService.findOrCreateCustomerByEmail(userEmail).getId()
+        ));
+    }
+
     @PostMapping
     public ResponseEntity<CustomerResponseDTO> createCustomer(@RequestBody CreateCustomerRequestDTO requestDTO) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(customerService.createCustomer(requestDTO));
+    }
+
+    @PostMapping("/me/addresses")
+    public ResponseEntity<CustomerAddressResponseDTO> createMyCustomerAddress(
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @RequestBody CreateCustomerAddressRequestDTO requestDTO
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(customerAddressService.createCustomerAddress(
+                        customerService.findOrCreateCustomerByEmail(userEmail),
+                        requestDTO
+                ));
+    }
+
+    @PatchMapping("/me/addresses/{addressId}")
+    public ResponseEntity<CustomerAddressResponseDTO> updateMyCustomerAddress(
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+            @PathVariable Long addressId,
+            @RequestBody UpdateCustomerAddressRequestDTO requestDTO
+    ) {
+        return ResponseEntity.ok(customerAddressService.updateCustomerAddress(
+                customerService.findOrCreateCustomerByEmail(userEmail),
+                addressId,
+                requestDTO
+        ));
     }
 
     @PatchMapping("/{customerId}")

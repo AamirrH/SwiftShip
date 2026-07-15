@@ -44,6 +44,12 @@ public class CustomerAddressService {
         log.info("Creating address for customer {}", customerId);
 
         Customer customer = customerService.findCustomerEntityById(customerId);
+        return createCustomerAddress(customer, requestDTO);
+    }
+
+    @Transactional
+    public CustomerAddressResponseDTO createCustomerAddress(Customer customer, CreateCustomerAddressRequestDTO requestDTO) {
+        log.info("Creating address for customer email {}", customer.getEmail());
 
         CustomerAddress address = new CustomerAddress();
         address.setCustomer(customer);
@@ -76,6 +82,15 @@ public class CustomerAddressService {
         address.setDefaultAddress(Boolean.TRUE.equals(requestDTO.getDefaultAddress()));
 
         return mapToResponseDTO(customerAddressRepository.save(address));
+    }
+
+    @Transactional
+    public CustomerAddressResponseDTO updateCustomerAddress(
+            Customer customer,
+            Long addressId,
+            UpdateCustomerAddressRequestDTO requestDTO
+    ) {
+        return updateCustomerAddress(customer.getId(), addressId, requestDTO);
     }
 
     @Transactional

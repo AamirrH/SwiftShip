@@ -133,6 +133,17 @@ export const api = {
     }),
   getOrders: () => request("/orders"),
   getMyOrders: () => request("/orders/my"),
+  getMyCustomerAddresses: () => request("/customers/me/addresses"),
+  createMyCustomerAddress: (payload) =>
+    request("/customers/me/addresses", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateMyCustomerAddress: (addressId, payload) =>
+    request(`/customers/me/addresses/${addressId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
   getCustomerAddresses: (customerId) => request(`/customers/${customerId}/addresses`),
   createCustomerAddress: (customerId, payload) =>
     request(`/customers/${customerId}/addresses`, {

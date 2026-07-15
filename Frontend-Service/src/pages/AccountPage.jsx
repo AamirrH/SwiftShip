@@ -5,7 +5,6 @@ import { Card } from "../components/ui/Card.jsx";
 import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
 
-const DEFAULT_CUSTOMER_ID = 7;
 const emptyAddress = {
   label: "Home",
   addressLine: "",
@@ -38,9 +37,9 @@ const fallbackAddresses = [
 
 export function AccountPage({ authUser }) {
   const { data: loadedAddresses, status: addressStatus } = useApiResource(
-    () => api.getCustomerAddresses(DEFAULT_CUSTOMER_ID),
+    () => (authUser ? api.getMyCustomerAddresses() : Promise.resolve([])),
     fallbackAddresses,
-    []
+    [authUser?.email, authUser?.username]
   );
   const [addresses, setAddresses] = useState(fallbackAddresses);
   const [selectedAddressId, setSelectedAddressId] = useState(fallbackAddresses[0].id);
@@ -97,8 +96,8 @@ export function AccountPage({ authUser }) {
     try {
       const savedAddress =
         selectedAddressId === "new"
-          ? await api.createCustomerAddress(DEFAULT_CUSTOMER_ID, payload)
-          : await api.updateCustomerAddress(DEFAULT_CUSTOMER_ID, selectedAddressId, payload);
+          ? await api.createMyCustomerAddress(payload)
+          : await api.updateMyCustomerAddress(selectedAddressId, payload);
 
       setAddresses((current) => upsertAddress(current, savedAddress));
       setSelectedAddressId(savedAddress.id);
