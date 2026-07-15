@@ -153,7 +153,13 @@ public class RoutingService {
     }
 
     public ModelRouteResponse getShortestRoute(RouteRequestDTO routeRequestDTO) {
-        List<RouteServiceDTO> routeServiceDTOS = getAllRoutes(routeRequestDTO);
+        List<RouteServiceDTO> routeServiceDTOS;
+        try {
+            routeServiceDTOS = getAllRoutes(routeRequestDTO);
+        } catch (RuntimeException exception) {
+            log.warn("External route calculation failed. Using local fallback route reason={}", exception.getMessage());
+            routeServiceDTOS = List.of(buildFallbackRoute(routeRequestDTO));
+        }
 
         String systemPrompt = """
                 You are a Shortest-Route Finder Model, Your sole purpose is to find the shortest route between two 
