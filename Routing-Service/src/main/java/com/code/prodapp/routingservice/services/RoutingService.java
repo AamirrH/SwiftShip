@@ -35,6 +35,8 @@ public class RoutingService {
     private static final String FULFILLMENT_EVENTS_TOPIC = "fulfillment-events";
     private static final String WAREHOUSE_ASSIGNED_EVENT = "WAREHOUSE_ASSIGNED";
     private static final String ROUTE_CALCULATED_EVENT = "ROUTE_CALCULATED";
+    private static final double FALLBACK_ROAD_DISTANCE_FACTOR = 1.35;
+    private static final double FALLBACK_SPEED_KMPH = 45.0;
 
     @Value("${osr.api.key}")
     private String apiKey;
@@ -70,7 +72,7 @@ public class RoutingService {
 
     public List<RouteServiceDTO> routeCalculationFallback(RouteRequestDTO routeRequestDTO, Throwable throwable) {
         log.warn("Route calculation fallback hit reason={}", throwable.getMessage());
-        throw new RouteServiceDownException("Route calculation is temporarily unavailable. Please try again later.");
+        return List.of(buildFallbackRoute(routeRequestDTO));
     }
 
     @Transactional
@@ -194,16 +196,81 @@ public class RoutingService {
                     .call()
                     .entity(ModelRouteResponse.class);
         } catch (Exception e) {
-            throw new RouteServiceDownException("Route Service is unavailable at this time. Please try again later.");
+            log.warn("Route AI selection failed. Using local route selection reason={}", e.getMessage());
+            return selectLocalRoute(routeServiceDTOS);
         }
 
         if (routeResponse == null) {
-            throw new RouteNotFoundException("Route not found");
+            return selectLocalRoute(routeServiceDTOS);
         }
 
         return new ModelRouteResponse(routeResponse.getSelectedRouteId(), routeResponse.getTotalDistance(),
                 routeResponse.getTimeToReach(), routeResponse.getReasoning());
 
+    }
+
+    private ModelRouteResponse selectLocalRoute(List<RouteServiceDTO> routeServiceDTOS) {
+        RouteServiceDTO selectedRoute = routeServiceDTOS
+                .stream()
+                .min((left, right) -> {
+                    int timeComparison = Double.compare(left.getTimeToReach(), right.getTimeToReach());
+                    if (timeComparison != 0) {
+                        return timeComparison;
+                    }
+                    return Double.compare(left.getTotalDistance(), right.getTotalDistance());
+                })
+                .orElseThrow(() -> new RouteNotFoundException("Route not found"));
+
+        return new ModelRouteResponse(
+                selectedRoute.getRouteId(),
+                selectedRoute.getTotalDistance(),
+                selectedRoute.getTimeToReach(),
+                "Selected locally because external route optimization was unavailable."
+        );
+    }
+
+    private RouteServiceDTO buildFallbackRoute(RouteRequestDTO routeRequestDTO) {
+        double distanceKm = calculateFallbackDistanceKm(routeRequestDTO);
+        double etaMinutes = Math.max(1.0, (distanceKm / FALLBACK_SPEED_KMPH) * 60.0);
+        return new RouteServiceDTO(
+                1L,
+                round(distanceKm),
+                round(etaMinutes)
+        );
+    }
+
+    private double calculateFallbackDistanceKm(RouteRequestDTO routeRequestDTO) {
+        if (routeRequestDTO == null || routeRequestDTO.getCoordinates() == null || routeRequestDTO.getCoordinates().size() < 2) {
+            return 1.0;
+        }
+
+        List<Double> origin = routeRequestDTO.getCoordinates().get(0);
+        List<Double> destination = routeRequestDTO.getCoordinates().get(1);
+        if (origin == null || destination == null || origin.size() < 2 || destination.size() < 2) {
+            return 1.0;
+        }
+
+        double warehouseLongitude = origin.get(0);
+        double warehouseLatitude = origin.get(1);
+        double customerLongitude = destination.get(0);
+        double customerLatitude = destination.get(1);
+        return Math.max(1.0, haversineKm(warehouseLatitude, warehouseLongitude, customerLatitude, customerLongitude)
+                * FALLBACK_ROAD_DISTANCE_FACTOR);
+    }
+
+    private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        final double earthRadiusKm = 6371.0;
+        double latitudeDistance = Math.toRadians(lat2 - lat1);
+        double longitudeDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latitudeDistance / 2) * Math.sin(latitudeDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(longitudeDistance / 2) * Math.sin(longitudeDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadiusKm * c;
+    }
+
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
 }
