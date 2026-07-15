@@ -38,8 +38,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 return chain.filter(exchange);
             }
 
-            String authToken = exchange.getRequest().getHeaders().getFirst("Authorization");
-            if(authToken == null || !authToken.startsWith("Bearer ")) {
+            String token = resolveToken(exchange.getRequest());
+            if(token == null || token.isBlank()) {
                 // No Token Found, do not accept this request
                 logger.warn("Gateway auth filter rejected missing bearer token requestId={} path={} requiredRole={}",
                         requestId,
@@ -52,7 +52,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 // Validate the JWT
 
                 try {
-                    String token = authToken.split("Bearer ")[1];
                     Long userId = jwtCheckerService.getUserIdFromToken(token);
                     String email = jwtCheckerService.getEmailFromToken(token);
                     String role = jwtCheckerService.getRoleFromToken(token);
@@ -98,6 +97,15 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             }
         });
+    }
+
+    private String resolveToken(ServerHttpRequest request) {
+        String authToken = request.getHeaders().getFirst("Authorization");
+        if (authToken != null && authToken.startsWith("Bearer ")) {
+            return authToken.substring("Bearer ".length());
+        }
+
+        return request.getQueryParams().getFirst("access_token");
     }
 
     private boolean hasRequiredRole(String requiredRole, String actualRole) {

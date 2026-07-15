@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:9090";
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL ?? buildDefaultWebSocketBaseUrl(API_BASE_URL);
 const ACCESS_TOKEN_STORAGE_KEY = "swiftship.accessToken";
 const AUTH_USER_STORAGE_KEY = "swiftship.authUser";
 
@@ -60,6 +61,22 @@ function decodeJwtPayload(accessToken) {
   } catch {
     return null;
   }
+}
+
+function buildDefaultWebSocketBaseUrl(apiBaseUrl) {
+  if (apiBaseUrl.startsWith("https://")) {
+    return apiBaseUrl.replace("https://", "wss://");
+  }
+  return apiBaseUrl.replace("http://", "ws://");
+}
+
+function buildWebSocketUrl(path) {
+  const accessToken = getAccessToken();
+  const url = new URL(`${WS_BASE_URL}${path}`);
+  if (accessToken) {
+    url.searchParams.set("access_token", accessToken);
+  }
+  return url.toString();
 }
 
 async function request(path, options = {}) {
@@ -128,6 +145,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getTracking: (orderNumber) => request(`/tracking/orders/${orderNumber}`),
+  connectTracking: (orderNumber) => new WebSocket(buildWebSocketUrl(`/ws/tracking/orders/${orderNumber}`)),
   getWarehouses: () => request("/admin/warehouses"),
   getWarehouse: (id) => request(`/admin/warehouses/${id}`),
   createWarehouse: (payload) =>

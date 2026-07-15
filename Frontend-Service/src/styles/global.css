@@ -1160,6 +1160,11 @@ a {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
 }
 
+.tracking-truck-pin {
+  transform: translate(-50%, -50%);
+  transition: left 420ms ease, top 420ms ease;
+}
+
 .notification-card {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) auto;

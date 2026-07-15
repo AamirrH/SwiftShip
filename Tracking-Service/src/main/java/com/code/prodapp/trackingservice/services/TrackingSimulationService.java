@@ -29,6 +29,7 @@ public class TrackingSimulationService {
     private static final double SIMULATION_TICK_SECONDS = SIMULATION_TICK_MILLISECONDS / 1000.0;
 
     private final LiveTrackingStateService liveTrackingStateService;
+    private final TrackingWebSocketPublisher trackingWebSocketPublisher;
     private final TrackingSessionRepository trackingSessionRepository;
     private final DriverService driverService;
     private final KafkaTemplate<String, Object> trackingKafkaTemplate;
@@ -95,7 +96,9 @@ public class TrackingSimulationService {
             // Saves to Database
             trackingSessionRepository.save(trackingSession);
             // Saves to Redis
-            liveTrackingStateService.saveLatestState(trackingSession);
+            TrackingSessionResponseDTO latestTrackingState = liveTrackingStateService.saveLatestState(trackingSession);
+            // Pushes to WebSocket subscribers
+            trackingWebSocketPublisher.publish(latestTrackingState);
 
             publishEtaUpdatedEvent(trackingSession);
             if (TrackingStatus.DELIVERED.equals(trackingSession.getTrackingStatus())) {

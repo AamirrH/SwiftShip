@@ -1,4 +1,5 @@
 import { Clock3, Navigation, Route, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { OrderTimeline } from "../components/orders/OrderTimeline.jsx";
 import { TrackingMap } from "../components/tracking/TrackingMap.jsx";
 import { Card } from "../components/ui/Card.jsx";
@@ -9,12 +10,53 @@ import { mockTracking } from "../data/mockData.js";
 
 export function TrackingPage({ orderNumber }) {
   const trackingOrderNumber = orderNumber ?? mockTracking.orderNumber;
+  const hasSelectedOrder = Boolean(orderNumber);
   const { data, status, error } = useApiResource(() => api.getTracking(trackingOrderNumber), mockTracking, [trackingOrderNumber]);
+  const [liveTracking, setLiveTracking] = useState(null);
+  const [socketStatus, setSocketStatus] = useState("connecting");
+
+  useEffect(() => {
+    setLiveTracking(null);
+  }, [trackingOrderNumber]);
+
+  useEffect(() => {
+    if (status === "ready") {
+      setLiveTracking(data);
+    }
+  }, [data, status]);
+
+  useEffect(() => {
+    if (!hasSelectedOrder || !trackingOrderNumber) {
+      setSocketStatus("offline");
+      return undefined;
+    }
+
+    setSocketStatus("connecting");
+    const socket = api.connectTracking(trackingOrderNumber);
+
+    socket.onopen = () => setSocketStatus("live");
+    socket.onmessage = (event) => {
+      try {
+        setLiveTracking(JSON.parse(event.data));
+        setSocketStatus("live");
+      } catch {
+        setSocketStatus("reconnecting");
+      }
+    };
+    socket.onerror = () => setSocketStatus("reconnecting");
+    socket.onclose = () => setSocketStatus("offline");
+
+    return () => {
+      socket.close();
+    };
+  }, [hasSelectedOrder, trackingOrderNumber]);
+
   const tracking = {
     ...mockTracking,
     ...data,
-    steps: data.steps ?? mockTracking.steps,
-    currentLocation: data.currentLocation ?? mockTracking.currentLocation,
+    ...liveTracking,
+    steps: liveTracking?.steps ?? data.steps ?? mockTracking.steps,
+    currentLocation: liveTracking?.currentLocation ?? data.currentLocation ?? buildLocationLabel(liveTracking ?? data),
   };
 
   return (
@@ -26,6 +68,7 @@ export function TrackingPage({ orderNumber }) {
           <p className="muted">
             {status === "fallback" ? fallbackMessage(error) : tracking.customerAddress}
           </p>
+          <p className="muted" style={{ marginTop: 8 }}>{socketMessage(socketStatus)}</p>
         </div>
         <StatusBadge>{String(tracking.status ?? tracking.trackingStatus).replaceAll("_", " ")}</StatusBadge>
       </div>
@@ -33,14 +76,14 @@ export function TrackingPage({ orderNumber }) {
       <Card>
         <OrderTimeline steps={tracking.steps} />
         <div className="grid three">
-          <Info icon={Clock3} label="Current ETA" value={`${Math.round(tracking.currentEtaMinutes)} min`} />
-          <Info icon={Route} label="Remaining" value={`${tracking.remainingDistanceKm} km`} />
+          <Info icon={Clock3} label="Current ETA" value={`${Math.round(tracking.currentEtaMinutes ?? 0)} min`} />
+          <Info icon={Route} label="Remaining" value={`${formatDistance(tracking.remainingDistanceKm)} km`} />
           <Info icon={Navigation} label="Location" value={tracking.currentLocation} />
         </div>
       </Card>
 
       <div className="split" style={{ marginTop: 24 }}>
-        <TrackingMap />
+        <TrackingMap tracking={tracking} />
         <Card>
           <span className="label-caps">Delivery partner</span>
           <h2 className="section-title" style={{ fontSize: 28, margin: "8px 0" }}>{tracking.driverName}</h2>
@@ -54,6 +97,33 @@ export function TrackingPage({ orderNumber }) {
       </div>
     </section>
   );
+}
+
+function buildLocationLabel(tracking) {
+  if (tracking?.currentLatitude == null || tracking?.currentLongitude == null) {
+    return mockTracking.currentLocation;
+  }
+  return `${tracking.currentLatitude.toFixed(4)}, ${tracking.currentLongitude.toFixed(4)}`;
+}
+
+function formatDistance(distance) {
+  if (distance == null) {
+    return "0.0";
+  }
+  return Number(distance).toFixed(1);
+}
+
+function socketMessage(socketStatus) {
+  if (socketStatus === "live") {
+    return "Live updates are connected.";
+  }
+  if (socketStatus === "connecting") {
+    return "Connecting live updates...";
+  }
+  if (socketStatus === "reconnecting") {
+    return "Live updates are reconnecting.";
+  }
+  return "Live updates are temporarily offline.";
 }
 
 function fallbackMessage(error) {
