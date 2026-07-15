@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -85,6 +84,13 @@ public class RoutingService {
                 warehouseAssignedEvent.getOrderNumber(),
                 warehouseAssignedEvent.getWarehouseId());
         if (!WAREHOUSE_ASSIGNED_EVENT.equals(warehouseAssignedEvent.getEventType())) {
+            return;
+        }
+        if (!isValidWarehouseAssignedEvent(warehouseAssignedEvent)) {
+            log.warn("Skipping malformed warehouse assignment event orderNumber={} customerId={} warehouseId={}",
+                    warehouseAssignedEvent.getOrderNumber(),
+                    warehouseAssignedEvent.getCustomerId(),
+                    warehouseAssignedEvent.getWarehouseId());
             return;
         }
 
@@ -185,12 +191,11 @@ public class RoutingService {
         PromptTemplate promptTemplate = new PromptTemplate(systemPrompt);
 
         // Validate before rendering the text
+        routeServiceDTOS = routeServiceDTOS.stream()
+                .filter(this::isValidRouteServiceDTO)
+                .toList();
         if (routeServiceDTOS.isEmpty()) {
             throw new RouteNotFoundException("Routes not returned");
-        }
-
-        if (routeServiceDTOS.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("A Route Service DTO is required");
         }
 
         // Render the system prompt with the parameters
@@ -207,13 +212,55 @@ public class RoutingService {
             return selectLocalRoute(routeServiceDTOS);
         }
 
-        if (routeResponse == null) {
+        if (!isValidModelRouteResponse(routeResponse)) {
+            log.warn("Route AI returned an incomplete route response. Using local route selection.");
             return selectLocalRoute(routeServiceDTOS);
         }
 
         return new ModelRouteResponse(routeResponse.getSelectedRouteId(), routeResponse.getTotalDistance(),
                 routeResponse.getTimeToReach(), routeResponse.getReasoning());
 
+    }
+
+    private boolean isValidWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent) {
+        return warehouseAssignedEvent != null
+                && warehouseAssignedEvent.getOrderNumber() != null
+                && warehouseAssignedEvent.getCustomerId() != null
+                && warehouseAssignedEvent.getWarehouseId() != null
+                && isValidLatitude(warehouseAssignedEvent.getCustomerLatitude())
+                && isValidLongitude(warehouseAssignedEvent.getCustomerLongitude())
+                && isValidLatitude(warehouseAssignedEvent.getWarehouseLatitude())
+                && isValidLongitude(warehouseAssignedEvent.getWarehouseLongitude());
+    }
+
+    private boolean isValidModelRouteResponse(ModelRouteResponse routeResponse) {
+        return routeResponse != null
+                && routeResponse.getSelectedRouteId() != null
+                && routeResponse.getTotalDistance() != null
+                && routeResponse.getTimeToReach() != null
+                && Double.isFinite(routeResponse.getTotalDistance())
+                && Double.isFinite(routeResponse.getTimeToReach())
+                && routeResponse.getTotalDistance() > 0
+                && routeResponse.getTimeToReach() > 0;
+    }
+
+    private boolean isValidRouteServiceDTO(RouteServiceDTO routeServiceDTO) {
+        return routeServiceDTO != null
+                && routeServiceDTO.getRouteId() != null
+                && routeServiceDTO.getTotalDistance() != null
+                && routeServiceDTO.getTimeToReach() != null
+                && Double.isFinite(routeServiceDTO.getTotalDistance())
+                && Double.isFinite(routeServiceDTO.getTimeToReach())
+                && routeServiceDTO.getTotalDistance() > 0
+                && routeServiceDTO.getTimeToReach() > 0;
+    }
+
+    private boolean isValidLatitude(double latitude) {
+        return Double.isFinite(latitude) && latitude >= -90.0 && latitude <= 90.0;
+    }
+
+    private boolean isValidLongitude(double longitude) {
+        return Double.isFinite(longitude) && longitude >= -180.0 && longitude <= 180.0;
     }
 
     private ModelRouteResponse selectLocalRoute(List<RouteServiceDTO> routeServiceDTOS) {
