@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -153,17 +154,54 @@ public class CustomerAddressService {
             return;
         }
 
-        GeocodingResultDTO geocodingResultDTO = geoapifyGeocodingService.geocodeAddress(buildAddressForGeocoding(address));
-        address.setLat(geocodingResultDTO.getLat());
-        address.setLng(geocodingResultDTO.getLng());
+        String addressForGeocoding = buildAddressForGeocoding(address);
+        try {
+            GeocodingResultDTO geocodingResultDTO = geoapifyGeocodingService.geocodeAddress(addressForGeocoding);
+            address.setLat(geocodingResultDTO.getLat());
+            address.setLng(geocodingResultDTO.getLng());
+        } catch (RuntimeException exception) {
+            double[] fallbackCoordinates = fallbackCoordinatesFor(address.getCity());
+            address.setLat(fallbackCoordinates[0]);
+            address.setLng(fallbackCoordinates[1]);
+            log.warn("Could not geocode customer address='{}'. Saving with fallback coordinates lat={} lng={} reason={}",
+                    addressForGeocoding,
+                    address.getLat(),
+                    address.getLng(),
+                    exception.getMessage());
+        }
     }
 
     private String buildAddressForGeocoding(CustomerAddress address) {
-        return String.join(", ",
-                address.getAddressLine(),
-                address.getCity(),
-                address.getState(),
-                address.getPincode()
-        );
+        return Stream.of(
+                        address.getAddressLine(),
+                        address.getCity(),
+                        address.getState(),
+                        address.getPincode()
+                )
+                .filter(value -> value != null && !value.isBlank())
+                .map(String::trim)
+                .reduce((left, right) -> left + ", " + right)
+                .orElse("India");
+    }
+
+    private double[] fallbackCoordinatesFor(String city) {
+        if (city == null) {
+            return new double[]{20.5937, 78.9629};
+        }
+
+        return switch (city.trim().toLowerCase()) {
+            case "pune" -> new double[]{18.5204, 73.8567};
+            case "mumbai" -> new double[]{19.0760, 72.8777};
+            case "delhi", "new delhi" -> new double[]{28.6139, 77.2090};
+            case "bengaluru", "bangalore" -> new double[]{12.9716, 77.5946};
+            case "hyderabad" -> new double[]{17.3850, 78.4867};
+            case "chennai" -> new double[]{13.0827, 80.2707};
+            case "kolkata" -> new double[]{22.5726, 88.3639};
+            case "ahmedabad" -> new double[]{23.0225, 72.5714};
+            case "jaipur" -> new double[]{26.9124, 75.7873};
+            case "lucknow" -> new double[]{26.8467, 80.9462};
+            case "nagpur" -> new double[]{21.1458, 79.0882};
+            default -> new double[]{20.5937, 78.9629};
+        };
     }
 }
