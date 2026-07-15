@@ -1,81 +1,76 @@
-# SwiftShip - Real-Time Order Fulfillment and Delivery Tracking
+# SwiftShip - Distributed Order Fulfillment and Live Delivery Tracking
 
 <img width="3096" height="3072" alt="SwiftShip_Icon" src="https://github.com/user-attachments/assets/1478f836-06ba-4ed1-ac4c-cc42e8c7168c" />
 
-SwiftShip is a Spring Boot microservices project that simulates quick-commerce order fulfillment and delivery tracking. It is built as a portfolio/learning system for distributed backend patterns: API Gateway routing, JWT auth, Kafka event choreography, PostGIS warehouse selection, external route calculation, AI route choice, simulated tracking, Redis live state, notifications, and a React frontend.
+SwiftShip is a full-stack microservices-based order fulfillment and delivery tracking platform built as a portfolio project. It simulates the backend flow of a quick-commerce/logistics system: customers place orders, inventory is reserved, the nearest warehouse is selected, a route is calculated, a driver/tracking session is created, and the customer receives live delivery updates and notifications.
 
-The project is currently being prepared for deployment on free-tier infrastructure such as Render, Neon, Aiven Kafka, and a Redis test database, so recent changes deliberately reduce avoidable database/Kafka churn.
+The project was built over roughly 2-3 months through many small, organic commits and real deployment/debugging iterations. The goal was to go beyond CRUD APIs and build a system that demonstrates service boundaries, asynchronous event choreography, fault tolerance, production configuration, and frontend/backend integration.
 
-## Current State
+## Live Links
 
-SwiftShip is now implemented through the full backend order lifecycle:
+| Resource | Link |
+| --- | --- |
+| Frontend demo | https://swift-ship-nu.vercel.app/ |
+| Repository | https://github.com/AamirrH/SwiftShip |
+| API Gateway | https://swiftship-api-gateway.onrender.com |
+| Eureka Dashboard | https://swiftship-u7gw.onrender.com |
+
+> Note: services are deployed on free-tier infrastructure, so cold starts or temporary latency can happen.
+
+## Deployed Infrastructure
+
+SwiftShip is deployed across several free-tier/cloud services:
+
+| Layer | Platform | Purpose |
+| --- | --- | --- |
+| Frontend | Vercel | React/Vite customer and admin console |
+| Backend services | Render | Independently deployed Spring Boot services |
+| Databases | Neon PostgreSQL | Separate service databases for auth, orders, inventory, warehouse, routing, tracking, notifications |
+| Kafka | Aiven Kafka | Event-driven communication between services |
+| Redis | Redis test DB | Latest tracking state / live delivery cache |
+| Service discovery | Eureka on Render | Runtime service registration and gateway discovery |
+| Email provider | Resend | Email notification layer |
+
+## Microservices
+
+| Service | Role |
+| --- | --- |
+| `API-Gateway` | Single backend entry point for the frontend, JWT validation, CORS, route forwarding, role-aware access |
+| `Auth-Service` | Manual signup/login, Google OAuth2, JWT access token generation |
+| `Inventory-Service` | Product catalog, stock checks, stock reservation/reduction/restoration |
+| `Order-Service` | Customers, saved addresses, cart checkout, order creation, grouped order views, cancellation |
+| `Warehouse-Service` | Warehouse data, PostGIS nearest active warehouse selection, warehouse assignment events |
+| `Routing-Service` | Route calculation using OpenRouteService, Gemini/Spring AI route choice, local route fallback |
+| `Tracking-Service` | Driver assignment, tracking sessions, Redis latest state, simulated delivery movement, WebSocket-ready tracking flow |
+| `Notification-Service` | In-app notifications, Kafka lifecycle listeners, Resend email integration |
+| `Discovery-Service` | Eureka service registry for deployed backend services |
+| `Frontend-Service` | React/Vite customer/admin dashboard |
+
+## End-to-End Flow
 
 ```text
-Customer signs in
-  -> browses product catalog
-  -> places an order with saved delivery address
-  -> Order-Service stores the order as PLACED and publishes ORDER_PLACED
-  -> Inventory-Service reserves/reduces stock and publishes ORDER_CONFIRMED
-  -> Order-Service marks the order CONFIRMED
+Customer logs in through JWT/OAuth2
+  -> browses products from Inventory-Service
+  -> adds items to cart
+  -> selects/saves delivery address
+  -> places order through API-Gateway
+  -> Order-Service persists order and emits ORDER_PLACED
+  -> Inventory-Service consumes event and reserves stock
+  -> Inventory-Service emits ORDER_CONFIRMED
+  -> Order-Service updates order status
   -> Warehouse-Service selects nearest active warehouse using PostGIS
-  -> Routing-Service calculates route alternatives and selects a route with Gemini/Spring AI
-  -> Tracking-Service creates a tracking session, assigns a simulated driver, and moves delivery state
-  -> Notification-Service stores in-app notifications and can send email through Resend
-  -> Frontend shows catalog, cart, orders, notifications, tracking snapshot, auth state, and account/address management
+  -> Warehouse-Service emits WAREHOUSE_ASSIGNED
+  -> Routing-Service calculates/falls back to route alternatives
+  -> Routing-Service emits ROUTE_CALCULATED
+  -> Tracking-Service creates tracking session and assigns simulated driver
+  -> Tracking-Service updates delivery state and ETA
+  -> Notification-Service stores customer notifications and sends email where enabled
+  -> Frontend displays orders, tracking, notifications, and account state
 ```
 
-True browser live tracking over WebSocket is the next planned tracking milestone. The backend currently updates tracking state on a scheduled simulation tick and exposes the latest state through REST/Redis-backed lookup.
+## Event-Driven Architecture
 
-## Services
-
-| Service | Local Port | Current Role |
-| --- | ---: | --- |
-| `Discovery-Service` | `8761` | Eureka service registry |
-| `Config-Server` | `9080` | Centralized Spring Cloud Config |
-| `API-Gateway` | `9090` | Single frontend entry point, JWT validation, role route protection, OAuth routing |
-| `Auth-Service` | `9040` local setup | Signup, login, Google OAuth, JWT access/refresh token generation |
-| `Inventory-Service` | `9010` local setup | Product catalog, stock checks, stock reserve/release |
-| `Order-Service` | `9020` local setup | Customers, addresses, orders, order items, order cancellation |
-| `Notification-Service` | `9050` | In-app notification CRUD, Kafka listeners, Resend email service |
-| `Warehouse-Service` | `9060` local setup | Warehouse CRUD, PostGIS nearest active warehouse selection |
-| `Routing-Service` | `9070` local setup | OpenRouteService routes, Gemini/Spring AI route choice |
-| `Tracking-Service` | `9099` | Driver CRUD, tracking sessions, Redis latest state, scheduled simulated delivery movement |
-| `Frontend-Service` | `5173` Vite default | React customer/admin console |
-
-Some local ports are stored in developer-local `application.properties` files and should be moved to environment/config-server values before production deployment.
-
-## Architecture Snapshot
-
-```text
-React Frontend
-  |
-  v
-API-Gateway :9090
-  |
-  |-- /auth/**, /oauth2/**, /login/oauth2/** -> Auth-Service
-  |-- /products/**                          -> Inventory-Service
-  |-- /orders/**, /customers/**             -> Order-Service
-  |-- /admin/warehouses/**                  -> Warehouse-Service
-  |-- /routes/**                            -> Routing-Service
-  |-- /tracking/**, /drivers/**             -> Tracking-Service
-  |-- /notifications/**, /emails/**         -> Notification-Service
-  |
-  v
-Eureka Discovery-Service
-
-Kafka carries lifecycle events.
-PostgreSQL/Neon stores service data.
-PostGIS powers nearest warehouse selection.
-OpenRouteService calculates routes.
-Gemini/Spring AI chooses routes.
-Redis stores latest tracking state.
-```
-
-## Kafka Topics and Free-Tier Constraint
-
-Aiven free tier limits the project to a small number of topics, so SwiftShip groups related events instead of creating one topic per event type.
-
-Current topic style:
+SwiftShip uses Kafka for the fulfillment pipeline. Because Aiven's free tier has topic limits, events are grouped into a small set of topics with event-type fields instead of creating one topic per event.
 
 ```text
 order-events
@@ -83,245 +78,115 @@ fulfillment-events
 tracking-events
 ```
 
-Representative event flow:
+Representative events:
 
 ```text
-Order-Service      -- ORDER_PLACED       --> order-events
-Inventory-Service  -- ORDER_CONFIRMED    --> order-events / fulfillment flow
-Warehouse-Service  -- WAREHOUSE_ASSIGNED --> fulfillment-events
-Routing-Service    -- ROUTE_CALCULATED   --> fulfillment-events
-Tracking-Service   -- ETA_UPDATED        --> tracking-events
-Tracking-Service   -- ORDER_DELIVERED    --> tracking-events
+ORDER_PLACED
+ORDER_CONFIRMED
+WAREHOUSE_ASSIGNED
+ROUTE_CALCULATED
+ETA_UPDATED
+ORDER_DELIVERED
 ```
 
-Notification-Service consumes lifecycle events for in-app/email notifications.
+This keeps the system closer to real event-driven architecture while staying deployable on free-tier infrastructure.
 
-## Implemented Features
+## Technical Features
 
-- Spring Boot microservices with service discovery through Eureka.
-- Spring Cloud Gateway as the frontend-facing entry point.
-- JWT login/signup and Google OAuth through the gateway.
-- Gateway diagnostics for request route matching and auth filter decisions.
-- Role-aware gateway protection for customer/admin routes.
-- React frontend auth session state with visible logged-in user and logout.
-- Frontend hides admin warehouse/route tabs for customer users.
-- Customer account page supports saved address editing.
-- Cart, order placement, and order cancellation confirmation messages.
-- Daily rotating featured products on the frontend using already-fetched catalog data.
-- Order-Service returns grouped order responses so one order renders as one row.
-- Order cancellation restores stock through Inventory-Service.
-- Inventory-Service owns product catalog and stock mutation.
-- Warehouse-Service selects nearest active warehouse using PostGIS.
-- Routing-Service integrates OpenRouteService and Gemini/Spring AI.
-- Tracking-Service creates sessions from route-calculated events, assigns simulated drivers, and stores latest state in Redis when available.
-- Tracking simulation now runs every 60 seconds instead of every 5 seconds to reduce DB/Redis/Kafka load for free-tier deployment.
-- Notification-Service stores in-app notifications and has a Resend-backed email sender.
+- Spring Boot microservices with independent service ownership.
+- Spring Cloud Gateway as the single public backend entry point.
+- Eureka service discovery across Render-deployed services.
+- JWT authentication and role-aware customer/admin routing.
+- Google OAuth2 login integrated through the gateway.
+- Kafka-based asynchronous service choreography.
+- Aiven Kafka configuration using SASL_SSL.
+- Separate Neon PostgreSQL databases per service.
+- PostGIS geography queries for nearest warehouse selection.
+- OpenRouteService integration for route alternatives.
+- Gemini/Spring AI assisted route selection.
+- Local routing fallback so external API failures do not break the order pipeline.
+- Redis-backed latest tracking state.
+- Simulated driver assignment and delivery movement.
+- WebSocket-ready live tracking architecture.
+- Resend-backed email notification layer.
+- In-app notification center.
+- Resilience4j retry, circuit breaker, and rate limiter patterns.
+- Dockerfiles for Render deployment.
+- Frontend health page for service visibility.
+- Responsive React frontend for desktop, laptop, and mobile.
+- Customer-facing language cleanup to avoid exposing internal route/service details.
 
-## Frontend
+## Frontend Features
 
-`Frontend-Service` is a React/Vite app.
+The frontend is a React/Vite app deployed on Vercel.
 
-Implemented screens:
+Implemented screens and flows:
 
-- Home/catalog with daily rotating featured products.
-- Product details and cart.
-- Checkout with saved address selection.
-- Orders page with grouped order rows, tracking navigation, and cancellation.
-- Tracking page using initial REST state.
-- Notifications page.
-- Account page with editable saved addresses.
-- Admin warehouse and route screens hidden unless the JWT role is `ADMIN`.
+- Customer signup/login and Google OAuth login.
+- Product catalog with search and daily rotating featured products.
+- Product cards, product detail view, and cart management.
+- Checkout with saved address selection and address creation.
+- Order placement and cancellation confirmations.
+- Grouped order history so each order appears once.
+- Tracking page with animated delivery route UI.
+- Notification center with read/unread state.
+- Account page with profile and address management.
+- Admin-only warehouse and route sections hidden from customer accounts.
+- Standalone health/status page for deployed service visibility.
 
-Local frontend config:
+Frontend config:
 
 ```text
-VITE_API_BASE_URL=http://localhost:9090
+VITE_API_BASE_URL=https://swiftship-api-gateway.onrender.com
 ```
 
-All normal frontend traffic should go through API-Gateway, not directly to individual services.
+All frontend traffic is designed to go through the API Gateway, not directly to individual services.
 
-## API Gateway Routes
+## Gateway Route Map
 
-Gateway runs locally at:
-
-```text
-http://localhost:9090
-```
-
-| Gateway Path | Routed Service | Role |
+| Gateway Path | Routed Service | Access |
 | --- | --- | --- |
-| `/auth/**` | `Auth-Service` | public |
-| `/oauth2/**` | `Auth-Service` | public |
-| `/login/oauth2/**` | `Auth-Service` | public |
-| `/products/**` | `Inventory-Service` | customer token |
-| `/orders/**` | `Order-Service` | customer token |
-| `/customers/**` | `Order-Service` | customer token |
-| `/admin/warehouses/**` | `Warehouse-Service` | admin token |
-| `/routes/**` | `Routing-Service` | admin token |
-| `/tracking/**` | `Tracking-Service` | customer token |
-| `/drivers/**` | `Tracking-Service` | customer token for now; gateway filters can be tightened later |
-| `/notifications/**` | `Notification-Service` | customer token |
-| `/emails/**` | `Notification-Service` | customer token |
+| `/auth/**` | Auth-Service | Public |
+| `/oauth2/**` | Auth-Service | Public |
+| `/login/oauth2/**` | Auth-Service | Public |
+| `/products/**` | Inventory-Service | Authenticated |
+| `/orders/**` | Order-Service | Authenticated customer |
+| `/customers/**` | Order-Service | Authenticated customer |
+| `/admin/warehouses/**` | Warehouse-Service | Admin |
+| `/routes/**` | Routing-Service | Admin/internal style access |
+| `/tracking/**` | Tracking-Service | Authenticated customer |
+| `/drivers/**` | Tracking-Service | Gateway-protected route |
+| `/notifications/**` | Notification-Service | Authenticated customer |
+| `/emails/**` | Notification-Service | Authenticated/customer flow |
 
-Protected routes require:
+## Deployment Notes
 
-```http
-Authorization: Bearer <accessToken>
-```
+The app is intentionally deployed on constrained free-tier platforms. That shaped several production-style decisions:
 
-## Google OAuth Notes
+- Kafka topics are consolidated to stay within Aiven topic limits.
+- Tracking simulation uses a slower scheduler to reduce Neon/Redis writes.
+- Services use small DB connection pools where needed.
+- External route failures degrade to local fallback route calculation.
+- API keys/secrets are supplied through deployment environment variables.
+- Each backend service has a lightweight keepalive endpoint/page for uptime pings.
 
-OAuth runs through the gateway.
+## Local Development
 
-Google Console local config:
+Suggested startup order:
 
-```text
-Authorized JavaScript origins:
-http://localhost:5173
-http://localhost:9090
-
-Authorized redirect URI:
-http://localhost:9090/login/oauth2/code/google
-```
-
-Auth-Service must also use the gateway callback:
-
-```properties
-spring.security.oauth2.client.registration.google.redirect-uri=http://localhost:9090/login/oauth2/code/google
-oauth2.success-redirect-url=http://localhost:5173/oauth/success
-```
-
-If OAuth fails with `invalid_id_token` and an `iat` claim error, sync the local system clock and restart Auth-Service.
-
-## Key Service APIs
-
-### Auth-Service
-
-```text
-POST /auth/signup
-POST /auth/login
-POST /auth/refresh
-GET  /oauth2/authorization/google
-GET  /login/oauth2/code/google
-```
-
-### Inventory-Service
-
-```text
-GET    /products
-GET    /products/{id}
-POST   /products/admin
-PUT    /products/admin/{id}
-PATCH  /products/admin/{id}
-DELETE /products/admin/{id}
-POST   /products/checkStock
-PUT    /products/reduceStock
-PUT    /products/addStock
-```
-
-### Order-Service
-
-```text
-GET  /orders
-POST /orders/{id}
-POST /orders/createOrder
-PUT  /orders/cancelOrder/{id}
-
-GET    /customers
-GET    /customers/{customerId}
-POST   /customers
-PATCH  /customers/{customerId}
-DELETE /customers/{customerId}
-
-GET    /customers/{customerId}/addresses
-GET    /customers/{customerId}/addresses/{addressId}
-POST   /customers/{customerId}/addresses
-PATCH  /customers/{customerId}/addresses/{addressId}
-DELETE /customers/{customerId}/addresses/{addressId}
-```
-
-`POST /orders/{id}` is still non-standard and should eventually become `GET /orders/{id}`.
-
-### Warehouse-Service
-
-```text
-GET    /admin/warehouses
-GET    /admin/warehouses/{id}
-POST   /admin/warehouses
-PATCH  /admin/warehouses/{id}
-DELETE /admin/warehouses/{id}
-GET    /admin/warehouses/nearest?lat={lat}&lon={lon}
-```
-
-### Routing-Service
-
-```text
-POST /routes
-```
-
-The main production-style flow is Kafka-driven from `WAREHOUSE_ASSIGNED`.
-
-### Tracking-Service
-
-```text
-GET    /tracking/orders/{orderNumber}
-
-GET    /drivers
-GET    /drivers/{driverId}
-GET    /drivers/status/{driverStatus}
-POST   /drivers
-PUT    /drivers/{driverId}
-PATCH  /drivers/{driverId}
-DELETE /drivers/{driverId}
-```
-
-### Notification-Service
-
-```text
-GET    /notifications
-GET    /notifications/{notificationId}
-GET    /notifications/customer/{customerId}
-GET    /notifications/customer/{customerId}/unread
-POST   /notifications
-PATCH  /notifications/{notificationId}/read
-DELETE /notifications/{notificationId}
-
-POST   /emails
-```
-
-## Tracking and Free-Tier Load
-
-The simulated delivery scheduler now runs every 60 seconds:
-
-```text
-@Scheduled(fixedRate = 60000)
-```
-
-Why 60 seconds:
-
-- 5 seconds is too write-heavy for free-tier Neon/Redis/Kafka.
-- 30 seconds is better but still twice the load of 60 seconds.
-- 60 seconds cuts scheduler work by 12x compared to the original 5-second tick while still giving a reasonable demo cadence.
-
-The distance movement calculation uses the same 60-second tick so ETA/distance remain logically consistent.
-
-## Suggested Local Startup Order
-
-1. Start PostgreSQL/PostGIS.
-2. Start Kafka.
-3. Start Redis or Memurai if testing Redis-backed latest tracking state.
-4. Start `Discovery-Service`.
-5. Start `Config-Server`.
-6. Start domain services:
-   - `Auth-Service`
-   - `Inventory-Service`
-   - `Order-Service`
-   - `Warehouse-Service`
-   - `Routing-Service`
-   - `Tracking-Service`
-   - `Notification-Service`
-7. Start `API-Gateway`.
-8. Start `Frontend-Service`.
+1. PostgreSQL/PostGIS
+2. Kafka
+3. Redis/Memurai
+4. Discovery-Service
+5. API-Gateway
+6. Auth-Service
+7. Inventory-Service
+8. Order-Service
+9. Warehouse-Service
+10. Routing-Service
+11. Tracking-Service
+12. Notification-Service
+13. Frontend-Service
 
 Frontend:
 
@@ -331,46 +196,27 @@ npm install
 npm run dev
 ```
 
-Backend services:
-
-```bash
-./mvnw spring-boot:run
-```
-
-On Windows PowerShell:
+Backend service example:
 
 ```powershell
+cd Order-Service
 .\mvnw.cmd spring-boot:run
 ```
 
-## Deployment Notes
+## Current Limitations
 
-Target free-tier infrastructure:
+SwiftShip is a portfolio/learning project, not a production SaaS. Some bugs or edge cases may still exist.
 
-- Render for services/frontend.
-- Neon for PostgreSQL databases.
-- Aiven for Kafka with limited topics/partitions.
-- Redis test database or compatible Redis provider for live tracking state.
+Known areas for future improvement:
 
-Important deployment constraints:
-
-- Move all secrets/API keys out of committed `application.properties`.
-- Prefer config-server/environment variables for deployment values.
-- Keep Kafka topic count low.
-- Avoid high-frequency schedulers and polling.
-- WebSocket live tracking should publish only when simulation state changes.
-- Frontend should continue using the gateway as its single backend base URL.
-
-## Current Limitations / Next Steps
-
-- WebSocket live tracking is not implemented yet. Frontend tracking currently loads the latest tracking state by REST.
-- Deployment manifests/environment variables still need final cleanup.
-- Kafka retry/DLT handling should be strengthened.
-- Event classes are duplicated between services; a shared events module or schema registry can be added later.
-- Some internal/admin route protection can be tightened further.
-- Add Docker Compose or deployment docs for reproducible infrastructure startup.
-- Add broader integration tests for the full lifecycle.
+- Add dead-letter topics and stronger Kafka retry/DLT handling.
+- Move duplicated event DTOs into a shared contract module or schema registry.
+- Add broader integration tests for the full order lifecycle.
+- Add stronger observability with centralized logs/tracing.
+- Improve deployment automation and infrastructure documentation.
+- Tighten internal-only route access further.
+- Continue polishing WebSocket live tracking behavior.
 
 ## Interview Pitch
 
-SwiftShip is a distributed order fulfillment and delivery tracking platform. It uses Kafka for asynchronous order lifecycle orchestration, PostGIS for nearest warehouse selection, OpenRouteService for route alternatives, Gemini/Spring AI for route choice, Redis for latest tracking state, and a React frontend behind a JWT-protected API Gateway. The current system supports product browsing, checkout, stock reservation, warehouse assignment, routing, tracking-session creation, notifications, and frontend role-aware customer/admin navigation.
+SwiftShip is a distributed order fulfillment and live delivery tracking platform built with Spring Boot microservices, Kafka event choreography, PostGIS warehouse selection, OpenRouteService/Gemini route calculation, Redis tracking state, JWT/OAuth2 authentication, and a React frontend behind an API Gateway. It demonstrates practical backend system design: service ownership, asynchronous workflows, cloud deployment, fault-tolerant fallbacks, role-based access, and real-world debugging across multiple services.
