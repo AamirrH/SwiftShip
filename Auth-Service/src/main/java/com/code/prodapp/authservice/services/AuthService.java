@@ -33,13 +33,26 @@ public class AuthService {
 
     public SignupResponseDTO signup(SignupRequestDTO signupRequestDTO) {
 
-        // Username is unique
-        String username = signupRequestDTO.getUsername();
-        if(userRepository.existsByUsername(username) || userRepository.existsByEmail(signupRequestDTO.getEmail())) {
-            throw new UserAlreadyExistsException("User with username " + username + " already exists");
+        String username = normalizeUsername(signupRequestDTO.getUsername());
+        String email = normalizeEmail(signupRequestDTO.getEmail());
+
+        if (!hasText(username)) {
+            throw new IllegalArgumentException("Username is required");
+        }
+        if (!hasText(email)) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (!hasText(signupRequestDTO.getPassword())) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        if(userRepository.existsByUsername(username)) {
+            throw new UserAlreadyExistsException("This username is already taken");
+        }
+        if(userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException("This email is already linked to an account");
         }
         String hashedPassword = bCryptPasswordEncoder.encode(signupRequestDTO.getPassword());
-        String email = signupRequestDTO.getEmail();
         UserEntity user = new UserEntity();
         user.setUsername(username);
         user.setPassword(hashedPassword);
@@ -131,6 +144,18 @@ public class AuthService {
                 ? UUID.randomUUID().toString().substring(0, 8)
                 : providerId.substring(providerId.length() - 6);
         return username + "_" + suffix;
+    }
+
+    private String normalizeUsername(String username) {
+        return username == null ? null : username.trim();
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
 }
