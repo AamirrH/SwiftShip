@@ -12,7 +12,7 @@ import { NotificationsPage } from "./pages/NotificationsPage.jsx";
 import { AdminWarehousesPage } from "./pages/AdminWarehousesPage.jsx";
 import { AdminRoutesPage } from "./pages/AdminRoutesPage.jsx";
 import { HealthPage } from "./pages/HealthPage.jsx";
-import { mockCart, mockProducts } from "./data/mockData.js";
+import { mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 import { useApiResource } from "./hooks/useApiResource.js";
 import { api, buildAuthUser, clearAuthSession, getAuthUser, setAccessToken, setAuthUser } from "./lib/api.js";
@@ -42,7 +42,7 @@ export default function App() {
   const [productSearchQuery, setProductSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const toastTimeoutRef = useRef(null);
-  const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
+  const [cart, setCart] = useLocalStorageState("swiftship.cart", []);
   const { data: unreadNotifications } = useApiResource(
     () => (authUser ? api.getUnreadMyNotifications() : Promise.resolve([])),
     [],
@@ -145,7 +145,7 @@ export default function App() {
       />
     ),
     product: <ProductPage product={selectedProduct} onBack={() => navigate("catalog")} onAddToCart={addToCart} />,
-    cart: <CartPage cart={cart} onOrderPlaced={showToast} setCart={setCart} onNavigate={navigate} />,
+    cart: <CartPage authUser={authUser} cart={cart} onOrderPlaced={showToast} setCart={setCart} onNavigate={navigate} />,
     orders: <OrdersPage onNavigate={navigate} onOrderCancelled={showToast} onTrackOrder={setSelectedOrderNumber} />,
     tracking: <TrackingPage orderNumber={selectedOrderNumber} />,
     notifications: <NotificationsPage authUser={authUser} />,

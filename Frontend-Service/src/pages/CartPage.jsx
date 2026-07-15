@@ -5,39 +5,13 @@ import { Card } from "../components/ui/Card.jsx";
 import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
 
-const DEFAULT_CUSTOMER_ID = 7;
-const fallbackAddresses = [
-  {
-    id: 3,
-    label: "Work",
-    addressLine: "EON Free Zone, Kharadi",
-    city: "Pune",
-    state: "Maharashtra",
-    pincode: "411014",
-    lat: 18.5515,
-    lng: 73.9349,
-    defaultAddress: true,
-  },
-  {
-    id: 1,
-    label: "Home",
-    addressLine: "Flat 101, North Main Road, Koregaon Park",
-    city: "Pune",
-    state: "Maharashtra",
-    pincode: "411001",
-    lat: 18.5362,
-    lng: 73.8939,
-    defaultAddress: false,
-  },
-];
-
-export function CartPage({ cart, onNavigate, onOrderPlaced, setCart }) {
+export function CartPage({ authUser, cart, onNavigate, onOrderPlaced, setCart }) {
   const [checkoutStatus, setCheckoutStatus] = useState("idle");
   const [checkoutError, setCheckoutError] = useState("");
   const { data: addresses, status: addressStatus } = useApiResource(
-    () => api.getCustomerAddresses(DEFAULT_CUSTOMER_ID),
-    fallbackAddresses,
-    []
+    () => (authUser ? api.getMyCustomerAddresses() : Promise.resolve([])),
+    [],
+    [authUser?.email, authUser?.username]
   );
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const handling = cart.length ? 199 : 0;
@@ -61,8 +35,20 @@ export function CartPage({ cart, onNavigate, onOrderPlaced, setCart }) {
     const selectedAddressId = Number(form.get("customerAddressId"));
     const selectedAddress =
       sortedAddresses.find((address) => address.id === selectedAddressId) ?? sortedAddresses[0];
+
+    if (!authUser) {
+      setCheckoutStatus("offline");
+      setCheckoutError("Please sign in before placing the order.");
+      return;
+    }
+
+    if (!selectedAddress) {
+      setCheckoutStatus("offline");
+      setCheckoutError("Please add a delivery address before placing the order.");
+      return;
+    }
+
     const payload = {
-      customerId: DEFAULT_CUSTOMER_ID,
       customerAddressId: selectedAddress.id,
       deliveryAddress: formatAddress(selectedAddress),
       deliveryLat: selectedAddress.lat,
@@ -144,7 +130,8 @@ export function CartPage({ cart, onNavigate, onOrderPlaced, setCart }) {
             <span className="label-caps">Delivery details</span>
             <label style={{ display: "block", marginTop: 14 }}>
               <span className="label-caps">Deliver to</span>
-              <select className="input" defaultValue={getDefaultAddressId(sortedAddresses)} name="customerAddressId" required style={{ marginTop: 8 }}>
+              <select className="input" defaultValue={getDefaultAddressId(sortedAddresses)} disabled={!sortedAddresses.length} name="customerAddressId" required style={{ marginTop: 8 }}>
+                {sortedAddresses.length === 0 && <option value="">Add an address from Account first</option>}
                 {sortedAddresses.map((address) => (
                   <option key={address.id} value={address.id}>
                     {formatAddressOption(address)}
@@ -154,7 +141,12 @@ export function CartPage({ cart, onNavigate, onOrderPlaced, setCart }) {
             </label>
             {addressStatus === "fallback" && (
               <p className="muted" style={{ marginBottom: 0 }}>
-                Your saved addresses are taking a moment to load.
+                We could not load your saved addresses right now.
+              </p>
+            )}
+            {addressStatus === "ready" && sortedAddresses.length === 0 && (
+              <p className="muted" style={{ marginBottom: 0 }}>
+                Add a delivery address from Account before checkout.
               </p>
             )}
 

@@ -6,12 +6,24 @@ import { Card } from "../components/ui/Card.jsx";
 import { StatusBadge } from "../components/ui/StatusBadge.jsx";
 import { api } from "../lib/api.js";
 import { useApiResource } from "../hooks/useApiResource.js";
-import { mockTracking } from "../data/mockData.js";
+const emptyTracking = {
+  driverName: "Not assigned yet",
+  status: "PENDING",
+  trackingStatus: "PENDING",
+  currentEtaMinutes: 0,
+  totalDistanceKm: 0,
+  remainingDistanceKm: 0,
+  customerAddress: "Choose an order to view tracking.",
+};
 
 export function TrackingPage({ orderNumber }) {
-  const trackingOrderNumber = orderNumber ?? mockTracking.orderNumber;
+  const trackingOrderNumber = orderNumber;
   const hasSelectedOrder = Boolean(orderNumber);
-  const { data, status, error } = useApiResource(() => api.getTracking(trackingOrderNumber), mockTracking, [trackingOrderNumber]);
+  const { data, status, error } = useApiResource(
+    () => (hasSelectedOrder ? api.getTracking(trackingOrderNumber) : Promise.resolve(emptyTracking)),
+    emptyTracking,
+    [hasSelectedOrder, trackingOrderNumber]
+  );
   const [liveTracking, setLiveTracking] = useState(null);
   const [socketStatus, setSocketStatus] = useState("connecting");
 
@@ -52,9 +64,10 @@ export function TrackingPage({ orderNumber }) {
   }, [hasSelectedOrder, trackingOrderNumber]);
 
   const tracking = {
-    ...mockTracking,
+    ...emptyTracking,
     ...data,
     ...liveTracking,
+    orderNumber: trackingOrderNumber,
     currentLocation: liveTracking?.currentLocation ?? data.currentLocation ?? buildLocationLabel(liveTracking ?? data),
   };
   const timelineSteps = buildTimelineSteps(tracking);
@@ -64,7 +77,7 @@ export function TrackingPage({ orderNumber }) {
       <div className="page-header">
         <div>
           <span className="label-caps">Live order tracking</span>
-          <h1 className="page-title">Order #{tracking.orderNumber}</h1>
+          <h1 className="page-title">{hasSelectedOrder ? `Order #${tracking.orderNumber}` : "Select an order"}</h1>
           <p className="muted">
             {status === "fallback" ? fallbackMessage(error) : tracking.customerAddress}
           </p>
@@ -101,7 +114,7 @@ export function TrackingPage({ orderNumber }) {
 
 function buildLocationLabel(tracking) {
   if (tracking?.currentLatitude == null || tracking?.currentLongitude == null) {
-    return mockTracking.currentLocation;
+    return "Location will appear when tracking starts";
   }
   return `${tracking.currentLatitude.toFixed(4)}, ${tracking.currentLongitude.toFixed(4)}`;
 }

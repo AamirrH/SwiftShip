@@ -14,36 +14,15 @@ const emptyAddress = {
   defaultAddress: true,
 };
 
-const fallbackAddresses = [
-  {
-    id: 3,
-    label: "Work",
-    addressLine: "EON Free Zone, Kharadi",
-    city: "Pune",
-    state: "Maharashtra",
-    pincode: "411014",
-    defaultAddress: true,
-  },
-  {
-    id: 1,
-    label: "Home",
-    addressLine: "Flat 101, North Main Road, Koregaon Park",
-    city: "Pune",
-    state: "Maharashtra",
-    pincode: "411001",
-    defaultAddress: false,
-  },
-];
-
 export function AccountPage({ authUser }) {
   const { data: loadedAddresses, status: addressStatus } = useApiResource(
     () => (authUser ? api.getMyCustomerAddresses() : Promise.resolve([])),
-    fallbackAddresses,
+    [],
     [authUser?.email, authUser?.username]
   );
-  const [addresses, setAddresses] = useState(fallbackAddresses);
-  const [selectedAddressId, setSelectedAddressId] = useState(fallbackAddresses[0].id);
-  const [addressForm, setAddressForm] = useState(fallbackAddresses[0]);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("new");
+  const [addressForm, setAddressForm] = useState(emptyAddress);
   const [saveStatus, setSaveStatus] = useState("idle");
   const [saveMessage, setSaveMessage] = useState("");
 
