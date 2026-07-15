@@ -220,8 +220,7 @@ a {
 }
 
 .grid.four {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 300px));
-  justify-content: start;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .card {
