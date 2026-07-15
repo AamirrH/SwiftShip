@@ -97,6 +97,25 @@ public class CustomerAddressService {
         return address;
     }
 
+    public CustomerAddress createCheckoutAddress(
+            Customer customer,
+            String deliveryAddress,
+            Double deliveryLat,
+            Double deliveryLng
+    ) {
+        CustomerAddress address = new CustomerAddress();
+        address.setCustomer(customer);
+        address.setLabel("Delivery");
+        address.setAddressLine(deliveryAddress);
+        address.setCity("");
+        address.setState("");
+        address.setPincode("");
+        address.setLat(deliveryLat);
+        address.setLng(deliveryLng);
+        address.setDefaultAddress(false);
+        return customerAddressRepository.save(address);
+    }
+
     private CustomerAddressResponseDTO mapToResponseDTO(CustomerAddress address) {
         return new CustomerAddressResponseDTO(
                 address.getId(),

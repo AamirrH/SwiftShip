@@ -79,6 +79,21 @@ public class CustomerService {
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id " + id));
     }
 
+    public Customer findOrCreateCustomerByEmail(String email) {
+        if (!hasText(email)) {
+            throw new CustomerNotFoundException("Customer email is required");
+        }
+
+        String normalizedEmail = email.trim();
+        return customerRepository.findByEmailIgnoreCase(normalizedEmail)
+                .orElseGet(() -> {
+                    Customer customer = new Customer();
+                    customer.setName(resolveCustomerName(null, normalizedEmail));
+                    customer.setEmail(normalizedEmail);
+                    return customerRepository.save(customer);
+                });
+    }
+
     private String resolveCustomerName(String name, String email) {
         if (hasText(name)) {
             return name.trim();

@@ -2,6 +2,7 @@ package com.code.prodapp.orderservice.service;
 
 import com.code.prodapp.orderservice.DTOs.*;
 import com.code.prodapp.orderservice.clients.InventoryClient;
+import com.code.prodapp.orderservice.entities.Customer;
 import com.code.prodapp.orderservice.entities.CustomerAddress;
 import com.code.prodapp.orderservice.entities.Item;
 import com.code.prodapp.orderservice.entities.Orders;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +46,7 @@ public class OrderService {
     private final ItemRepository itemRepository;
     private final KafkaTemplate<String, OrderEvent> orderEventKafkaTemplate;
     private final CustomerAddressService customerAddressService;
+    private final CustomerService customerService;
 
 
     public List<OrderResponseDTO> getAllOrders(){
@@ -88,13 +91,7 @@ public class OrderService {
         }
         List<ReturnedItemsDTO> returnedItemsDTOList = inventoryClient.InStockAndReturnPrices(stockCheckDTOList);
         // Now start creating the order.
-        CustomerAddress customerAddress = customerAddressService.findAddressForCustomer(
-                orderRequestDTO.getCustomerId(),
-                orderRequestDTO.getCustomerAddressId()
-        );
-        if (userEmail != null && !userEmail.isBlank()) {
-            customerAddress.getCustomer().setEmail(userEmail);
-        }
+        CustomerAddress customerAddress = resolveCheckoutAddress(orderRequestDTO, userEmail);
         // Calculate the total price, manually
         double totalPrice = 0.0;
         for(ReturnedItemsDTO returnedItemsDTO : returnedItemsDTOList){
@@ -216,11 +213,41 @@ public class OrderService {
         orderRepository.save(order);
     }
     private String buildAddressSnapshot(CustomerAddress address) {
-        return String.join(", ",
+        return Stream.of(
                 address.getAddressLine(),
                 address.getCity(),
                 address.getState(),
                 address.getPincode()
+        )
+                .filter(value -> value != null && !value.isBlank())
+                .collect(Collectors.joining(", "));
+    }
+
+    private CustomerAddress resolveCheckoutAddress(OrderRequestDTO orderRequestDTO, String userEmail) {
+        try {
+            if (orderRequestDTO.getCustomerId() != null && orderRequestDTO.getCustomerAddressId() != null) {
+                CustomerAddress customerAddress = customerAddressService.findAddressForCustomer(
+                        orderRequestDTO.getCustomerId(),
+                        orderRequestDTO.getCustomerAddressId()
+                );
+                if (userEmail != null && !userEmail.isBlank()) {
+                    customerAddress.getCustomer().setEmail(userEmail);
+                }
+                return customerAddress;
+            }
+        } catch (RuntimeException exception) {
+            log.warn("Could not use requested checkout address customerId={} addressId={} reason={}",
+                    orderRequestDTO.getCustomerId(),
+                    orderRequestDTO.getCustomerAddressId(),
+                    exception.getMessage());
+        }
+
+        Customer customer = customerService.findOrCreateCustomerByEmail(userEmail);
+        return customerAddressService.createCheckoutAddress(
+                customer,
+                orderRequestDTO.getDeliveryAddress(),
+                orderRequestDTO.getDeliveryLat(),
+                orderRequestDTO.getDeliveryLng()
         );
     }
 
