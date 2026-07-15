@@ -40,7 +40,7 @@ public class CustomerService {
         log.info("Creating customer {}", requestDTO.getEmail());
 
         Customer customer = new Customer();
-        customer.setName(requestDTO.getName());
+        customer.setName(resolveCustomerName(requestDTO.getName(), requestDTO.getEmail()));
         customer.setEmail(requestDTO.getEmail());
         customer.setPhoneNumber(requestDTO.getPhoneNumber());
 
@@ -52,9 +52,18 @@ public class CustomerService {
         log.info("Updating customer by id {}", id);
 
         Customer customer = findCustomerEntityById(id);
-        customer.setName(requestDTO.getName());
-        customer.setEmail(requestDTO.getEmail());
-        customer.setPhoneNumber(requestDTO.getPhoneNumber());
+        if (hasText(requestDTO.getName())) {
+            customer.setName(requestDTO.getName().trim());
+        }
+        if (hasText(requestDTO.getEmail())) {
+            customer.setEmail(requestDTO.getEmail().trim());
+        }
+        if (hasText(requestDTO.getPhoneNumber())) {
+            customer.setPhoneNumber(requestDTO.getPhoneNumber().trim());
+        }
+        if (!hasText(customer.getName())) {
+            customer.setName(resolveCustomerName(customer.getName(), customer.getEmail()));
+        }
 
         return modelMapper.map(customerRepository.save(customer), CustomerResponseDTO.class);
     }
@@ -68,5 +77,23 @@ public class CustomerService {
     public Customer findCustomerEntityById(Long id) {
         return customerRepository.findById(id)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id " + id));
+    }
+
+    private String resolveCustomerName(String name, String email) {
+        if (hasText(name)) {
+            return name.trim();
+        }
+        if (hasText(email)) {
+            int atIndex = email.indexOf('@');
+            if (atIndex > 0) {
+                return email.substring(0, atIndex).trim();
+            }
+            return email.trim();
+        }
+        return "SwiftShip Customer";
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
