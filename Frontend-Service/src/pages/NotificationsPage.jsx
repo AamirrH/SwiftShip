@@ -5,12 +5,11 @@ import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
 import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
-import { mockNotifications } from "../data/mockData.js";
 
 const CUSTOMER_ID = 7;
 
 export function NotificationsPage() {
-  const { data, status, error } = useApiResource(() => api.getCustomerNotifications(CUSTOMER_ID), mockNotifications, []);
+  const { data, status, error } = useApiResource(() => api.getCustomerNotifications(CUSTOMER_ID), [], []);
   const [readOverrides, setReadOverrides] = useState({});
   const [filter, setFilter] = useState("all");
 
