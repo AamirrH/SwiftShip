@@ -107,7 +107,7 @@ export function AccountPage({ authUser }) {
       setSaveMessage("Address saved.");
     } catch (error) {
       setSaveStatus("error");
-      setSaveMessage(error.status ? `Backend rejected the address with status ${error.status}.` : "Gateway is not reachable.");
+      setSaveMessage("We could not save this address right now. Please try again.");
     }
   }
 
@@ -155,7 +155,7 @@ export function AccountPage({ authUser }) {
               <h2 className="section-title" style={{ marginTop: 6 }}>Change saved address</h2>
             </div>
             {addressStatus === "fallback" && (
-              <span className="muted">Using sample addresses until the gateway responds.</span>
+              <span className="muted">Your saved addresses are taking a moment to load.</span>
             )}
           </div>
 

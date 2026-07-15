@@ -45,7 +45,7 @@ export function TrackingPage({ orderNumber }) {
         <Card>
           <span className="label-caps">Driver</span>
           <h2 className="section-title" style={{ fontSize: 28, margin: "8px 0" }}>{tracking.driverName}</h2>
-          <p className="muted">Your simulated driver stream is ready for Redis/WebSocket integration when that layer is enabled.</p>
+          <p className="muted">Your driver is on the way. We will keep this page updated as your order moves.</p>
           <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
             <Button>
               <Phone size={18} /> Call driver
@@ -62,12 +62,12 @@ export function TrackingPage({ orderNumber }) {
 
 function fallbackMessage(error) {
   if (!error?.status) {
-    return "Cannot reach gateway for tracking; showing local demo tracking.";
+    return "We could not refresh tracking right now.";
   }
   if (error.status === 404) {
     return "Tracking session was not created for this order yet.";
   }
-  return `Backend returned ${error.status} for tracking; showing local demo tracking.`;
+  return "We could not refresh tracking right now.";
 }
 
 function Info({ icon: Icon, label, value }) {

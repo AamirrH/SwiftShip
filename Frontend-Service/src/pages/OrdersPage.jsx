@@ -27,7 +27,7 @@ export function OrdersPage({ onNavigate, onOrderCancelled, onTrackOrder }) {
       setStatusOverrides((current) => ({ ...current, [orderId]: "CANCELLED" }));
       onOrderCancelled?.(`Order #${orderId} has been cancelled`);
     } catch (error) {
-      onOrderCancelled?.(error.status ? `Could not cancel order #${orderId}. Backend returned ${error.status}.` : "Gateway is not reachable.");
+      onOrderCancelled?.(`Could not cancel order #${orderId} right now. Please try again.`);
     }
   }
 
@@ -48,7 +48,7 @@ export function OrdersPage({ onNavigate, onOrderCancelled, onTrackOrder }) {
           <span className="label-caps">Customer orders</span>
           <h1 className="page-title">Order history</h1>
           <p className="muted">
-            {status === "fallback" ? fallbackMessage(error, "orders") : "Synced from `/orders`."}
+            {status === "fallback" ? fallbackMessage(error, "orders") : "Your latest orders are ready."}
           </p>
         </div>
         <Button onClick={() => onNavigate("catalog")}>
@@ -160,7 +160,7 @@ function canCancelOrder(status) {
 
 function fallbackMessage(error, resourceName) {
   if (!error?.status) {
-    return `Cannot reach gateway for ${resourceName}; showing local demo data.`;
+    return `We could not refresh your ${resourceName} right now.`;
   }
-  return `Backend returned ${error.status} for ${resourceName}; showing local demo data.`;
+  return `We could not refresh your ${resourceName} right now.`;
 }

@@ -89,11 +89,11 @@ export function CartPage({ cart, onNavigate, onOrderPlaced, setCart }) {
       } else if (error.status === 403) {
         setCheckoutError("Your account is not allowed to place this order.");
       } else if (error.status === 503) {
-        setCheckoutError("Gateway is running, but Order-Service is not registered/reachable yet.");
+        setCheckoutError("Checkout is temporarily unavailable. Please try again in a moment.");
       } else if (error.status) {
-        setCheckoutError(`Backend rejected the order with status ${error.status}.`);
+        setCheckoutError("We could not place this order right now. Please review your cart and try again.");
       } else {
-        setCheckoutError("Gateway is not reachable yet. The order payload is ready for `/orders/createOrder`.");
+        setCheckoutError("SwiftShip is having trouble connecting right now. Please try again.");
       }
     }
   }
@@ -154,7 +154,7 @@ export function CartPage({ cart, onNavigate, onOrderPlaced, setCart }) {
             </label>
             {addressStatus === "fallback" && (
               <p className="muted" style={{ marginBottom: 0 }}>
-                Showing saved test addresses until customer addresses load from the gateway.
+                Your saved addresses are taking a moment to load.
               </p>
             )}
 

@@ -57,7 +57,7 @@ export function NotificationsPage() {
           <p className="muted">
             {status === "fallback"
               ? fallbackMessage(error)
-              : "Synced from notification-service."}
+              : "Your latest updates are ready."}
           </p>
         </div>
         <Button variant="secondary" onClick={markAllRead}>
@@ -98,10 +98,7 @@ export function NotificationsPage() {
 }
 
 function fallbackMessage(error) {
-  if (!error?.status) {
-    return "Cannot reach gateway for notifications; showing sample notifications.";
-  }
-  return `Backend returned ${error.status} for notifications; showing sample notifications.`;
+  return "We could not refresh notifications right now.";
 }
 
 function SummaryCard({ label, value }) {

@@ -16,9 +16,9 @@ import { Card } from "../components/ui/Card.jsx";
 import { api, buildAuthUser, setAccessToken } from "../lib/api.js";
 
 const authBenefits = [
-  "Track every order from stock reservation to delivery",
-  "Receive in-app ETA, warehouse, and route notifications",
-  "Reuse saved customer details across checkout flows",
+  "Track every order from checkout to delivery",
+  "Receive clear updates when your order moves",
+  "Reuse your saved details for faster checkout",
 ];
 
 export function AuthPage({ onAuthSuccess, onNavigate }) {
@@ -32,7 +32,7 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
     () =>
       mode === "login"
         ? "Use your SwiftShip username and password, or continue with your Google account."
-        : "Customer signup maps to the backend auth DTO with the CUSTOMER role selected for you.",
+        : "Create your customer account and start ordering in a few seconds.",
     [mode]
   );
 
@@ -99,8 +99,8 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
             : error.status === 409
             ? "A user with that username or email already exists."
             : error.status === 500
-            ? "Auth service hit a backend error. Check the Auth-Service logs."
-            : "Gateway is not reachable yet, or the auth route is not available through the gateway.",
+            ? "We could not sign you in right now. Please try again in a moment."
+            : "SwiftShip is having trouble connecting right now. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -114,8 +114,7 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
           <span className="label-caps">Customer access</span>
           <h1 className="page-title">Order faster, track cleaner, stay notified.</h1>
           <p className="muted">
-            Sign in before checkout so SwiftShip can reserve inventory, attach delivery updates to your account,
-            and keep notifications tied to the same customer flow.
+            Sign in before checkout to keep your orders, saved addresses, tracking updates, and notifications in one place.
           </p>
 
           <div className="auth-benefits">
@@ -129,8 +128,8 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
 
           <div className="auth-service-strip">
             <ServiceStep icon={UserRound} label="Customer" value="Profile secured" />
-            <ServiceStep icon={BadgeCheck} label="JWT" value="Bearer access" />
-            <ServiceStep icon={ShieldCheck} label="Refresh" value="HTTP-only cookie" />
+            <ServiceStep icon={BadgeCheck} label="Checkout" value="Ready faster" />
+            <ServiceStep icon={ShieldCheck} label="Updates" value="Always connected" />
           </div>
         </div>
 

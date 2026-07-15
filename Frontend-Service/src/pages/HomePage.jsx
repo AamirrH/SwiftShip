@@ -61,7 +61,7 @@ export function HomePage({ onAddToCart, onNavigate, onOpenProduct }) {
         <div>
           <span className="label-caps">Popular now</span>
           <h2 className="section-title" style={{ fontSize: 26, margin: "6px 0 0" }}>Featured picks for today</h2>
-          {status === "fallback" && <p className="muted">Showing trial products while your backend catalog is offline.</p>}
+          {status === "fallback" && <p className="muted">We are showing a few picks while the latest catalog loads.</p>}
         </div>
         <Button variant="ghost" onClick={() => onNavigate("catalog")}>
           View all <ArrowRight size={18} />
