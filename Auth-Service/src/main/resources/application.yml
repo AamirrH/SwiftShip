@@ -1,3 +1,56 @@
+server:
+  port: ${PORT:9040}
+
+spring:
+  application:
+    name: Auth-Service
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    defer-datasource-initialization: ${SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION:true}
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE:always}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID}
+            client-secret: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET}
+            scope: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE:openid,email,profile}
+            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+    register-with-eureka: ${EUREKA_CLIENT_REGISTER_WITH_EUREKA:true}
+    fetch-registry: ${EUREKA_CLIENT_FETCH_REGISTRY:true}
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:false}
+    non-secure-port-enabled: ${EUREKA_INSTANCE_NON_SECURE_PORT_ENABLED:true}
+    secure-port-enabled: ${EUREKA_INSTANCE_SECURE_PORT_ENABLED:false}
+    non-secure-port: ${EUREKA_INSTANCE_NON_SECURE_PORT:${server.port}}
+    secure-port: ${EUREKA_INSTANCE_SECURE_PORT:443}
+
+jwt:
+  SecretKey: ${JWT_SECRETKEY}
+
+oauth2:
+  success-redirect-url: ${OAUTH2_SUCCESS_REDIRECT_URL:http://localhost:5173/oauth/success}
+
 resilience4j:
   retry:
     configs:
