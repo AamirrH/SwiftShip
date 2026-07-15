@@ -11,5 +11,7 @@ public interface OrderRepository extends JpaRepository<Orders,Long> {
 
     List<Orders> findAllByCustomerIsNotNullAndCustomerAddressIsNotNull();
 
+    List<Orders> findAllByCustomerEmailAndCustomerAddressIsNotNull(String email);
+
 
 }

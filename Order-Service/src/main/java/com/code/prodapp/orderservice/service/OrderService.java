@@ -54,6 +54,17 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public List<OrderResponseDTO> getOrdersForCustomerEmail(String userEmail) {
+        log.info("Getting orders for customer email {}", userEmail);
+        if (userEmail == null || userEmail.isBlank()) {
+            return List.of();
+        }
+        return orderRepository.findAllByCustomerEmailAndCustomerAddressIsNotNull(userEmail.trim())
+                .stream()
+                .map(this::mapOrderToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
     public OrderResponseDTO getOrderById(Long id){
         log.info("Getting order by id {}", id);
         Orders order = orderRepository.findById(id)

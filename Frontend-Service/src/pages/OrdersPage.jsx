@@ -5,10 +5,9 @@ import { Card } from "../components/ui/Card.jsx";
 import { StatusBadge } from "../components/ui/StatusBadge.jsx";
 import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
-import { mockOrders } from "../data/mockData.js";
 
 export function OrdersPage({ onNavigate, onOrderCancelled, onTrackOrder }) {
-  const { data, status, error } = useApiResource(api.getOrders, mockOrders, []);
+  const { data, status, error } = useApiResource(api.getMyOrders, [], []);
   const [statusOverrides, setStatusOverrides] = useState({});
   const orders = useMemo(() => groupOrderRows(data).map(normalizeOrder), [data]);
   const visibleOrders = orders.map((order) => ({
@@ -101,6 +100,13 @@ export function OrdersPage({ onNavigate, onOrderCancelled, onTrackOrder }) {
             </div>
           </div>
         ))}
+        {visibleOrders.length === 0 && (
+          <div className="card-pad muted">
+            {status === "fallback"
+              ? fallbackMessage(error, "orders")
+              : "No orders yet. Your orders will appear here after checkout."}
+          </div>
+        )}
       </Card>
     </section>
   );

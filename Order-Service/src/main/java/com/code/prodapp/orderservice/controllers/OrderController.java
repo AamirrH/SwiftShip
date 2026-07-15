@@ -35,6 +35,13 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<OrderResponseDTO>> getMyOrders(
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
+    ){
+        return ResponseEntity.ok(orderService.getOrdersForCustomerEmail(userEmail));
+    }
+
     @PostMapping("/{ID}")
     public ResponseEntity<OrderResponseDTO> getProductById(@PathVariable(name = "ID") Long id){
         return ResponseEntity.ok(orderService.getOrderById(id));

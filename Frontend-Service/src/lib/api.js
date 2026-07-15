@@ -115,6 +115,7 @@ export const api = {
       method: "PUT",
     }),
   getOrders: () => request("/orders"),
+  getMyOrders: () => request("/orders/my"),
   getCustomerAddresses: (customerId) => request(`/customers/${customerId}/addresses`),
   createCustomerAddress: (customerId, payload) =>
     request(`/customers/${customerId}/addresses`, {
