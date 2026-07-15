@@ -29,3 +29,4 @@ Notification-Service/src/main/resources/application.properties
 
 ### Safe deploy configs tracked intentionally ###
 !API-Gateway/src/main/resources/application.yml
+!Order-Service/src/main/resources/application.properties
