@@ -46,17 +46,23 @@ public class AuthService {
             throw new IllegalArgumentException("Password is required");
         }
 
-        if(userRepository.existsByUsername(username)) {
+        UserEntity existingEmailUser = userRepository.findByEmail(email).orElse(null);
+
+        if(userRepository.existsByUsername(username)
+                && (existingEmailUser == null || !username.equals(existingEmailUser.getUsername()))) {
             throw new UserAlreadyExistsException("This username is already taken");
         }
-        if(userRepository.existsByEmail(email)) {
+
+        if(existingEmailUser != null && !"GOOGLE".equalsIgnoreCase(existingEmailUser.getAuthProvider())) {
             throw new UserAlreadyExistsException("This email is already linked to an account");
         }
+
         String hashedPassword = bCryptPasswordEncoder.encode(signupRequestDTO.getPassword());
-        UserEntity user = new UserEntity();
+        UserEntity user = existingEmailUser != null ? existingEmailUser : new UserEntity();
         user.setUsername(username);
         user.setPassword(hashedPassword);
         user.setEmail(email);
+        user.setAuthProvider(existingEmailUser != null ? "PASSWORD_GOOGLE" : null);
         user.setRole(resolveSignupRole(signupRequestDTO.getRole()));
         UserEntity savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, SignupResponseDTO.class);

@@ -31,7 +31,7 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
   const helperText = useMemo(
     () =>
       mode === "login"
-        ? "Use your SwiftShip username and password, or continue with your Google account."
+        ? "Use your SwiftShip username or email, or continue with your Google account."
         : "Create your customer account and start ordering in a few seconds.",
     [mode]
   );
@@ -179,7 +179,12 @@ export function AuthPage({ onAuthSuccess, onNavigate }) {
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
-            <Field icon={UserRound} label="Username" name="username" placeholder="aamir_customer" />
+            <Field
+              icon={UserRound}
+              label={mode === "login" ? "Username or email" : "Username"}
+              name="username"
+              placeholder={mode === "login" ? "aamir_customer or aamir@example.com" : "aamir_customer"}
+            />
             {mode === "signup" && (
               <Field icon={Mail} label="Email" name="email" placeholder="aamir@example.com" type="email" />
             )}

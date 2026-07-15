@@ -31,6 +31,7 @@ public class UserService implements UserDetailsService {
 
     public UserEntity getUserByUsername(String username) {
         return userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
 
