@@ -8,9 +8,8 @@ import { mockProducts } from "../data/mockData.js";
 
 const categories = ["All", "Electronics", "Daily Essentials", "Personal Care", "Home", "Lifestyle", "Packaging"];
 
-export function CatalogPage({ onAddToCart, onOpenProduct }) {
+export function CatalogPage({ onAddToCart, onOpenProduct, onSearchQueryChange, searchQuery = "" }) {
   const [category, setCategory] = useState("All");
-  const [query, setQuery] = useState("");
   const { data } = useApiResource(api.getProducts, mockProducts, []);
 
   const products = useMemo(
@@ -28,7 +27,16 @@ export function CatalogPage({ onAddToCart, onOpenProduct }) {
 
   const filtered = products.filter((product) => {
     const matchesCategory = category === "All" || product.category === category;
-    const matchesQuery = product.productName.toLowerCase().includes(query.toLowerCase());
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const searchableText = [
+      product.productName,
+      product.category,
+      product.description,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    const matchesQuery = !normalizedQuery || searchableText.includes(normalizedQuery);
     return matchesCategory && matchesQuery;
   });
 
@@ -50,7 +58,13 @@ export function CatalogPage({ onAddToCart, onOpenProduct }) {
         <div className="grid two">
           <div style={{ alignSelf: "start", minHeight: 42, position: "relative" }}>
             <Search size={18} style={{ left: 14, pointerEvents: "none", position: "absolute", top: 12 }} />
-            <input className="input" placeholder="Search catalog..." style={{ paddingLeft: 42 }} value={query} onChange={(event) => setQuery(event.target.value)} />
+            <input
+              className="input"
+              placeholder="Search catalog..."
+              style={{ paddingLeft: 42 }}
+              value={searchQuery}
+              onChange={(event) => onSearchQueryChange?.(event.target.value)}
+            />
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "flex-end" }}>
             {categories.map((item) => (
@@ -66,6 +80,11 @@ export function CatalogPage({ onAddToCart, onOpenProduct }) {
         {filtered.map((product) => (
           <ProductCard key={product.id} product={product} onAddToCart={onAddToCart} onOpenProduct={onOpenProduct} />
         ))}
+        {filtered.length === 0 && (
+          <div className="card card-pad muted">
+            No products matched your search.
+          </div>
+        )}
       </div>
     </section>
   );

@@ -33,7 +33,19 @@ const adminNavItems = [
   { id: "health", label: "Health", icon: Activity },
 ];
 
-export function AppShell({ activePage, authUser, cartCount, children, notificationCount = 0, onLogout, onNavigate, title }) {
+export function AppShell({
+  activePage,
+  authUser,
+  cartCount,
+  children,
+  notificationCount = 0,
+  onLogout,
+  onNavigate,
+  onSearch,
+  onSearchQueryChange,
+  searchQuery,
+  title,
+}) {
   const isAdmin = authUser?.role === "ADMIN";
   const primaryNavItems = authUser
     ? navItems
@@ -101,15 +113,28 @@ export function AppShell({ activePage, authUser, cartCount, children, notificati
               {title}
             </div>
           </div>
-          <div className="topbar-search" style={{ width: "min(420px, 38vw)" }}>
+          <form
+            className="topbar-search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSearch?.(searchQuery ?? "");
+            }}
+            style={{ width: "min(420px, 38vw)" }}
+          >
             <div style={{ position: "relative" }}>
               <Search
                 size={18}
                 style={{ left: 14, position: "absolute", top: "50%", transform: "translateY(-50%)" }}
               />
-              <input className="input" placeholder="Search products, orders, tracking..." style={{ paddingLeft: 42 }} />
+              <input
+                className="input"
+                onChange={(event) => onSearchQueryChange?.(event.target.value)}
+                placeholder="Search products..."
+                style={{ paddingLeft: 42 }}
+                value={searchQuery ?? ""}
+              />
             </div>
-          </div>
+          </form>
           <div className="topbar-actions">
             {authUser ? (
               <button className="user-pill" onClick={() => onNavigate("account")} title="Account">

@@ -40,6 +40,7 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(mockProducts[0]);
   const [selectedOrderNumber, setSelectedOrderNumber] = useState(null);
   const [authUser, setCurrentAuthUser] = useState(() => getAuthUser());
+  const [productSearchQuery, setProductSearchQuery] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const toastTimeoutRef = useRef(null);
   const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
@@ -128,9 +129,22 @@ export default function App() {
     navigate("home");
   }
 
+  function searchProducts(query) {
+    const nextQuery = query.trim();
+    setProductSearchQuery(nextQuery);
+    navigate("catalog");
+  }
+
   const pages = {
     home: <HomePage onNavigate={navigate} onOpenProduct={openProduct} onAddToCart={addToCart} />,
-    catalog: <CatalogPage onOpenProduct={openProduct} onAddToCart={addToCart} />,
+    catalog: (
+      <CatalogPage
+        onOpenProduct={openProduct}
+        onAddToCart={addToCart}
+        searchQuery={productSearchQuery}
+        onSearchQueryChange={setProductSearchQuery}
+      />
+    ),
     product: <ProductPage product={selectedProduct} onBack={() => navigate("catalog")} onAddToCart={addToCart} />,
     cart: <CartPage cart={cart} onOrderPlaced={showToast} setCart={setCart} onNavigate={navigate} />,
     orders: <OrdersPage onNavigate={navigate} onOrderCancelled={showToast} onTrackOrder={setSelectedOrderNumber} />,
@@ -155,6 +169,9 @@ export default function App() {
       authUser={authUser}
       onLogout={logout}
       onNavigate={navigate}
+      onSearch={searchProducts}
+      searchQuery={productSearchQuery}
+      onSearchQueryChange={setProductSearchQuery}
       title={pageTitles[activePage]}
     >
       {pages[activePage]}
