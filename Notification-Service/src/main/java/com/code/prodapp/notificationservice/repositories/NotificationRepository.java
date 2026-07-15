@@ -12,4 +12,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     List<Notification> findAllByCustomerIdAndReadStatus(Long customerId, NotificationReadStatus readStatus);
 
+    List<Notification> findAllByRecipientIgnoreCase(String recipient);
+
+    List<Notification> findAllByRecipientIgnoreCaseAndReadStatus(String recipient, NotificationReadStatus readStatus);
+
 }

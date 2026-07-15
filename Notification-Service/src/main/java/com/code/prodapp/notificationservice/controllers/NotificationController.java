@@ -25,6 +25,20 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getAllNotifications());
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<List<NotificationResponseDTO>> getMyNotifications(
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
+    ) {
+        return ResponseEntity.ok(notificationService.getNotificationsByRecipient(userEmail));
+    }
+
+    @GetMapping("/me/unread")
+    public ResponseEntity<List<NotificationResponseDTO>> getMyUnreadNotifications(
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
+    ) {
+        return ResponseEntity.ok(notificationService.getUnreadNotificationsByRecipient(userEmail));
+    }
+
     @GetMapping("/{notificationId}")
     public ResponseEntity<NotificationResponseDTO> getNotificationById(@PathVariable Long notificationId) {
         return ResponseEntity.ok(notificationService.getNotificationById(notificationId));

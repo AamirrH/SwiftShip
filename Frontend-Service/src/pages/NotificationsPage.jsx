@@ -6,10 +6,12 @@ import { Card } from "../components/ui/Card.jsx";
 import { useApiResource } from "../hooks/useApiResource.js";
 import { api } from "../lib/api.js";
 
-const CUSTOMER_ID = 7;
-
-export function NotificationsPage() {
-  const { data, status, error } = useApiResource(() => api.getCustomerNotifications(CUSTOMER_ID), [], []);
+export function NotificationsPage({ authUser }) {
+  const { data, status, error } = useApiResource(
+    () => (authUser ? api.getMyNotifications() : Promise.resolve([])),
+    [],
+    [authUser?.email, authUser?.username]
+  );
   const [readOverrides, setReadOverrides] = useState({});
   const [filter, setFilter] = useState("all");
 
@@ -54,7 +56,9 @@ export function NotificationsPage() {
           <span className="label-caps">Order notifications</span>
           <h1 className="page-title">Notification center</h1>
           <p className="muted">
-            {status === "fallback"
+            {!authUser
+              ? "Sign in to see your order updates."
+              : status === "fallback"
               ? fallbackMessage(error)
               : "Your latest updates are ready."}
           </p>

@@ -154,6 +154,8 @@ export const api = {
     request(`/notifications/customer/${customerId}`),
   getUnreadCustomerNotifications: (customerId) =>
     request(`/notifications/customer/${customerId}/unread`),
+  getMyNotifications: () => request("/notifications/me"),
+  getUnreadMyNotifications: () => request("/notifications/me/unread"),
   markNotificationRead: (notificationId) =>
     request(`/notifications/${notificationId}/read`, {
       method: "PATCH",

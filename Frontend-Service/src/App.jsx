@@ -12,7 +12,7 @@ import { NotificationsPage } from "./pages/NotificationsPage.jsx";
 import { AdminWarehousesPage } from "./pages/AdminWarehousesPage.jsx";
 import { AdminRoutesPage } from "./pages/AdminRoutesPage.jsx";
 import { HealthPage } from "./pages/HealthPage.jsx";
-import { mockCart, mockNotifications, mockProducts } from "./data/mockData.js";
+import { mockCart, mockProducts } from "./data/mockData.js";
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js";
 import { useApiResource } from "./hooks/useApiResource.js";
 import { api, buildAuthUser, clearAuthSession, getAuthUser, setAccessToken, setAuthUser } from "./lib/api.js";
@@ -32,7 +32,6 @@ const pageTitles = {
   auth: "Sign in",
 };
 
-const DEFAULT_CUSTOMER_ID = 7;
 const adminPages = new Set(["adminWarehouses", "adminRoutes", "health"]);
 
 export default function App() {
@@ -45,9 +44,9 @@ export default function App() {
   const toastTimeoutRef = useRef(null);
   const [cart, setCart] = useLocalStorageState("swiftship.cart", mockCart);
   const { data: unreadNotifications } = useApiResource(
-    () => api.getUnreadCustomerNotifications(DEFAULT_CUSTOMER_ID),
-    mockNotifications.filter((notification) => notification.readStatus === "UNREAD"),
-    []
+    () => (authUser ? api.getUnreadMyNotifications() : Promise.resolve([])),
+    [],
+    [authUser?.email, authUser?.username]
   );
 
   useEffect(() => {
@@ -149,7 +148,7 @@ export default function App() {
     cart: <CartPage cart={cart} onOrderPlaced={showToast} setCart={setCart} onNavigate={navigate} />,
     orders: <OrdersPage onNavigate={navigate} onOrderCancelled={showToast} onTrackOrder={setSelectedOrderNumber} />,
     tracking: <TrackingPage orderNumber={selectedOrderNumber} />,
-    notifications: <NotificationsPage />,
+    notifications: <NotificationsPage authUser={authUser} />,
     adminWarehouses: <AdminWarehousesPage />,
     adminRoutes: <AdminRoutesPage />,
     health: <HealthPage onNavigate={navigate} />,

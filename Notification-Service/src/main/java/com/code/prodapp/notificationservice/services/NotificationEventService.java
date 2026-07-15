@@ -36,6 +36,7 @@ public class NotificationEventService {
         if (ORDER_CONFIRMED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),
+                    event.getCustomerEmail(),
                     event.getOrderNumber(),
                     NotificationType.ORDER_CONFIRMED,
                     "Order confirmed",
@@ -57,6 +58,7 @@ public class NotificationEventService {
         if (WAREHOUSE_ASSIGNED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),
+                    event.getCustomerEmail(),
                     event.getOrderNumber(),
                     NotificationType.WAREHOUSE_ASSIGNED,
                     "Warehouse assigned",
@@ -68,6 +70,7 @@ public class NotificationEventService {
         if (ROUTE_CALCULATED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),
+                    event.getCustomerEmail(),
                     event.getOrderNumber(),
                     NotificationType.ROUTE_CALCULATED,
                     "Route calculated",
@@ -89,6 +92,7 @@ public class NotificationEventService {
         if (ETA_UPDATED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),
+                    event.getCustomerEmail(),
                     event.getOrderNumber(),
                     NotificationType.ETA_UPDATED,
                     "ETA updated",
@@ -100,6 +104,7 @@ public class NotificationEventService {
         if (ORDER_DELIVERED_EVENT.equals(event.getEventType())) {
             createNotification(
                     event.getCustomerId(),
+                    event.getCustomerEmail(),
                     event.getOrderNumber(),
                     NotificationType.ORDER_DELIVERED,
                     "Order delivered",
@@ -110,6 +115,7 @@ public class NotificationEventService {
 
     private void createNotification(
             Long customerId,
+            String customerEmail,
             Long orderNumber,
             NotificationType notificationType,
             String title,
@@ -122,6 +128,7 @@ public class NotificationEventService {
 
         CreateNotificationRequestDTO requestDTO = new CreateNotificationRequestDTO();
         requestDTO.setCustomerId(customerId);
+        requestDTO.setRecipient(customerEmail);
         requestDTO.setOrderNumber(orderNumber);
         requestDTO.setNotificationType(notificationType);
         requestDTO.setTitle(title);

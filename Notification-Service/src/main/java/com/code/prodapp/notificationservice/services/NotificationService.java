@@ -49,6 +49,37 @@ public class NotificationService {
                 .toList();
     }
 
+    public List<NotificationResponseDTO> getNotificationsByRecipient(String recipient) {
+        String normalizedRecipient = normalizeRecipient(recipient);
+        if (normalizedRecipient == null) {
+            log.info("Skipping notification lookup because authenticated recipient is missing");
+            return List.of();
+        }
+
+        log.info("Getting notifications for authenticated recipient {}", normalizedRecipient);
+        return notificationRepository.findAllByRecipientIgnoreCase(normalizedRecipient)
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    public List<NotificationResponseDTO> getUnreadNotificationsByRecipient(String recipient) {
+        String normalizedRecipient = normalizeRecipient(recipient);
+        if (normalizedRecipient == null) {
+            log.info("Skipping unread notification lookup because authenticated recipient is missing");
+            return List.of();
+        }
+
+        log.info("Getting unread notifications for authenticated recipient {}", normalizedRecipient);
+        return notificationRepository.findAllByRecipientIgnoreCaseAndReadStatus(
+                        normalizedRecipient,
+                        NotificationReadStatus.UNREAD
+                )
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
     @Transactional
     public NotificationResponseDTO createNotification(CreateNotificationRequestDTO requestDTO) {
         log.info("Creating notification for customer {}", requestDTO.getCustomerId());
@@ -91,6 +122,14 @@ public class NotificationService {
     private Notification findNotificationEntityById(Long notificationId) {
         return notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationNotFoundException("Notification not found with id " + notificationId));
+    }
+
+    private String normalizeRecipient(String recipient) {
+        if (recipient == null || recipient.isBlank()) {
+            return null;
+        }
+
+        return recipient.trim();
     }
 
     private NotificationResponseDTO mapToDTO(Notification notification) {
