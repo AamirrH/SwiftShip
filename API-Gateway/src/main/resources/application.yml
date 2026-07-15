@@ -1,0 +1,126 @@
+spring:
+  application:
+    name: API-Gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: Order-Service
+              uri: lb://ORDER-SERVICE
+              predicates:
+                - Path=/orders/**,/customers/**
+                - Method=GET,POST,PUT,PATCH,DELETE,OPTIONS
+              filters:
+                - name: AuthenticationFilter
+                  args:
+                    role: CUSTOMER
+            - id: Inventory-Service
+              uri: lb://INVENTORY-SERVICE
+              predicates:
+                - Path=/products/**
+                - Method=GET,POST,PUT,PATCH,DELETE,OPTIONS
+              filters:
+                - name: AuthenticationFilter
+                  args:
+                    role: CUSTOMER
+            - id: Auth-Service
+              uri: lb://AUTH-SERVICE
+              predicates:
+                - Path=/auth/**,/oauth2/**,/login/oauth2/**
+                - Method=GET,POST,PUT,PATCH,DELETE,OPTIONS
+            - id: Warehouse-Service
+              uri: lb://WAREHOUSE-SERVICE
+              predicates:
+                - Path=/admin/warehouses/**
+                - Method=GET,POST,PUT,PATCH,DELETE,OPTIONS
+              filters:
+                - name: AuthenticationFilter
+                  args:
+                    role: ADMIN
+            - id: Routing-Service
+              uri: lb://ROUTING-SERVICE
+              predicates:
+                - Path=/routes/**
+                - Method=GET,POST,PUT,PATCH,DELETE,OPTIONS
+              filters:
+                - name: AuthenticationFilter
+                  args:
+                    role: ADMIN
+            - id: Tracking-Service
+              uri: lb://TRACKING-SERVICE
+              predicates:
+                - Path=/tracking/**,/drivers/**
+                - Method=GET,POST,PUT,PATCH,DELETE,OPTIONS
+              filters:
+                - name: AuthenticationFilter
+                  args:
+                    role: CUSTOMER
+            - id: Notification-Service
+              uri: lb://NOTIFICATION-SERVICE
+              predicates:
+                - Path=/notifications/**,/emails/**
+                - Method=GET,POST,PUT,PATCH,DELETE,OPTIONS
+              filters:
+                - name: AuthenticationFilter
+                  args:
+                    role: CUSTOMER
+
+
+
+server:
+  port: ${PORT:9090}
+
+
+
+## Eureka Server Config
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:localhost}
+    prefer-ip-address: ${EUREKA_INSTANCE_PREFER_IP_ADDRESS:false}
+    non-secure-port-enabled: ${EUREKA_INSTANCE_NON_SECURE_PORT_ENABLED:true}
+    secure-port-enabled: ${EUREKA_INSTANCE_SECURE_PORT_ENABLED:false}
+    non-secure-port: ${EUREKA_INSTANCE_NON_SECURE_PORT:${server.port}}
+    secure-port: ${EUREKA_INSTANCE_SECURE_PORT:443}
+
+
+## API Gateway Config
+
+jwt:
+  SecretKey: ${JWT_SECRETKEY}
+
+platform:
+  health:
+    timeout-millis: 3000
+    http-targets:
+      - name: Discovery Service
+        url: http://localhost:8761
+      - name: API Gateway
+        url: http://localhost:9090/actuator/health
+      - name: Auth Service
+        url: http://localhost:9040/auth/login
+      - name: Inventory Service
+        url: http://localhost:9010/actuator/health
+      - name: Order Service
+        url: http://localhost:9020/actuator/health
+      - name: Notification Service
+        url: http://localhost:9050/actuator/health
+      - name: Warehouse Service
+        url: http://localhost:9060/actuator/health
+      - name: Routing Service
+        url: http://localhost:9070/actuator/health
+      - name: Tracking Service
+        url: http://localhost:9099/actuator/health
+    tcp-targets:
+      - name: Kafka Server
+        host: localhost
+        port: 9092
+      - name: Redis
+        host: localhost
+        port: 6379
+      - name: PostgreSQL
+        host: localhost
+        port: 5433

@@ -26,3 +26,6 @@ Warehouse-Service/src/main/resources/application.properties
 Routing-Service/src/main/resources/application.properties
 Tracking-Service/src/main/resources/application.properties
 Notification-Service/src/main/resources/application.properties
+
+### Safe deploy configs tracked intentionally ###
+!API-Gateway/src/main/resources/application.yml
