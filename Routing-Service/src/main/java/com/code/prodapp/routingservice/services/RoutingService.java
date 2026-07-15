@@ -8,6 +8,9 @@ import com.code.prodapp.routingservice.events.WarehouseAssignedEvent;
 import com.code.prodapp.routingservice.exceptions.RouteNotFoundException;
 import com.code.prodapp.routingservice.exceptions.RouteServiceDownException;
 import com.code.prodapp.routingservice.repositories.RouteRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +48,9 @@ public class RoutingService {
     private final KafkaTemplate<String, RouteCalculatedEvent> routingKafkaTemplate;
     private final RouteRepository routeRepository;
 
+    @Retry(name = "routingServiceRetry", fallbackMethod = "routeCalculationFallback")
+    @CircuitBreaker(name = "routingCircuitBreaker", fallbackMethod = "routeCalculationFallback")
+    @RateLimiter(name = "routingServiceRateLimiter")
     public List<RouteServiceDTO> getAllRoutes(RouteRequestDTO routeRequestDTO) {
         AtomicLong counter = new AtomicLong(1L);
         RouteResponseDTO routeResponseDTO = routeFeignClient.getAllRoutes(apiKey, drivingProfile, routeRequestDTO);
@@ -60,6 +66,11 @@ public class RoutingService {
                 })
                 .collect(Collectors.toList());
 
+    }
+
+    public List<RouteServiceDTO> routeCalculationFallback(RouteRequestDTO routeRequestDTO, Throwable throwable) {
+        log.warn("Route calculation fallback hit reason={}", throwable.getMessage());
+        throw new RouteServiceDownException("Route calculation is temporarily unavailable. Please try again later.");
     }
 
     @Transactional

@@ -3,6 +3,7 @@ package com.code.prodapp.notificationservice.controllers;
 import com.code.prodapp.notificationservice.DTOs.CreateNotificationRequestDTO;
 import com.code.prodapp.notificationservice.DTOs.NotificationResponseDTO;
 import com.code.prodapp.notificationservice.services.NotificationService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
+@RateLimiter(name = "notificationServiceRateLimiter")
 public class NotificationController {
 
     private final NotificationService notificationService;

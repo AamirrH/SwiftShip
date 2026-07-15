@@ -4,6 +4,7 @@ package com.code.prodapp.inventoryservice.controllers;
 import com.code.prodapp.inventoryservice.DTOs.*;
 import com.code.prodapp.inventoryservice.clients.OrdersFeignClient;
 import com.code.prodapp.inventoryservice.service.ProductService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -17,6 +18,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("/products")
+@RateLimiter(name = "inventoryServiceRateLimiter")
 public class ProductController {
 
     private final ProductService productService;

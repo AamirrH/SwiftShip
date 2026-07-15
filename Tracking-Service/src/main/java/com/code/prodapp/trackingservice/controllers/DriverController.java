@@ -5,6 +5,7 @@ import com.code.prodapp.trackingservice.DTOs.DriverResponseDTO;
 import com.code.prodapp.trackingservice.DTOs.UpdateDriverRequestDTO;
 import com.code.prodapp.trackingservice.entities.DriverStatus;
 import com.code.prodapp.trackingservice.services.DriverService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/drivers")
 @RequiredArgsConstructor
+@RateLimiter(name = "trackingServiceRateLimiter")
 public class DriverController {
 
     private final DriverService driverService;

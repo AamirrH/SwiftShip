@@ -6,6 +6,7 @@ import com.code.prodapp.authservice.DTOs.SignupRequestDTO;
 import com.code.prodapp.authservice.DTOs.SignupResponseDTO;
 import com.code.prodapp.authservice.exceptions.TokenException;
 import com.code.prodapp.authservice.services.AuthService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Slf4j
+@RateLimiter(name = "authServiceRateLimiter")
 public class AuthControllers {
 
     private final AuthService authService;

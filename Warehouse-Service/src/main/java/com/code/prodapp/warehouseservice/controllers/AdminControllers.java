@@ -4,6 +4,7 @@ import com.code.prodapp.warehouseservice.DTOs.CreateWarehouseRequestDTO;
 import com.code.prodapp.warehouseservice.DTOs.UpdateWarehouseRequestDTO;
 import com.code.prodapp.warehouseservice.DTOs.WarehouseResponseDTO;
 import com.code.prodapp.warehouseservice.services.WarehouseService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/admin/warehouses")
 @RequiredArgsConstructor
+@RateLimiter(name = "warehouseServiceRateLimiter")
 public class AdminControllers {
 
     private final WarehouseService warehouseService;
