@@ -55,9 +55,9 @@ export function TrackingPage({ orderNumber }) {
     ...mockTracking,
     ...data,
     ...liveTracking,
-    steps: liveTracking?.steps ?? data.steps ?? mockTracking.steps,
     currentLocation: liveTracking?.currentLocation ?? data.currentLocation ?? buildLocationLabel(liveTracking ?? data),
   };
+  const timelineSteps = buildTimelineSteps(tracking);
 
   return (
     <section className="page">
@@ -74,7 +74,7 @@ export function TrackingPage({ orderNumber }) {
       </div>
 
       <Card>
-        <OrderTimeline steps={tracking.steps} />
+        <OrderTimeline steps={timelineSteps} />
         <div className="grid three">
           <Info icon={Clock3} label="Current ETA" value={`${Math.round(tracking.currentEtaMinutes ?? 0)} min`} />
           <Info icon={Route} label="Remaining" value={`${formatDistance(tracking.remainingDistanceKm)} km`} />
@@ -104,6 +104,55 @@ function buildLocationLabel(tracking) {
     return mockTracking.currentLocation;
   }
   return `${tracking.currentLatitude.toFixed(4)}, ${tracking.currentLongitude.toFixed(4)}`;
+}
+
+function buildTimelineSteps(tracking) {
+  const status = tracking?.trackingStatus ?? tracking?.status;
+  const progress = calculateProgress(tracking);
+  const createdTime = formatTime(tracking?.createdAt);
+  const updatedTime = formatTime(tracking?.updatedAt);
+  const isDelivered = status === "DELIVERED";
+  const isOnRoute = status === "IN_TRANSIT" || progress > 0;
+  const isAssigned = status === "DRIVER_ASSIGNED" || isOnRoute || isDelivered;
+
+  return [
+    { label: "Ordered", time: createdTime, state: "done" },
+    { label: "Reserved", time: createdTime, state: isAssigned ? "done" : "active" },
+    { label: "On Route", time: isOnRoute || isDelivered ? updatedTime : "Pending", state: getRouteStepState(isOnRoute, isDelivered) },
+    { label: "Delivered", time: isDelivered ? updatedTime : "Pending", state: isDelivered ? "done" : "todo" },
+  ];
+}
+
+function getRouteStepState(isOnRoute, isDelivered) {
+  if (isDelivered) {
+    return "done";
+  }
+  return isOnRoute ? "active" : "todo";
+}
+
+function calculateProgress(tracking) {
+  const totalDistance = Number(tracking?.totalDistanceKm ?? 0);
+  const remainingDistance = Number(tracking?.remainingDistanceKm ?? totalDistance);
+  if (totalDistance <= 0) {
+    return tracking?.trackingStatus === "DELIVERED" ? 1 : 0;
+  }
+  return Math.min(1, Math.max(0, (totalDistance - remainingDistance) / totalDistance));
+}
+
+function formatTime(value) {
+  if (!value) {
+    return "Pending";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Pending";
+  }
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatDistance(distance) {

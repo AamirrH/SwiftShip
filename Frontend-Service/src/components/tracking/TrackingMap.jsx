@@ -1,4 +1,7 @@
-import { Home, MapPin, Navigation, Truck } from "lucide-react";
+import { Home, Truck } from "lucide-react";
+
+const ROUTE_PATH =
+  "M 8 72 C 18 56 28 84 38 64 S 55 42 64 56 S 78 76 84 49 S 83 25 92 23";
 
 export function TrackingMap({ tracking }) {
   const progress = calculateProgress(tracking);
@@ -6,17 +9,17 @@ export function TrackingMap({ tracking }) {
 
   return (
     <div className="tracking-map">
-      <div className="route-line" />
-      <div className="map-pin" style={{ left: 42, bottom: 70 }}>
-        <MapPin size={21} />
-      </div>
+      <svg className="tracking-route-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <path className="tracking-route-shadow" d={ROUTE_PATH} />
+        <path className="tracking-route-path" d={ROUTE_PATH} />
+      </svg>
       <div
         className="map-pin tracking-truck-pin"
         style={{ left: `${truckPosition.left}%`, top: `${truckPosition.top}%`, color: "var(--tertiary)" }}
       >
         <Truck size={21} />
       </div>
-      <div className="map-pin" style={{ right: 42, top: 48, color: "var(--secondary)" }}>
+      <div className="map-pin tracking-home-pin" style={{ left: "92%", top: "23%", color: "var(--secondary)" }}>
         <Home size={21} />
       </div>
       <div className="card card-pad" style={{ bottom: 18, left: 18, position: "absolute", width: "min(320px, calc(100% - 36px))" }}>
@@ -26,7 +29,6 @@ export function TrackingMap({ tracking }) {
           Driver position updates automatically as the simulated delivery moves.
         </p>
       </div>
-      <Navigation size={28} style={{ color: "var(--primary)", position: "absolute", right: 120, bottom: 104 }} />
     </div>
   );
 }
@@ -41,16 +43,65 @@ function calculateProgress(tracking) {
 }
 
 function calculateTruckPosition(progress) {
-  if (progress < 0.62) {
-    return {
-      left: 8 + progress * 108,
-      top: 71,
-    };
-  }
+  const clampedProgress = Math.min(1, Math.max(0, progress));
+  const routePoints = sampleRoutePoints();
+  const targetIndex = Math.min(routePoints.length - 1, Math.round(clampedProgress * (routePoints.length - 1)));
+  const point = routePoints[targetIndex];
 
-  const verticalProgress = (progress - 0.62) / 0.38;
   return {
-    left: 75,
-    top: 71 - verticalProgress * 54,
+    left: point.x,
+    top: point.y,
+  };
+}
+
+function sampleRoutePoints() {
+  const segments = [
+    {
+      start: { x: 8, y: 72 },
+      control1: { x: 18, y: 56 },
+      control2: { x: 28, y: 84 },
+      end: { x: 38, y: 64 },
+    },
+    {
+      start: { x: 38, y: 64 },
+      control1: { x: 48, y: 44 },
+      control2: { x: 55, y: 42 },
+      end: { x: 64, y: 56 },
+    },
+    {
+      start: { x: 64, y: 56 },
+      control1: { x: 73, y: 70 },
+      control2: { x: 78, y: 76 },
+      end: { x: 84, y: 49 },
+    },
+    {
+      start: { x: 84, y: 49 },
+      control1: { x: 90, y: 22 },
+      control2: { x: 83, y: 25 },
+      end: { x: 92, y: 23 },
+    },
+  ];
+
+  return segments.flatMap((segment, segmentIndex) =>
+    Array.from({ length: 24 }, (_, index) => {
+      const step = segmentIndex === 0 ? index : index + 1;
+      return cubicBezierPoint(segment, step / 24);
+    })
+  );
+}
+
+function cubicBezierPoint(segment, time) {
+  const inverseTime = 1 - time;
+  return {
+    x:
+      inverseTime ** 3 * segment.start.x +
+      3 * inverseTime ** 2 * time * segment.control1.x +
+      3 * inverseTime * time ** 2 * segment.control2.x +
+      time ** 3 * segment.end.x,
+    y:
+      inverseTime ** 3 * segment.start.y +
+      3 * inverseTime ** 2 * time * segment.control1.y +
+      3 * inverseTime * time ** 2 * segment.control2.y +
+      time ** 3 * segment.end.y,
   };
 }

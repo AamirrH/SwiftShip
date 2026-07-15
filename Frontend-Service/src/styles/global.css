@@ -1101,7 +1101,8 @@ a {
   display: none;
 }
 
-.step.done::before {
+.step.done::before,
+.step.active::before {
   background: var(--primary);
 }
 
@@ -1139,12 +1140,30 @@ a {
   background-size: 34px 34px, 34px 34px, auto, auto;
 }
 
-.route-line {
+.tracking-route-svg {
   position: absolute;
-  inset: 74px 58px 96px 58px;
-  border-top: 4px solid var(--primary);
-  border-right: 4px solid var(--primary);
-  border-radius: 0 110px 0 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.tracking-route-path,
+.tracking-route-shadow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.tracking-route-shadow {
+  stroke: rgba(0, 0, 0, 0.44);
+  stroke-width: 8;
+}
+
+.tracking-route-path {
+  stroke: var(--primary);
+  stroke-width: 4;
 }
 
 .map-pin {
@@ -1163,6 +1182,10 @@ a {
 .tracking-truck-pin {
   transform: translate(-50%, -50%);
   transition: left 420ms ease, top 420ms ease;
+}
+
+.tracking-home-pin {
+  transform: translate(-50%, -50%);
 }
 
 .notification-card {
