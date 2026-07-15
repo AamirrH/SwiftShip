@@ -56,17 +56,24 @@ public class RoutingService {
     public List<RouteServiceDTO> getAllRoutes(RouteRequestDTO routeRequestDTO) {
         AtomicLong counter = new AtomicLong(1L);
         RouteResponseDTO routeResponseDTO = routeFeignClient.getAllRoutes(apiKey, drivingProfile, routeRequestDTO);
-        return routeResponseDTO
+        if (routeResponseDTO == null || routeResponseDTO.getRoutes() == null || routeResponseDTO.getRoutes().isEmpty()) {
+            log.warn("External route service returned no routes. Using local fallback route.");
+            return List.of(buildFallbackRoute(routeRequestDTO));
+        }
+
+        List<RouteServiceDTO> routes = routeResponseDTO
                 .getRoutes()
                 .stream()
-                .map(r -> {
-                    RouteServiceDTO routeServiceDTO = new RouteServiceDTO();
-                    routeServiceDTO.setRouteId(counter.getAndIncrement());
-                    routeServiceDTO.setTotalDistance(r.getSummary().getDistance() / 1000.0);
-                    routeServiceDTO.setTimeToReach(r.getSummary().getDuration() / 60.0);
-                    return routeServiceDTO;
-                })
+                .map(route -> toRouteServiceDTO(route, counter.getAndIncrement()))
+                .filter(this::isValidRouteServiceDTO)
                 .collect(Collectors.toList());
+
+        if (routes.isEmpty()) {
+            log.warn("External route service returned only invalid routes. Using local fallback route.");
+            return List.of(buildFallbackRoute(routeRequestDTO));
+        }
+
+        return routes;
 
     }
 
@@ -78,6 +85,11 @@ public class RoutingService {
     @Transactional
     @KafkaListener(topics = FULFILLMENT_EVENTS_TOPIC)
     public void handleWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent) {
+        if (warehouseAssignedEvent == null) {
+            log.warn("Skipping null fulfillment event in routing service.");
+            return;
+        }
+
         log.info("Kafka receive topic={} eventType={} orderNumber={} warehouseId={}",
                 FULFILLMENT_EVENTS_TOPIC,
                 warehouseAssignedEvent.getEventType(),
@@ -191,6 +203,9 @@ public class RoutingService {
         PromptTemplate promptTemplate = new PromptTemplate(systemPrompt);
 
         // Validate before rendering the text
+        if (routeServiceDTOS == null) {
+            routeServiceDTOS = List.of(buildFallbackRoute(routeRequestDTO));
+        }
         routeServiceDTOS = routeServiceDTOS.stream()
                 .filter(this::isValidRouteServiceDTO)
                 .toList();
@@ -220,6 +235,19 @@ public class RoutingService {
         return new ModelRouteResponse(routeResponse.getSelectedRouteId(), routeResponse.getTotalDistance(),
                 routeResponse.getTimeToReach(), routeResponse.getReasoning());
 
+    }
+
+    private RouteServiceDTO toRouteServiceDTO(Routes route, Long routeId) {
+        RouteServiceDTO routeServiceDTO = new RouteServiceDTO();
+        routeServiceDTO.setRouteId(routeId);
+        if (route == null || route.getSummary() == null) {
+            return routeServiceDTO;
+        }
+        routeServiceDTO.setTotalDistance(route.getSummary().getDistance() == null
+                ? null
+                : route.getSummary().getDistance() / 1000.0);
+        routeServiceDTO.setTimeToReach(route.getSummary().getDuration() / 60.0);
+        return routeServiceDTO;
     }
 
     private boolean isValidWarehouseAssignedEvent(WarehouseAssignedEvent warehouseAssignedEvent) {
@@ -300,7 +328,7 @@ public class RoutingService {
 
         List<Double> origin = routeRequestDTO.getCoordinates().get(0);
         List<Double> destination = routeRequestDTO.getCoordinates().get(1);
-        if (origin == null || destination == null || origin.size() < 2 || destination.size() < 2) {
+        if (!hasValidCoordinatePair(origin) || !hasValidCoordinatePair(destination)) {
             return 1.0;
         }
 
@@ -310,6 +338,15 @@ public class RoutingService {
         double customerLatitude = destination.get(1);
         return Math.max(1.0, haversineKm(warehouseLatitude, warehouseLongitude, customerLatitude, customerLongitude)
                 * FALLBACK_ROAD_DISTANCE_FACTOR);
+    }
+
+    private boolean hasValidCoordinatePair(List<Double> coordinates) {
+        return coordinates != null
+                && coordinates.size() >= 2
+                && coordinates.get(0) != null
+                && coordinates.get(1) != null
+                && isValidLongitude(coordinates.get(0))
+                && isValidLatitude(coordinates.get(1));
     }
 
     private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
