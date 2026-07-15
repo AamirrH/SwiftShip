@@ -2,9 +2,9 @@
 
 <img width="3096" height="3072" alt="SwiftShip_Icon" src="https://github.com/user-attachments/assets/1478f836-06ba-4ed1-ac4c-cc42e8c7168c" />
 
-SwiftShip is a full-stack microservices-based order fulfillment and delivery tracking platform built as a portfolio project. It simulates the backend flow of a quick-commerce/logistics system: customers place orders, inventory is reserved, the nearest warehouse is selected, a route is calculated, a driver/tracking session is created, and the customer receives live delivery updates and notifications.
+SwiftShip is a full-stack distributed order fulfillment and live delivery tracking platform built as a portfolio project. It simulates the kind of backend workflow used in quick-commerce and logistics systems: a customer places an order, stock is reserved, the nearest warehouse is selected, a route is calculated, a tracking session starts, and the customer receives delivery updates.
 
-The project was built over roughly 2-3 months through many small, organic commits and real deployment/debugging iterations. The goal was to go beyond CRUD APIs and build a system that demonstrates service boundaries, asynchronous event choreography, fault tolerance, production configuration, and frontend/backend integration.
+The project was built over roughly 2-3 months through many small, organic commits and real deployment/debugging iterations. The goal was not only to build APIs, but to understand how independent services communicate, fail, recover, and still complete one user-facing business flow.
 
 ## Live Links
 
@@ -15,62 +15,188 @@ The project was built over roughly 2-3 months through many small, organic commit
 | API Gateway | https://swiftship-api-gateway.onrender.com |
 | Eureka Dashboard | https://swiftship-u7gw.onrender.com |
 
-> Note: services are deployed on free-tier infrastructure, so cold starts or temporary latency can happen.
+> The project is deployed on free-tier infrastructure, so cold starts and occasional latency can happen.
+
+## What SwiftShip Does
+
+From the customer side, SwiftShip supports a complete shopping and fulfillment experience:
+
+- Sign up and log in using manual auth or Google OAuth2.
+- Browse a product catalog.
+- Search products.
+- View product details.
+- Add products to cart.
+- Save and manage delivery addresses.
+- Place an order.
+- See grouped order history.
+- Cancel eligible orders.
+- Track delivery progress.
+- Receive in-app notifications for order lifecycle updates.
+- View account/profile state.
+
+From the backend side, SwiftShip coordinates a multi-service order lifecycle:
+
+```text
+Customer checkout
+  -> API-Gateway validates JWT and forwards request
+  -> Order-Service creates order and snapshots delivery address
+  -> Order-Service publishes ORDER_PLACED
+  -> Inventory-Service reserves/reduces product stock
+  -> Inventory-Service publishes ORDER_CONFIRMED
+  -> Order-Service updates order status
+  -> Warehouse-Service selects nearest active warehouse using PostGIS
+  -> Warehouse-Service publishes WAREHOUSE_ASSIGNED
+  -> Routing-Service calculates/selects route and falls back when external routing fails
+  -> Routing-Service publishes ROUTE_CALCULATED
+  -> Tracking-Service creates tracking session and assigns simulated driver
+  -> Tracking-Service simulates delivery movement and ETA changes
+  -> Notification-Service creates customer notifications and email updates
+  -> Frontend shows order, tracking, notification, and account state
+```
+
+## Architecture Overview
+
+SwiftShip is split into independently owned services. The frontend talks only to the API Gateway; the gateway routes requests to backend services and enforces authentication/authorization boundaries.
+
+```text
+React/Vite Frontend on Vercel
+        |
+        v
+Spring Cloud API-Gateway on Render
+        |
+        |-- Auth-Service
+        |-- Inventory-Service
+        |-- Order-Service
+        |-- Warehouse-Service
+        |-- Routing-Service
+        |-- Tracking-Service
+        |-- Notification-Service
+        |
+        v
+Eureka Discovery-Service
+
+Kafka connects the lifecycle asynchronously.
+Neon PostgreSQL stores service data.
+PostGIS handles geospatial warehouse lookup.
+Redis stores latest tracking state.
+Aiven Kafka carries events.
+Render hosts backend services.
+Vercel hosts the frontend.
+```
 
 ## Deployed Infrastructure
-
-SwiftShip is deployed across several free-tier/cloud services:
 
 | Layer | Platform | Purpose |
 | --- | --- | --- |
 | Frontend | Vercel | React/Vite customer and admin console |
 | Backend services | Render | Independently deployed Spring Boot services |
-| Databases | Neon PostgreSQL | Separate service databases for auth, orders, inventory, warehouse, routing, tracking, notifications |
-| Kafka | Aiven Kafka | Event-driven communication between services |
-| Redis | Redis test DB | Latest tracking state / live delivery cache |
-| Service discovery | Eureka on Render | Runtime service registration and gateway discovery |
-| Email provider | Resend | Email notification layer |
+| Databases | Neon PostgreSQL | Separate databases for service-owned data |
+| Messaging | Aiven Kafka | Event-driven communication between services |
+| Cache/live state | Redis test DB | Latest tracking/session state |
+| Service discovery | Eureka on Render | Service registry for gateway/service lookup |
+| Email | Resend | Email notification layer |
 
-## Microservices
+## Services and Responsibilities
 
-| Service | Role |
-| --- | --- |
-| `API-Gateway` | Single backend entry point for the frontend, JWT validation, CORS, route forwarding, role-aware access |
-| `Auth-Service` | Manual signup/login, Google OAuth2, JWT access token generation |
-| `Inventory-Service` | Product catalog, stock checks, stock reservation/reduction/restoration |
-| `Order-Service` | Customers, saved addresses, cart checkout, order creation, grouped order views, cancellation |
-| `Warehouse-Service` | Warehouse data, PostGIS nearest active warehouse selection, warehouse assignment events |
-| `Routing-Service` | Route calculation using OpenRouteService, Gemini/Spring AI route choice, local route fallback |
-| `Tracking-Service` | Driver assignment, tracking sessions, Redis latest state, simulated delivery movement, WebSocket-ready tracking flow |
-| `Notification-Service` | In-app notifications, Kafka lifecycle listeners, Resend email integration |
-| `Discovery-Service` | Eureka service registry for deployed backend services |
-| `Frontend-Service` | React/Vite customer/admin dashboard |
+### API-Gateway
 
-## End-to-End Flow
+- Single public backend entry point.
+- Routes frontend requests to internal services.
+- Validates JWTs.
+- Handles CORS.
+- Protects customer/admin route groups.
+- Keeps the frontend from directly depending on service URLs.
+
+### Auth-Service
+
+- Manual signup/login.
+- Password hashing.
+- Google OAuth2 login.
+- JWT access token generation.
+- Auth success redirect flow for the deployed frontend.
+
+### Order-Service
+
+- Owns customers, saved addresses, orders, and order items.
+- Creates orders from checkout payloads.
+- Stores delivery address snapshots on the order.
+- Groups order items so one order appears once in the frontend.
+- Supports order cancellation.
+- Publishes order lifecycle events to Kafka.
+- Handles stock restoration during cancellation where applicable.
+
+### Inventory-Service
+
+- Owns product catalog and stock state.
+- Serves product list/detail/search-style frontend use cases.
+- Checks stock availability.
+- Reserves/reduces stock asynchronously after order placement.
+- Restores stock when orders are cancelled.
+- Publishes order confirmation events after successful reservation.
+
+### Warehouse-Service
+
+- Owns warehouse data and active/inactive warehouse state.
+- Stores warehouse coordinates using PostgreSQL/PostGIS geography points.
+- Selects nearest active fulfillment hub using spatial distance queries.
+- Avoids manual Java-side coordinate loops by pushing geospatial work to the database.
+- Publishes warehouse assignment events.
+
+Nearest warehouse logic conceptually works like this:
 
 ```text
-Customer logs in through JWT/OAuth2
-  -> browses products from Inventory-Service
-  -> adds items to cart
-  -> selects/saves delivery address
-  -> places order through API-Gateway
-  -> Order-Service persists order and emits ORDER_PLACED
-  -> Inventory-Service consumes event and reserves stock
-  -> Inventory-Service emits ORDER_CONFIRMED
-  -> Order-Service updates order status
-  -> Warehouse-Service selects nearest active warehouse using PostGIS
-  -> Warehouse-Service emits WAREHOUSE_ASSIGNED
-  -> Routing-Service calculates/falls back to route alternatives
-  -> Routing-Service emits ROUTE_CALCULATED
-  -> Tracking-Service creates tracking session and assigns simulated driver
-  -> Tracking-Service updates delivery state and ETA
-  -> Notification-Service stores customer notifications and sends email where enabled
-  -> Frontend displays orders, tracking, notifications, and account state
+customer latitude/longitude
+  -> build PostGIS point
+  -> compare against active warehouse geography points
+  -> use spatial distance/indexing
+  -> return nearest fulfillment warehouse
 ```
 
-## Event-Driven Architecture
+### Routing-Service
 
-SwiftShip uses Kafka for the fulfillment pipeline. Because Aiven's free tier has topic limits, events are grouped into a small set of topics with event-type fields instead of creating one topic per event.
+- Consumes warehouse assignment events.
+- Builds route requests from warehouse/customer coordinates.
+- Integrates with OpenRouteService for route alternatives.
+- Uses Gemini/Spring AI to select a route from available alternatives.
+- Stores selected route records.
+- Publishes route calculated events.
+- Includes fallback route calculation so external API failure does not stop the fulfillment pipeline.
+
+### Tracking-Service
+
+- Consumes route calculated events.
+- Creates tracking sessions.
+- Assigns simulated drivers.
+- Moves active deliveries over time.
+- Updates remaining distance, ETA, and current coordinates.
+- Stores latest state in Redis where available.
+- Exposes tracking lookup for customer order tracking.
+- Provides the backend foundation for live tracking/WebSocket updates.
+
+### Notification-Service
+
+- Consumes lifecycle events from Kafka.
+- Stores in-app notifications.
+- Supports read/unread notification state.
+- Sends email-style notifications through Resend where configured.
+- Gives the frontend a notification center tied to the customer/order lifecycle.
+
+### Discovery-Service
+
+- Eureka registry for deployed services.
+- Helps visualize which backend services are currently registered and alive.
+
+### Frontend-Service
+
+- React/Vite frontend deployed on Vercel.
+- Customer and admin console.
+- Talks to the backend through API-Gateway only.
+
+## Kafka Event Flow
+
+SwiftShip uses Kafka for asynchronous event choreography. To stay within Aiven free-tier topic limits, related events are grouped into a small number of topics and differentiated by `eventType`.
+
+Topics:
 
 ```text
 order-events
@@ -78,7 +204,7 @@ fulfillment-events
 tracking-events
 ```
 
-Representative events:
+Lifecycle events:
 
 ```text
 ORDER_PLACED
@@ -89,58 +215,90 @@ ETA_UPDATED
 ORDER_DELIVERED
 ```
 
-This keeps the system closer to real event-driven architecture while staying deployable on free-tier infrastructure.
+Flow:
 
-## Technical Features
-
-- Spring Boot microservices with independent service ownership.
-- Spring Cloud Gateway as the single public backend entry point.
-- Eureka service discovery across Render-deployed services.
-- JWT authentication and role-aware customer/admin routing.
-- Google OAuth2 login integrated through the gateway.
-- Kafka-based asynchronous service choreography.
-- Aiven Kafka configuration using SASL_SSL.
-- Separate Neon PostgreSQL databases per service.
-- PostGIS geography queries for nearest warehouse selection.
-- OpenRouteService integration for route alternatives.
-- Gemini/Spring AI assisted route selection.
-- Local routing fallback so external API failures do not break the order pipeline.
-- Redis-backed latest tracking state.
-- Simulated driver assignment and delivery movement.
-- WebSocket-ready live tracking architecture.
-- Resend-backed email notification layer.
-- In-app notification center.
-- Resilience4j retry, circuit breaker, and rate limiter patterns.
-- Dockerfiles for Render deployment.
-- Frontend health page for service visibility.
-- Responsive React frontend for desktop, laptop, and mobile.
-- Customer-facing language cleanup to avoid exposing internal route/service details.
+```text
+Order-Service
+  publishes ORDER_PLACED
+        |
+        v
+Inventory-Service
+  reserves stock
+  publishes ORDER_CONFIRMED
+        |
+        v
+Warehouse-Service
+  selects nearest active warehouse using PostGIS
+  publishes WAREHOUSE_ASSIGNED
+        |
+        v
+Routing-Service
+  calculates/selects delivery route
+  publishes ROUTE_CALCULATED
+        |
+        v
+Tracking-Service
+  creates session, assigns driver, simulates movement
+  publishes tracking updates
+        |
+        v
+Notification-Service
+  stores/sends customer lifecycle updates
+```
 
 ## Frontend Features
 
-The frontend is a React/Vite app deployed on Vercel.
+The frontend is built with React and Vite and deployed on Vercel.
 
-Implemented screens and flows:
+Implemented screens/features:
 
-- Customer signup/login and Google OAuth login.
-- Product catalog with search and daily rotating featured products.
-- Product cards, product detail view, and cart management.
-- Checkout with saved address selection and address creation.
-- Order placement and cancellation confirmations.
-- Grouped order history so each order appears once.
-- Tracking page with animated delivery route UI.
+- Home page with featured products.
+- Catalog page with product search.
+- Product detail page.
+- Cart and checkout.
+- Saved address selection and address creation.
+- Order placement confirmation.
+- Order cancellation confirmation.
+- Grouped customer order history.
+- Tracking screen with animated delivery route UI.
 - Notification center with read/unread state.
-- Account page with profile and address management.
-- Admin-only warehouse and route sections hidden from customer accounts.
-- Standalone health/status page for deployed service visibility.
+- Account/profile screen.
+- Editable customer address information.
+- Admin/customer role-based navigation.
+- Warehouse admin pages.
+- Route/admin pages.
+- Standalone health page for service connectivity.
+- Responsive layout for desktop, laptop, tablet, and mobile.
 
-Frontend config:
+Frontend production base URL:
 
 ```text
 VITE_API_BASE_URL=https://swiftship-api-gateway.onrender.com
 ```
 
-All frontend traffic is designed to go through the API Gateway, not directly to individual services.
+## Security and Access Control
+
+- JWT-based backend authentication.
+- Google OAuth2 login support.
+- API Gateway validates tokens before forwarding protected requests.
+- Frontend stores and sends access tokens for authenticated calls.
+- Customer/admin role awareness in frontend navigation.
+- Admin routes hidden from customer users in the UI.
+- Gateway route groups separate public, customer, admin, and internal-style endpoints.
+
+## Resilience and Failure Handling
+
+SwiftShip includes several production-style safeguards:
+
+- Resilience4j retry patterns.
+- Circuit breakers around external/service-sensitive paths.
+- Rate limiters to reduce abuse and free-tier overload.
+- Routing fallback when OpenRouteService fails or returns invalid data.
+- Null-safe event handling in routing paths.
+- Redis used for fast latest tracking state where available.
+- Slower tracking scheduler to reduce database/cache churn on free-tier infrastructure.
+- Kafka topic consolidation for Aiven free-tier limits.
+- Service keepalive pages/endpoints for Render free-tier deployments.
 
 ## Gateway Route Map
 
@@ -159,16 +317,30 @@ All frontend traffic is designed to go through the API Gateway, not directly to 
 | `/notifications/**` | Notification-Service | Authenticated customer |
 | `/emails/**` | Notification-Service | Authenticated/customer flow |
 
-## Deployment Notes
+## Technical Stack
 
-The app is intentionally deployed on constrained free-tier platforms. That shaped several production-style decisions:
-
-- Kafka topics are consolidated to stay within Aiven topic limits.
-- Tracking simulation uses a slower scheduler to reduce Neon/Redis writes.
-- Services use small DB connection pools where needed.
-- External route failures degrade to local fallback route calculation.
-- API keys/secrets are supplied through deployment environment variables.
-- Each backend service has a lightweight keepalive endpoint/page for uptime pings.
+- Java 21
+- Spring Boot
+- Spring Cloud Gateway
+- Spring Security
+- OAuth2 Client
+- Eureka Discovery
+- Spring Cloud Config support
+- Spring Kafka
+- Apache Kafka / Aiven Kafka
+- PostgreSQL / Neon
+- PostGIS
+- Redis
+- OpenFeign
+- OpenRouteService
+- Spring AI / Gemini
+- Resilience4j
+- Docker
+- React
+- Vite
+- Vercel
+- Render
+- Resend
 
 ## Local Development
 
@@ -176,7 +348,7 @@ Suggested startup order:
 
 1. PostgreSQL/PostGIS
 2. Kafka
-3. Redis/Memurai
+3. Redis or Memurai
 4. Discovery-Service
 5. API-Gateway
 6. Auth-Service
@@ -205,18 +377,19 @@ cd Order-Service
 
 ## Current Limitations
 
-SwiftShip is a portfolio/learning project, not a production SaaS. Some bugs or edge cases may still exist.
+SwiftShip is a portfolio/learning project, not a production SaaS. Some bugs and edge cases may still exist.
 
-Known areas for future improvement:
+Future improvements:
 
-- Add dead-letter topics and stronger Kafka retry/DLT handling.
+- Add dedicated dead-letter topics and stronger Kafka retry/DLT handling.
 - Move duplicated event DTOs into a shared contract module or schema registry.
-- Add broader integration tests for the full order lifecycle.
-- Add stronger observability with centralized logs/tracing.
-- Improve deployment automation and infrastructure documentation.
-- Tighten internal-only route access further.
-- Continue polishing WebSocket live tracking behavior.
+- Add more integration tests across the full lifecycle.
+- Add centralized logging/tracing dashboards.
+- Improve deployment automation.
+- Tighten internal/admin route access further.
+- Continue polishing WebSocket-driven live tracking behavior.
+- Add richer admin analytics and operational dashboards.
 
 ## Interview Pitch
 
-SwiftShip is a distributed order fulfillment and live delivery tracking platform built with Spring Boot microservices, Kafka event choreography, PostGIS warehouse selection, OpenRouteService/Gemini route calculation, Redis tracking state, JWT/OAuth2 authentication, and a React frontend behind an API Gateway. It demonstrates practical backend system design: service ownership, asynchronous workflows, cloud deployment, fault-tolerant fallbacks, role-based access, and real-world debugging across multiple services.
+SwiftShip is a deployed distributed order fulfillment and live delivery tracking platform. It uses Spring Boot microservices, Spring Cloud Gateway, JWT/OAuth2 authentication, Kafka event choreography, PostGIS nearest-warehouse selection, OpenRouteService/Gemini route calculation, Redis tracking state, Resilience4j fault tolerance, Neon PostgreSQL databases, Render backend deployments, and a Vercel React frontend. The project demonstrates service ownership, asynchronous workflows, cloud deployment, fault-tolerant fallbacks, role-based access, and end-to-end debugging across a real multi-service system.
