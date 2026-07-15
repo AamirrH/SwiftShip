@@ -23,8 +23,8 @@ export function HealthPage({ onNavigate }) {
         error.status === 403
           ? "Admin access is required to view platform health."
           : error.status
-          ? `Gateway returned ${error.status} for platform health.`
-          : "Gateway is not reachable."
+          ? "Platform health could not be loaded right now."
+          : "Platform health could not be loaded right now."
       );
     }
   }
@@ -42,7 +42,7 @@ export function HealthPage({ onNavigate }) {
         <div>
           <span className="label-caps">SwiftShip Operations</span>
           <h1 className="page-title">Platform health</h1>
-          <p className="muted">Gateway-owned checks for services, Kafka, Redis, and database connectivity.</p>
+          <p className="muted">Operational checks for app services, messaging, cache, and database connectivity.</p>
         </div>
         <div className="health-actions">
           <Button variant="secondary" onClick={() => onNavigate("home")}>

@@ -48,7 +48,7 @@ export function AdminRoutesPage() {
           <span className="label-caps">Admin routing operations</span>
           <h1 className="page-title">Route optimization desk</h1>
           <p className="muted">
-            Compare alternatives from `/routes` and inspect which route should be selected for delivery.
+            Compare delivery alternatives and inspect which route should be selected.
           </p>
         </div>
       </div>
@@ -71,7 +71,7 @@ export function AdminRoutesPage() {
             </Button>
           </form>
           {routeStatus === "offline" && (
-            <p className="muted">routing-service is offline, so sample alternatives are shown.</p>
+            <p className="muted">Route alternatives are taking a moment to refresh.</p>
           )}
         </Card>
 

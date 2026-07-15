@@ -36,7 +36,7 @@ export function NotificationsPage() {
     try {
       await api.markNotificationRead(notificationId);
     } catch {
-      // Keep the optimistic UI update when the notification service is offline.
+      // Keep the optimistic UI update if the refresh fails.
     }
   }
 

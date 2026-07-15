@@ -72,8 +72,8 @@ export function AdminWarehousesPage() {
           <h1 className="page-title">Warehouse control room</h1>
           <p className="muted">
             {status === "fallback"
-              ? "Showing local sample warehouses until warehouse-service is reachable."
-              : "Synced from `/admin/warehouses`."}
+              ? "Warehouse data is taking a moment to refresh."
+              : "Warehouse data is up to date."}
           </p>
         </div>
       </div>
@@ -98,7 +98,7 @@ export function AdminWarehousesPage() {
               <div>
                 <h3 className="section-title" style={{ fontSize: 19, margin: 0 }}>{warehouse.warehouseName}</h3>
                 <p className="muted" style={{ margin: "5px 0 8px" }}>
-                  {warehouse.city} · {warehouse.lat.toFixed(4)}, {warehouse.lng.toFixed(4)}
+                  {warehouse.city} - {warehouse.lat.toFixed(4)}, {warehouse.lng.toFixed(4)}
                 </p>
                 <StatusBadge>{warehouse.active ? "Active" : "Inactive"}</StatusBadge>
               </div>
@@ -159,7 +159,7 @@ export function AdminWarehousesPage() {
               </Button>
             </form>
             {formStatus === "offline" && (
-              <p className="muted">Warehouse-service is offline, so this was added locally for preview.</p>
+              <p className="muted">This warehouse was saved on this screen for now. Please refresh before making final changes.</p>
             )}
           </Card>
         </div>
