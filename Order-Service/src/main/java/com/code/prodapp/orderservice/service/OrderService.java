@@ -48,7 +48,7 @@ public class OrderService {
 
     public List<OrderResponseDTO> getAllOrders(){
         log.info("Getting all orders");
-        return orderRepository.findAll()
+        return orderRepository.findAllByCustomerIsNotNullAndCustomerAddressIsNotNull()
                 .stream()
                 .map(this::mapOrderToResponseDTO)
                 .collect(Collectors.toList());
