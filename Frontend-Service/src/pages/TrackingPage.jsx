@@ -1,7 +1,6 @@
-import { Clock3, MapPin, Navigation, Phone, Route } from "lucide-react";
+import { Clock3, Navigation, Route, Truck } from "lucide-react";
 import { OrderTimeline } from "../components/orders/OrderTimeline.jsx";
 import { TrackingMap } from "../components/tracking/TrackingMap.jsx";
-import { Button } from "../components/ui/Button.jsx";
 import { Card } from "../components/ui/Card.jsx";
 import { StatusBadge } from "../components/ui/StatusBadge.jsx";
 import { api } from "../lib/api.js";
@@ -43,16 +42,13 @@ export function TrackingPage({ orderNumber }) {
       <div className="split" style={{ marginTop: 24 }}>
         <TrackingMap />
         <Card>
-          <span className="label-caps">Driver</span>
+          <span className="label-caps">Delivery partner</span>
           <h2 className="section-title" style={{ fontSize: 28, margin: "8px 0" }}>{tracking.driverName}</h2>
           <p className="muted">Your driver is on the way. We will keep this page updated as your order moves.</p>
-          <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
-            <Button>
-              <Phone size={18} /> Call driver
-            </Button>
-            <Button variant="secondary">
-              <MapPin size={18} /> Share delivery pin
-            </Button>
+          <div className="card card-pad" style={{ boxShadow: "none", marginTop: 20 }}>
+            <Truck size={22} style={{ color: "var(--primary)" }} />
+            <div className="label-caps" style={{ marginTop: 10 }}>Current status</div>
+            <strong>{String(tracking.status ?? tracking.trackingStatus).replaceAll("_", " ")}</strong>
           </div>
         </Card>
       </div>
