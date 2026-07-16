@@ -19,10 +19,15 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        log.info("Configuring Auth-Service security: public paths=/auth/signup,/auth/login,/auth/refresh,/oauth2/**,/login/oauth2/**");
+        log.info("Configuring Auth-Service security with public auth, OAuth, and keepalive paths");
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/",
+                                "/keepalive.html",
+                                "/favicon.ico",
+                                "/actuator/health",
+                                "/error",
                                 "/auth/signup",
                                 "/auth/login",
                                 "/auth/refresh",
