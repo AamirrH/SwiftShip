@@ -94,33 +94,33 @@ jwt:
 
 platform:
   health:
-    timeout-millis: 3000
+    timeout-millis: ${PLATFORM_HEALTH_TIMEOUT_MILLIS:5000}
     http-targets:
       - name: Discovery Service
-        url: http://localhost:8761
+        url: ${DISCOVERY_SERVICE_HEALTH_URL:https://swiftship-u7gw.onrender.com/}
       - name: API Gateway
-        url: http://localhost:9090/actuator/health
+        url: ${API_GATEWAY_HEALTH_URL:https://swiftship-api-gateway.onrender.com/keepalive.html}
       - name: Auth Service
-        url: http://localhost:9040/auth/login
+        url: ${AUTH_SERVICE_HEALTH_URL:https://swiftship-authentication-service.onrender.com/keepalive.html}
       - name: Inventory Service
-        url: http://localhost:9010/actuator/health
+        url: ${INVENTORY_SERVICE_HEALTH_URL:https://swiftship-inventory-service.onrender.com/keepalive.html}
       - name: Order Service
-        url: http://localhost:9020/actuator/health
+        url: ${ORDER_SERVICE_HEALTH_URL:https://swiftship-order-service.onrender.com/keepalive.html}
       - name: Notification Service
-        url: http://localhost:9050/actuator/health
+        url: ${NOTIFICATION_SERVICE_HEALTH_URL:https://swiftship-notification-service.onrender.com/keepalive.html}
       - name: Warehouse Service
-        url: http://localhost:9060/actuator/health
+        url: ${WAREHOUSE_SERVICE_HEALTH_URL:https://swiftship-warehouse-service.onrender.com/keepalive.html}
       - name: Routing Service
-        url: http://localhost:9070/actuator/health
+        url: ${ROUTING_SERVICE_HEALTH_URL:https://swiftship-routing-service.onrender.com/keepalive.html}
       - name: Tracking Service
-        url: http://localhost:9099/actuator/health
+        url: ${TRACKING_SERVICE_HEALTH_URL:https://swiftship-tracking-service.onrender.com/keepalive.html}
     tcp-targets:
-      - name: Kafka Server
-        host: localhost
-        port: 9092
+      - name: Aiven Kafka
+        host: ${PLATFORM_HEALTH_KAFKA_HOST:managed-kafka-swiftship-managed-kafka-swiftship.l.aivencloud.com}
+        port: ${PLATFORM_HEALTH_KAFKA_PORT:28471}
       - name: Redis
-        host: localhost
-        port: 6379
-      - name: PostgreSQL
-        host: localhost
-        port: 5433
+        host: ${PLATFORM_HEALTH_REDIS_HOST:enormous-enormous-fish-69531.db.redis.io}
+        port: ${PLATFORM_HEALTH_REDIS_PORT:10407}
+      - name: Neon PostgreSQL
+        host: ${PLATFORM_HEALTH_POSTGRES_HOST:ep-proud-mountain-ao1bc8l5-pooler.c-2.ap-southeast-1.aws.neon.tech}
+        port: ${PLATFORM_HEALTH_POSTGRES_PORT:5432}
