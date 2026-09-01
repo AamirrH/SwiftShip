@@ -6,15 +6,6 @@ SwiftShip is a full-stack distributed order fulfillment and live delivery tracki
 
 The project was built over roughly 2-3 months through many small, organic commits and real deployment/debugging iterations. The goal was not only to build APIs, but to understand how independent services communicate, fail, recover, and still complete one user-facing business flow.
 
-## Live Links
-
-| Resource | Link |
-| --- | --- |
-| Frontend demo | https://swift-ship-nu.vercel.app/ |
-| Repository | https://github.com/AamirrH/SwiftShip |
-| API Gateway | https://swiftship-api-gateway.onrender.com |
-| Eureka Dashboard | https://swiftship-u7gw.onrender.com |
-
 > The project is deployed on free-tier infrastructure, so cold starts and occasional latency can happen.
 
 ## What SwiftShip Does
